@@ -1,0 +1,133 @@
+body {
+    background-color: #f8f8f8;
+}
+#page-wrapper {
+    background-color: #fff;
+    padding-right: 40px;
+}
+@media(min-width:768px) {
+    #page-wrapper {
+        border-left: 1px solid #e7e7e7;
+    }
+}
+.sidebar ul li {
+    border-bottom: 1px solid #e7e7e7;
+}
+.sidebar ul li a.active {
+    background-color: #eee;
+}
+.btn-primary.btn-outline {
+    color: #428bca;
+}
+
+.btn-success.btn-outline {
+    color: #5cb85c;
+}
+
+.btn-info.btn-outline {
+    color: #5bc0de;
+}
+
+.btn-warning.btn-outline {
+    color: #f0ad4e;
+}
+
+.btn-danger.btn-outline {
+    color: #d9534f;
+}
+
+.btn-primary.btn-outline:hover,
+.btn-success.btn-outline:hover,
+.btn-info.btn-outline:hover,
+.btn-warning.btn-outline:hover,
+.btn-danger.btn-outline:hover {
+    color: #fff;
+}
+
+table.dataTable thead .sorting:after {
+    color: rgba(50,50,50,.5);
+}
+.show-grid [class^=col-] {
+    border: 1px solid #ddd;
+    background-color: #eee!important;
+}
+.panel-green {
+    border-color: #5cb85c;
+}
+
+.panel-green .panel-heading {
+    border-color: #5cb85c;
+    color: #fff;
+    background-color: #5cb85c;
+}
+
+.panel-green a {
+    color: #5cb85c;
+}
+
+.panel-green a:hover {
+    color: #3d8b3d;
+}
+
+.panel-red {
+    border-color: #d9534f;
+}
+
+.panel-red .panel-heading {
+    border-color: #d9534f;
+    color: #fff;
+    background-color: #d9534f;
+}
+
+.panel-red a {
+    color: #d9534f;
+}
+
+.panel-red a:hover {
+    color: #b52b27;
+}
+
+.panel-yellow {
+    border-color: #f0ad4e;
+}
+
+.panel-yellow .panel-heading {
+    border-color: #f0ad4e;
+    color: #fff;
+    background-color: #f0ad4e;
+}
+
+.panel-yellow a {
+    color: #f0ad4e;
+}
+
+.panel-yellow a:hover {
+    color: #df8a13;
+}
+
+#slide-panel {
+    border-left: 1px solid #e7e7e7;
+    background-color: #428bca;
+}
+
+#slide-panel-toggle {
+    background-color: #428bca;
+    border: 2px solid #e7e7e7;
+    visibility: hidden;
+}
+
+.navbar-title{
+    color:#777777;
+    visibility: hidden;
+}
+
+@media(min-width:768px) {
+    .navbar-title, #slide-panel-toggle {
+        visibility: visible;
+    }
+
+}
+
+.red {
+    color: #d9534f;
+}

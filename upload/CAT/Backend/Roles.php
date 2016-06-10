@@ -23,14 +23,14 @@
  *
  */
 
-if (!class_exists('CAT_Backend_Dashboard'))
+if (!class_exists('CAT_Backend_Roles'))
 {
     if (!class_exists('CAT_Object', false))
     {
         @include dirname(__FILE__) . '/../Object.php';
     }
 
-    class CAT_Backend_Dashboard extends CAT_Object
+    class CAT_Backend_Roles extends CAT_Object
     {
         // array to store config options
         protected $_config         = array( 'loglevel' => 7 );
@@ -47,7 +47,29 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
-        
+
+        public static function create()
+        {
+            if(!CAT_Object::user()->hasPerm('roles_add'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $val   = CAT_Helper_Validate::getInstance();
+            $name  = $val->sanitizePost('role_name');
+            $desc  = $val->sanitizePost('role_description');
+            if(CAT_Roles::getInstance()->exists($name))
+                CAT_Object::json_error('A role with the same name already exists!');
+            CAT_Roles::getInstance()->addRole($name,$desc);
+        }
+
+        public static function edit()
+        {
+// ----- TODO: check permissions -----
+            $val = CAT_Helper_Validate::getInstance();
+            $field = $val->sanitizePost('name');
+            $id    = $val->sanitizePost('pk');
+            $value = $val->sanitizePost('value');
+            CAT_Roles::getInstance()->set($field,$value,$id);
+        }
+
         /**
          *
          * @access public
@@ -56,15 +78,19 @@ if (!class_exists('CAT_Backend_Dashboard'))
         public static function index()
         {
             $self = self::getInstance();
-            $tpl_data = array();
-            $tpl_data['dashboard'] = CAT_Helper_Dashboard::renderDashboard('global',false);
-            $tpl_data['MAIN_MENU'] = CAT_Backend::getMainMenu();
+            $tpl_data = array(
+                'roles' => CAT_Roles::getInstance()->getRoles(),
+                'perms'  => CAT_User::getInstance()->getPerms(),
+            );
+echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r( $tpl_data );
+echo "</textarea>";
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_dashboard', $tpl_data);
+            $self->tpl()->output('backend_roles', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function dashboard()
+        }   // end function media()
         
 
-    } // class CAT_Helper_Dashboard
+    } // class CAT_Helper_Roles
 
 } // if class_exists()

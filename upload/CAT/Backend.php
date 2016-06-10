@@ -61,7 +61,15 @@ if (!class_exists('CAT_Backend', false))
         public static function getInstance($section_name='Start',$section_permission='start',$auto_header=true,$auto_auth=true)
         {
             if (!self::$instance)
+            {
                 self::$instance = new self();
+                self::$instance->tpl()->setGlobals(array(
+                    'meta' => array(
+                        'LANGUAGE' => strtolower(LANGUAGE),
+                        'CHARSET'  => (defined('DEFAULT_CHARSET')) ? DEFAULT_CHARSET : "utf-8",
+                    ),
+                ));
+            }
             return self::$instance;
         }   // end function getInstance()
 
@@ -70,13 +78,16 @@ if (!class_exists('CAT_Backend', false))
          **/
         public static function dispatch()
         {
-            $self = self::getInstance();
+            $self   = self::getInstance();
+
+            // no route yet
             if(!self::$route)
             {
                 self::$route
                     = isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] :
                       isset($_SERVER['PATH_INFO'])      ? $_SERVER['PATH_INFO']      :
-                      isset($_SERVER['REQUEST_URI'])    ? $_SERVER['REQUEST_URI']    : '/' ;
+                      isset($_SERVER['REQUEST_URI'])    ? $_SERVER['REQUEST_URI']    : '/'
+                    ;
                 $path_prefix = str_ireplace(
                     CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
                     '',
@@ -91,12 +102,15 @@ if (!class_exists('CAT_Backend', false))
                     '',
                     self::$route
                 );
+                // remove leading /
+                if(!strpos(self::$route,'/',0))
+                    self::$route = substr(self::$route,1,strlen(self::$route));
             }
             $self->log()->logDebug(sprintf('resulting route [%s]',self::$route));
 
             // handle the route
-            // special cases: login and authenticate
-            if(preg_match('~^/(login|authenticate|logout)~',self::$route,$m))
+            // special cases: login. logout and authenticate
+            if(preg_match('~^(login|authenticate|logout)~',self::$route,$m))
             {
                 $func = $m[1];
                 $self->log()->logDebug(sprintf('calling func [%s]',$func));
@@ -107,37 +121,64 @@ if (!class_exists('CAT_Backend', false))
                 // any other routes require user login
                 if(!$self->user()->is_authenticated())
                 {
+                    // re-route
                     header('Location: '.CAT_ADMIN_URL.'/login');
                 }
                 else
                 {
                     // the user is logged in
-                    $func = str_replace('/','',self::$route);
+                    $route = split('/',str_replace('\\','/',self::$route));
+                    // set user data as template var {$USER.<property>}
                     $self->tpl()->setGlobals('USER',$self->user()->get());
-                    // check permissions
-                    if(!$self->user()->hasPerm($func))
+                    $self->tpl()->setGlobals('SECTION',ucfirst($route[0]));
+                    // check the user permissions
+                    if(!$self->user()->hasPerm($route[0]))
                     {
                         CAT_Object::printFatalError('Access denied');
                     }
-                    // internal function
-                    if(method_exists($self,$func))
+                    // the first item is the controller class
+                    $class   = 'CAT_Backend_'.ucfirst($route[0]);
+                    // check if the controller exists
+                    try
                     {
-                        return self::$func();
-                        exit;
+                        $handler = $class::getInstance();
+                        // second item (if exists) is the function name; if
+                        // no function name is available, use index()
+                        if(isset($route[1]))
+                        {
+                            $func = $route[1];
+                            // check permission for the "sub route"
+                            if(!$self->user()->hasPerm($func))
+                            {
+                                CAT_Object::printFatalError('Access denied');
+                            }
+                        }
+                        else
+                        {
+                            // the permission for the index route is already
+                            // checked
+                            $func = 'index';
+                        }
+                        if(method_exists($handler,$func))
+                        {
+                            return $handler::$func();
+                            exit;
+                        }
                     }
-                    // controller class
-                    $class   = 'CAT_Backend_'.ucfirst($func);
-                    $handler = $class::getInstance();
-                    if(method_exists($handler,$func))
+                    catch( Exception $e )
                     {
-                        return $handler::$func();
-                        exit;
+                        // internal function?
+                        $func = $route[0];
+                        if(method_exists($self,$func))
+                        {
+                            return self::$func();
+                            exit;
+                        }
                     }
                 }
             }
-            echo "ROUTE: ", self::$route;
+            #echo "ROUTE: ", self::$route;
             #ROUTE: /blackcat/bcwa20/backend/start/index.php
-            #self::$route =
         }   // end function dispatch()
 
         /**
@@ -182,26 +223,50 @@ if (!class_exists('CAT_Backend', false))
         }   // end function isBackend()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getForms($section)
+        {
+            if(!self::$form)
+            {
+                $init = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').'/forms.init.php');
+                if(file_exists($init))
+                    require $init;
+                self::$form = \wblib\wbForms::getInstance();
+                self::$form->set('wblib_url',CAT_URL.'/modules/lib_wblib/wblib');
+                self::$form->set('lang_path',CAT_PATH.'/languages');
+            }
+            //P:\apache\htdocs\blackcat\bcwa20\CAT\Forms\settings
+            if(file_exists(CAT_PATH.'/CAT/Forms/'.$section.'/inc.forms.php'))
+                self::$form->loadFile('inc.forms.php',CAT_PATH.'/CAT/Forms/'.$section);
+            return self::$form;
+        }   // end function getForms()
+
+        /**
          * get the main menu (backend sections)
          * checks the user priviledges
          *
          * @access public
          * @return array
          **/
-        public static function getMainMenu()
+        public static function getMainMenu($current=NULL)
         {
             $menu = array();
             $self = self::getInstance();
 
-            foreach(array_values(array('dashboard','media','settings','addons','admintools','preferences')) as $item)
+            if(!$current) $current = self::$route;
+
+            foreach(array_values(array('dashboard','media','settings','addons','admintools','users','groups','roles','preferences')) as $item)
             {
                 if($self->user()->hasPerm($item))
                 {
                     $menu[] = array(
-                        'link'             => CAT_ADMIN_URL.'/'.$item,
-                        'title'            => $self->lang()->translate(ucfirst($item)),
-                        'permission_title' => $item,
-                        'current'          => ($item == strtolower($self->section_name)) ? true : false
+                        'link'    => CAT_ADMIN_URL.'/'.$item,
+                        'title'   => $self->lang()->translate(ucfirst($item)),
+                        'name'    => $item,
+                        'current' => ( $current && $current == $item ) ? true : false,
                     );
                 }
             }
@@ -319,30 +384,15 @@ if (!class_exists('CAT_Backend', false))
         public static function login()
         {
             global $parser;
+            // we need this twice
             $username_fieldname = CAT_Helper_Validate::createFieldname('username_');
+            // for debugging
             $self = self::getInstance();
 			$tpl_data = array(
                 'USERNAME_FIELDNAME'    => $username_fieldname,
                 'PASSWORD_FIELDNAME'    => CAT_Helper_Validate::createFieldname('password_'),
                 'USERNAME'              => CAT_Helper_Validate::sanitizePost($username_fieldname),
-                'ACTION_URL'			=> CAT_ADMIN_URL.'/authenticate/',
-                'LOGIN_URL'				=> CAT_ADMIN_URL.'/authenticate/',
-                'DEFAULT_URL'			=> CAT_ADMIN_URL.'/dashboard/',
-                'WARNING_URL'			=> CAT_THEME_URL . '/templates/warning.html',
-                'REDIRECT_URL'			=> CAT_ADMIN_URL . '/dashboard/',
-                'FORGOTTEN_DETAILS_APP'	=> CAT_ADMIN_URL . '/forgot/',
-                // --- database settings ---
-            	'MIN_USERNAME_LEN'		=> AUTH_MIN_LOGIN_LENGTH,
-            	'MAX_USERNAME_LEN'		=> AUTH_MAX_LOGIN_LENGTH,
-            	'MIN_PASSWORD_LEN'		=> AUTH_MIN_PASS_LENGTH,
-            	'MAX_PASSWORD_LEN'		=> AUTH_MAX_PASS_LENGTH,
-                'PAGES_DIRECTORY'       => PAGES_DIRECTORY,
-                'ATTEMPTS'              => CAT_Helper_Validate::fromSession('ATTEMTPS'),
-                #'MESSAGE'               => self::$loginerror,
             );
-
-			$tpl_data['meta']['LANGUAGE']	= strtolower(LANGUAGE);
-			$tpl_data['meta']['CHARSET']	= (defined('DEFAULT_CHARSET')) ? DEFAULT_CHARSET : "utf-8";
 
             $self->log()->logDebug('printing login page');
             $parser->output('login',$tpl_data);

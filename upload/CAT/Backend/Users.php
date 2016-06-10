@@ -23,14 +23,14 @@
  *
  */
 
-if (!class_exists('CAT_Backend_Dashboard'))
+if (!class_exists('CAT_Backend_Users'))
 {
     if (!class_exists('CAT_Object', false))
     {
         @include dirname(__FILE__) . '/../Object.php';
     }
 
-    class CAT_Backend_Dashboard extends CAT_Object
+    class CAT_Backend_Users extends CAT_Object
     {
         // array to store config options
         protected $_config         = array( 'loglevel' => 7 );
@@ -57,14 +57,12 @@ if (!class_exists('CAT_Backend_Dashboard'))
         {
             $self = self::getInstance();
             $tpl_data = array();
-            $tpl_data['dashboard'] = CAT_Helper_Dashboard::renderDashboard('global',false);
-            $tpl_data['MAIN_MENU'] = CAT_Backend::getMainMenu();
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_dashboard', $tpl_data);
+            $self->tpl()->output('backend_users', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function dashboard()
+        }   // end function media()
         
 
-    } // class CAT_Helper_Dashboard
+    } // class CAT_Helper_Users
 
 } // if class_exists()

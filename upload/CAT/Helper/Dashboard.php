@@ -71,6 +71,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
 
             $layout = explode('-',$config['layout']);
             $cols   = count($layout);
+            $rows   = 0;
 
             foreach(range(1,$cols) as $col)
             {
@@ -79,12 +80,16 @@ if (!class_exists('CAT_Helper_Dashboard'))
                     'widgets' => array()
                 );
                 $widgets = CAT_Helper_Array::ArrayFilterByKey($config['widgets'],'column',$col);
+                if(count($widgets)>$rows) $rows = count($widgets);
                 foreach($widgets as $item)
                 {
                     $config['columns'][$col]['widgets'][]
                         = CAT_Helper_Widget::render($item);
                 }
             }
+
+            $config['col_count'] = $cols;
+            $config['row_count'] = $rows;
 
             return $config;
         }   // end function getDashboard()
@@ -417,7 +422,10 @@ if (!class_exists('CAT_Helper_Dashboard'))
         {
             $config = self::getDashboard($module);
             $hidden = self::getNotShown($module);
-            self::getInstance()->tpl()->setPath(CAT_PATH.'/CAT/Helper/Dashboard');
+            if(file_exists(CAT_PATH.'/templates/'.DEFAULT_THEME.'/templates/default/dashboard.tpl'))
+                self::getInstance()->tpl()->setPath(CAT_PATH.'/templates/'.DEFAULT_THEME);
+            else
+                self::getInstance()->tpl()->setPath(CAT_PATH.'/CAT/Helper/Dashboard');
             if($direct_output)
             {
                 self::getInstance()->tpl()->output('dashboard.tpl',array('dashboard'=>$config,'module'=>$module,'addable'=>$hidden));

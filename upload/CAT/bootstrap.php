@@ -48,12 +48,29 @@ spl_autoload_register(function($class)
 {
     if (defined('CAT_PATH'))
     {
-        $file = '/'.str_replace('_', '/', $class); // files in CAT subfolder
-        // files in (old) framework subfolder (do not have CAT_ in class name)
-        if(substr_compare($class, 'CAT_', 0, 4))   
-            $file = '/framework'.$file;
-        if (file_exists(CAT_PATH . $file . '.php'))
-            @require CAT_PATH . $file . '.php';
+        if(!substr_compare($class, 'wblib', 0, 4))
+        {
+            if(substr_count($class,'wbForms') && !class_exists('\wblib\wbForms'))
+            {
+                @require CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/lib_wblib/wblib/wbForms.php');
+            }
+            else
+            {
+                $file = str_replace('\\','/',CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/lib_wblib/'.str_replace(array('\\','_'), array('/','/'), $class).'.php'));
+                if (file_exists($file)) {
+                    @require $file;
+                }
+            }
+        }
+        else
+        {
+            $file = '/'.str_replace('_', '/', $class); // files in CAT subfolder
+            // files in (old) framework subfolder (do not have CAT_ in class name)
+            if(substr_compare($class, 'CAT_', 0, 4))
+                $file = '/framework'.$file;
+            if (file_exists(CAT_PATH . $file . '.php'))
+                @require CAT_PATH . $file . '.php';
+        }
     }
     // next in stack
 });

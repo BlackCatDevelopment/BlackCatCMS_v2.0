@@ -1495,16 +1495,6 @@ frontend.css and template.css are added in _get_css()
             $keywords    = NULL;
             $description = NULL;
 
-            // charset
-            $output[] = CAT_Helper_Page::$space
-                      . '<meta http-equiv="Content-Type" content="text/html; charset='
-                      . ( isset($properties['default_charset']) && $properties['default_charset'] != ''
-                      ? $properties['default_charset'] :
-                      ( defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : 'utf-8' )
-                      )
-                          . '" />'
-                          ;
-
             // page title
             if(isset($droplets_config['page_title']))
                 $title = $droplets_config['page_title'];
@@ -1575,8 +1565,8 @@ frontend.css and template.css are added in _get_css()
             global $page_id;
             $meta = self::getDefaultMeta($droplets_config);
             self::$meta = array_merge(
-                $meta,
-                self::$meta
+                self::$meta,
+                $meta
             );
             // if the current page has linked pages in other languages
             $linked = self::getLinkedByLanguage($page_id);

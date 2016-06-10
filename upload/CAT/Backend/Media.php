@@ -53,7 +53,7 @@ if (!class_exists('CAT_Backend_Media'))
          * @access public
          * @return
          **/
-        public static function media()
+        public static function index()
         {
             $self = self::getInstance();
             $tpl_data = array();

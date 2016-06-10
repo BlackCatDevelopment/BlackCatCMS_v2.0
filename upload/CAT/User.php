@@ -18,7 +18,7 @@ if (!class_exists('CAT_User'))
 
     class CAT_User extends CAT_Object
     {
-        protected $_config = array( 'loglevel' => 8 );
+        protected $_config = array( 'loglevel' => 7 );
         // array to hold the user data
         protected $user    = array();
         // array to hold the user roles
@@ -54,6 +54,43 @@ if (!class_exists('CAT_User'))
             return new self();
         }   // end function getInstance()
 
+
+        /**
+         * get user attribute; returns NULL if the given attribute is not set
+         *
+         * @access public
+         * @param  string  $attr - attribute name
+         * @return mixed   value of $attr or NULL if not set
+         **/
+        public function get($attr=NULL)
+        {
+            if(isset($this->user))
+            {
+                if($attr)
+                {
+                    if(isset($this->user[$attr]))
+                    {
+                        return $this->user[$attr];
+                    }
+                }
+                return (array)$this->user;
+            }
+            else
+            {
+                return NULL;
+            }
+        }   // end function get()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getPerms()
+        {
+            return $this->perms;
+        }   // end function getPerms()
+
         /**
          *
          * @access public
@@ -72,11 +109,13 @@ if (!class_exists('CAT_User'))
          * authenticate user
          *
          * @access public
-         * @return
+         * @return boolean
          **/
         public function authenticate()
         {
             $this->reset();
+
+            $self  = self::getInstance();
 
             $field = CAT_Helper_Validate::sanitizePost('username_fieldname');
             $user  = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
@@ -85,15 +124,22 @@ if (!class_exists('CAT_User'))
             $field = CAT_Helper_Validate::sanitizePost('password_fieldname');
             $pass  = sha1(CAT_Helper_Validate::sanitizePost($field));
 
+            $self->log()->logDebug(sprintf('Trying to authenticate user [%s]',$name));
+
             $get_user = CAT_Helper_DB::getInstance()->query(
                 'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `username`=:name AND `password`=:pw AND `active`=1',
                 array('name'=>$name,'pw'=>$pass)
             );
+
             if($get_user->rowCount() != 0)
             {
     			$id = $get_user->fetch(\PDO::FETCH_ASSOC);
                 $this->initUser($id['user_id']);
                 return true;
+            }
+            else
+            {
+                $self->log()->logDebug('No such user, user not active, or invalid password!');
             }
             return false;
         }   // end function authenticate()
@@ -103,6 +149,7 @@ if (!class_exists('CAT_User'))
          **/
         public function login()
         {
+// ------------------- ????????????????????????????? ---------------------------
         }   // end function login()
 
         /**
@@ -173,32 +220,6 @@ echo "</textarea>";
         }   // end function hasPerm()
 
         /**
-         * get user attribute; returns NULL if the given attribute is not set
-         *
-         * @access public
-         * @param  string  $attr - attribute name
-         * @return mixed   value of $attr or NULL if not set
-         **/
-        public function get($attr=NULL)
-        {
-            if(isset($this->user))
-            {
-                if($attr)
-                {
-                    if(isset($this->user[$attr]))
-                    {
-                        return $this->user[$attr];
-                    }
-                }
-                return (array)$this->user;
-            }
-            else
-            {
-                return NULL;
-            }
-        }   // end function get()
-
-        /**
          * Check if the user is authenticated
          *
          * @access public
@@ -256,7 +277,7 @@ echo "</textarea>";
             $this->log()->logDebug(sprintf('init user with id: [%d]',$id));
             // read user from DB
             $get_user = CAT_Helper_DB::getInstance()->query(
-                'SELECT `user_id`, `primary_group`, `username`, `display_name`, `email`, `language`, `home_folder` FROM `:prefix:rbac_users` WHERE user_id=:id',
+                'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder` FROM `:prefix:rbac_users` WHERE user_id=:id',
                 array('id'=>$id)
             );
             // load data into object
@@ -283,15 +304,7 @@ echo "</textarea>";
          **/
         protected function initRoles()
         {
-            $sth = CAT_Helper_DB::getInstance()->query(
-                'SELECT t1.`role_id`, t2.`title`
-                FROM `:prefix:rbac_userroles` AS t1
-                JOIN `:prefix:rbac_roles` AS t2
-                ON t1.`role_id`=t2.`role_id`
-                WHERE t1.`user_id`=:id',
-                array('id'=>$this->user['user_id'])
-            );
-            $this->roles = $sth->fetchAll(\PDO::FETCH_ASSOC);
+            $this->roles = CAT_Roles::getInstance()->getRoles(array('user'=>$this->user['user_id']));
         }   // end function initRoles()
 
         /**
@@ -301,18 +314,35 @@ echo "</textarea>";
          **/
         protected function initPerms()
         {
+            // superuser; has all permissions
+            if($this->is_root())
+            {
+                $q = 'SELECT * FROM `:prefix:rbac_permissions`';
+                $opt = NULL;
+            }
             if(is_array($this->roles))
             {
                 $q = 'SELECT * FROM `:prefix:rbac_rolepermissions` AS t1
                 JOIN `:prefix:rbac_permissions` AS t2
                 ON `t1`.`perm_id`=`t2`.`perm_id`
                 WHERE `t1`.`role_id`=:id';
+                $opt = array('id'=>$role['role_id']);
+            }
+
+            $sth = CAT_Helper_DB::getInstance()->query($q, $opt);
+            $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
+
+            if($this->is_root())
+            {
+                foreach(array_values($perms) as $perm)
+                {
+                    $this->perms[$perm['title']] = -1;
+                }
+            }
+            else
+            {
                 foreach(array_values($this->roles) as $role)
                 {
-                    $sth = CAT_Helper_DB::getInstance()->query(
-                        $q, array('id'=>$role['role_id'])
-                    );
-                    $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
                     foreach(array_values($perms) as $perm)
                     {
                         $this->perms[$perm['title']] = $role['role_id'];
@@ -329,20 +359,16 @@ echo "</textarea>";
          **/
         protected function initGroups()
         {
-            $sth = CAT_Helper_DB::getInstance()->query(
-                'select
-                    `t1`.`user_id`,
-                    `t3`.`title`,
-                    `t3`.`description`
-                from `cat_rbac_users` as `t1`
-                join `cat_rbac_usergroups` as `t2`
-                on `t1`.`user_id`=`t2`.`user_id`
-                join `cat_rbac_groups` as `t3`
-                on `t2`.`group_id` = `t3`.`group_id`
-                WHERE `t1`.`user_id`=:id',
-                array('id'=>$this->user['user_id'])
-            );
+            $q = 'SELECT * '
+               . 'FROM `:prefix:rbac_users` AS t1 '
+               . 'JOIN `:prefix:rbac_usergroups` AS t2 '
+               . 'ON `t1`.`user_id`=`t2`.`user_id` '
+               . 'WHERE `t1`.`user_id`=:id'
+               ;
+            $sth = CAT_Helper_DB::getInstance()->query($q,array('id'=>$this->user['user_id']));
             $this->groups = $sth->fetchAll(\PDO::FETCH_ASSOC);
+            // fetch data for primary group
+            
         }   // end function initGroups()
 
     } // class CAT_User
