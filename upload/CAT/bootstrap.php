@@ -149,11 +149,11 @@ if ( ! CAT_Registry::exists('LANGUAGE') )
     CAT_Registry::register('LANGUAGE',DEFAULT_LANGUAGE,true);
 
 // Load Language file
-if (!defined('LANGUAGE_LOADED'))
-    if (!file_exists(CAT_PATH . '/languages/' . LANGUAGE . '.php'))
-        exit('Error loading language file ' . LANGUAGE . ', please check configuration');
-    else
-        require_once(CAT_PATH . '/languages/' . LANGUAGE . '.php');
+#if (!defined('LANGUAGE_LOADED'))
+#    if (!file_exists(CAT_PATH . '/languages/' . LANGUAGE . '.php'))
+#        exit('Error loading language file ' . LANGUAGE . ', please check configuration');
+#    else
+#        require_once(CAT_PATH . '/languages/' . LANGUAGE . '.php');
 
 //**************************************************************************
 // Set theme

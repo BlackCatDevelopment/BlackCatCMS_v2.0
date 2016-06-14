@@ -131,3 +131,6 @@ table.dataTable thead .sorting:after {
 .red {
     color: #d9534f;
 }
+.highlight{
+    background-color: #fcf8e3;
+}

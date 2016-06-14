@@ -7,10 +7,7 @@
                     <span class="icon-bar"></span>
                 </button>
                 <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
-            </div>
-            <!-- /.navbar-header -->
-
-            {* <div class="navbar-title">{$SECTION}</div> *}
+            </div><!-- /.navbar-header -->
 
             <ul class="nav nav-pills navbar-top-links navbar-right">
                 <li class="dropdown">
@@ -22,11 +19,8 @@
                         <li class="divider"></li>
                         <li><a href="{$CAT_ADMIN_URL}/logout/"><i class="fa fa-sign-out fa-fw"></i> {translate('Logout')}</a></li>
                     </ul>
-                    <!-- /.dropdown-user -->
                 </li>
-                <!-- /.dropdown -->
-            </ul>
-            <!-- /.navbar-top-links -->
+            </ul><!-- /.navbar-top-links -->
 
             <div class="navbar-default sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
@@ -38,7 +32,5 @@
                         {/if}{/foreach}
                     </ul>
                 </div>
-                <!-- /.sidebar-collapse -->
-            </div>
-            <!-- /.navbar-static-side -->
+            </div><!-- /.navbar-static-side -->
         </nav>

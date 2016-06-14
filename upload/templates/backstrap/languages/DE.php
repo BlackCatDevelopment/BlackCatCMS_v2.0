@@ -40,5 +40,6 @@ if (defined('CAT_PATH')) {
 }
 
 $LANG = array(
+    'Built in' => 'Eingebaut',
     'Toggle navigation' => 'Navigation umschalten',
 );

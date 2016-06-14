@@ -55,6 +55,7 @@ $(function() {
             type   : $type,
             url    : $url,
             data   : $data,
+            dataType: 'json',
             success: function(data, status) {
                 // activate for debugging:
                 //console.log(data);
@@ -76,4 +77,6 @@ $(function() {
         $('#slide-panel-toggle span').toggleClass('fa-angle-right');
 		return false;
 	});
+
+    
 });

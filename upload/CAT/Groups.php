@@ -124,6 +124,8 @@ if (!class_exists('CAT_Groups'))
             $q    = 'SELECT * FROM `:prefix:rbac_groups` AS t1 '
                   . 'JOIN `:prefix:rbac_usergroups` AS t2 '
                   . 'ON `t1`.`group_id`=`t2`.`group_id` '
+                  . 'JOIN `:prefix:rbac_users` AS t3 '
+                  . 'ON `t2`.`user_id`=`t3`.`user_id` '
                   . 'WHERE `t1`.`group_id` = :id'
                   ;
             $dbh  = CAT_Helper_DB::getInstance();

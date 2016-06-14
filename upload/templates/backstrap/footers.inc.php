@@ -44,6 +44,7 @@ $mod_footers = array(
         'js' => array(
             '/modules/lib_bootstrap/vendor/js/bootstrap.min.js',
             '/modules/lib_bootstrap/vendor/js/bootstrap-editable.min.js',
+            '/modules/lib_bootstrap/vendor/js/fuelux.min.js',
             '/templates/backstrap/js/metisMenu.min.js',
             '/templates/backstrap/js/sb-admin-2.js',
         )

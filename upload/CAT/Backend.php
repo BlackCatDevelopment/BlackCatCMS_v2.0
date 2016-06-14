@@ -57,6 +57,7 @@ if (!class_exists('CAT_Backend', false))
         private static $instance = array();
         private static $form     = NULL;
         private static $route    = NULL;
+        private static $params   = NULL;
 
         public static function getInstance($section_name='Start',$section_permission='start',$auto_header=true,$auto_auth=true)
         {
@@ -94,8 +95,8 @@ if (!class_exists('CAT_Backend', false))
                     CAT_Helper_Directory::sanitizePath(CAT_PATH)
                 );
                 $self->log()->logDebug(sprintf(
-                    'current route [%s], route prefix (rel. path to doc root) [%s]',
-                    self::$route, $path_prefix
+                    'document root [%s], CAT_PATH [%s], current route [%s], route prefix (rel. path to doc root) [%s]',
+                    $_SERVER['DOCUMENT_ROOT'], CAT_Helper_Directory::sanitizePath(CAT_PATH), self::$route, $path_prefix
                 ));
                 self::$route = str_ireplace(
                     CAT_Helper_Directory::sanitizePath($path_prefix.'/'.CAT_BACKEND_FOLDER),
@@ -126,52 +127,46 @@ if (!class_exists('CAT_Backend', false))
                 }
                 else
                 {
-                    // the user is logged in
-                    $route = split('/',str_replace('\\','/',self::$route));
+                    // the user is logged in, resolve the route
+                    $route      = explode('/',str_replace('\\','/',self::$route));
+                    // first part of the route is the controller name
+                    $controller = array_shift($route);
+                    // second item (if exists) is the function name; if
+                    // no function name is available, use index()
+                    $function   = (count($route) ? array_shift($route) : 'index');
+                    // if there are any items left, save as params
+                    if(count($route)) self::$params = $route;
                     // set user data as template var {$USER.<property>}
                     $self->tpl()->setGlobals('USER',$self->user()->get());
-                    $self->tpl()->setGlobals('SECTION',ucfirst($route[0]));
+                    $self->tpl()->setGlobals('SECTION',ucfirst($controller));
                     // check the user permissions
-                    if(!$self->user()->hasPerm($route[0]))
+                    if(!$self->user()->hasPerm($controller))
                     {
                         CAT_Object::printFatalError('Access denied');
                     }
-                    // the first item is the controller class
-                    $class   = 'CAT_Backend_'.ucfirst($route[0]);
+                    // controller class name
+                    $class   = 'CAT_Backend_'.ucfirst($controller);
+                    // add perms for use inside the templates
+                    $self->tpl()->setGlobals('PERMS',CAT_User::getInstance()->getPerms());
                     // check if the controller exists
                     try
                     {
                         $handler = $class::getInstance();
-                        // second item (if exists) is the function name; if
-                        // no function name is available, use index()
-                        if(isset($route[1]))
+                        if(!$self->user()->hasPerm($function))
                         {
-                            $func = $route[1];
-                            // check permission for the "sub route"
-                            if(!$self->user()->hasPerm($func))
-                            {
-                                CAT_Object::printFatalError('Access denied');
-                            }
+                            CAT_Object::printFatalError('Access denied');
                         }
-                        else
+                        if(method_exists($handler,$function))
                         {
-                            // the permission for the index route is already
-                            // checked
-                            $func = 'index';
-                        }
-                        if(method_exists($handler,$func))
-                        {
-                            return $handler::$func();
+                            return $handler::$function();
                             exit;
                         }
                     }
                     catch( Exception $e )
                     {
-                        // internal function?
-                        $func = $route[0];
-                        if(method_exists($self,$func))
+                        if(method_exists($self,$function))
                         {
-                            return self::$func();
+                            return self::$function();
                             exit;
                         }
                     }
@@ -258,7 +253,7 @@ if (!class_exists('CAT_Backend', false))
 
             if(!$current) $current = self::$route;
 
-            foreach(array_values(array('dashboard','media','settings','addons','admintools','users','groups','roles','preferences')) as $item)
+            foreach(array_values(array('dashboard','pages','media','settings','addons','admintools','users','groups','roles','preferences')) as $item)
             {
                 if($self->user()->hasPerm($item))
                 {
@@ -274,12 +269,22 @@ if (!class_exists('CAT_Backend', false))
         }
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getRouteParams()
+        {
+            return self::$params;
+        }   // end function getRouteParams()
+
+        /**
          *  Print the admin header
          *
          *  @access public
          *  @return void
          */
-        public function print_header()
+        public static function print_header()
         {
             $tpl_data = array();
             $addons   = CAT_Helper_Addons::getInstance();

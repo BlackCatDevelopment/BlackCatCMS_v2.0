@@ -51,6 +51,69 @@ if ( ! class_exists( 'CAT_Users', false ) )
             }
             return self::$instance;
         }   // end function getInstance()
+
+        /**
+         * delete a user
+         *
+         * @access public
+         * @param  integer $user_id
+         * @return mixed   true on success, db error string otherwise
+         **/
+        public static function deleteUser($user_id)
+        {
+            $self = self::getInstance();
+       		$self->db()->query(
+                "DELETE FROM `:prefix:rbac_users` WHERE `user_id`=:id",
+                array('id'=>$user_id)
+            );
+            return ( $self->db()->isError() ? $self->db()->getError() : true );
+        }   // end function deleteUser()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getUsers($opt=NULL)
+        {
+            $q = 'SELECT * FROM `:prefix:rbac_users` AS `t1` ';
+            $p = array();
+            if(is_array($opt))
+            {
+                if(isset($opt['group_id']))
+                {
+                    $q .= 'JOIN `:prefix_usergroups` AS `t2` '
+                       .  'ON `t1`.`user_id`=`t2`.`user_id` '
+                       .  'WHERE `t2`.`group_id`=:id'
+                       ;
+                    $p['id'] = $opt['group_id'];
+                }
+            }
+            $dbh  = CAT_Helper_DB::getInstance();
+            $sth  = $dbh->query($q,$p);
+            return $sth->fetchAll(\PDO::FETCH_ASSOC);
+        }   // end function getUsers()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getUserGroups($id)
+        {
+            $q = 'SELECT * '
+               . 'FROM `:prefix:rbac_users` AS t1 '
+               . 'JOIN `:prefix:rbac_usergroups` AS t2 '
+               . 'ON `t1`.`user_id`=`t2`.`user_id` '
+               . 'JOIN `:prefix:rbac_groups` AS t3 '
+               . 'ON `t2`.`group_id`=`t3`.`group_id` '
+               . 'WHERE `t1`.`user_id`=:id'
+               ;
+            $sth = CAT_Helper_DB::getInstance()->query($q,array('id'=>$id));
+            return $sth->fetchAll(\PDO::FETCH_ASSOC);
+        }   // end function getUserGroups()
+        
+        
     }
 }
 

@@ -86,6 +86,16 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return
          **/
+        public function getGroups()
+        {
+            return $this->groups;
+        }   // end function getGroups()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public function getPerms()
         {
             return $this->perms;
@@ -359,16 +369,7 @@ echo "</textarea>";
          **/
         protected function initGroups()
         {
-            $q = 'SELECT * '
-               . 'FROM `:prefix:rbac_users` AS t1 '
-               . 'JOIN `:prefix:rbac_usergroups` AS t2 '
-               . 'ON `t1`.`user_id`=`t2`.`user_id` '
-               . 'WHERE `t1`.`user_id`=:id'
-               ;
-            $sth = CAT_Helper_DB::getInstance()->query($q,array('id'=>$this->user['user_id']));
-            $this->groups = $sth->fetchAll(\PDO::FETCH_ASSOC);
-            // fetch data for primary group
-            
+            $this->groups = CAT_Users::getUserGroups($this->user['user_id']);
         }   // end function initGroups()
 
     } // class CAT_User

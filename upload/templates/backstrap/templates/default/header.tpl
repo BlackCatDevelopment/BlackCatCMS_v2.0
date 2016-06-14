@@ -9,13 +9,8 @@
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 </head>
-<body>
-    <div id="slide-panel-toggle">
-        <span class="fa fa-angle-left"></span>
-    </div>
-    <div id="slide-panel">
-        Page tree
-    </div>
+<body class="fuelux">
+
     <div id="wrapper">
         {include 'nav.tpl'}
         <div id="page-wrapper">

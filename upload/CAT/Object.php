@@ -382,6 +382,20 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
          * @access public
          * @return
          **/
+        public static function asJSON()
+        {
+            $headers = getallheaders();
+            if(isset($headers['Accept']) && preg_match('~application/json~i',$headers['Accept']))
+                return true;
+            else
+                return false;
+        }   // end function asJSON()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function json_success($message,$exit=true)
         {
             self::json_result(true,$message,$exit);

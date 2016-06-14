@@ -129,6 +129,10 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
             self::$search_paths[] = $this->_config['workdir'];
             self::$search_paths   = array_unique(self::$search_paths);
 
+            // add template
+            if(CAT_Backend::isBackend() && file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath'])))
+                self::$search_paths[] = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']);
+
 	        // add default lang
 	        $lang_files[] = 'EN';
 	        $lang_files   = array_unique( $lang_files );
@@ -136,7 +140,7 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	        foreach ( $lang_files as $l )
 	        {
 	            $file = $l . '.php';
-	            if ( $this->addFile( $file, $var ) )
+	            if ( $this->addFile( $file, NULL, $var ) )
 	            {
 	                break;
 	            }
@@ -151,7 +155,6 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	     **/
 	    public function addFile( $file, $path = NULL, $var = NULL )
 	    {
-
 	        $this->log()->logDebug( 'FILE ['.$file.'] PATH ['.$path.'] VAR ['.$var.']' );
 	        $check_var = 'LANG';
 
@@ -168,17 +171,21 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
                 array_unshift(self::$search_paths, $path);
                 self::$search_paths = array_unique(self::$search_paths);
             }
-
             foreach(self::$search_paths as $path)
             {
-	            $file = CAT_Helper_Directory::sanitizePath($path.'/'.$file);
-    	        if ( file_exists( $file ) && ! $this->isLoaded($file) )
+	            $filename = CAT_Helper_Directory::sanitizePath($path.'/'.$file);
+    	        if ( file_exists($filename) && ! $this->isLoaded($filename) )
     	        {
-    	            $this->log()->logDebug( 'found language file: ', $file );
-    	            $this->checkFile($file,$check_var);
+    	            $this->log()->logDebug( 'found language file: ', $filename );
+    	            $this->checkFile($filename,$check_var);
     	        }
             }
-
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Funktioniert derzeit nicht, da in der Schleife $filename verwendet wird
+// Das war nötig, um Sprachdateien aus mehreren Verzeichnissen laden zu können
+// (vorher wurde die Variable $file überschrieben wodurch der Pfad vermurkst
+// wurde)
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(!$this->isLoaded($file))
             {
     	        $this->log()->logDebug( 'language file does not exist: ', $file );

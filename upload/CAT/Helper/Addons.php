@@ -273,8 +273,14 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 $counter = 1;
                 while ( $addon = $addons->fetchRow() )
                 {
-                    if ( !$check_permission || ( $addon['type'] != 'language' && CAT_Users::get_permission( $addon['directory'], $addon['type'] ) ) || $addon['type'] == 'language' )
-                    {
+                    if (
+                           !$check_permission
+                        || (
+                               $addon['type'] != 'language'
+//                            && CAT_Users::get_permission( $addon['directory'], $addon['type'] )
+                           )
+                        || $addon['type'] == 'language'
+                    ) {
                         $addons_array[ $counter ] = array_merge( $addon, array(
                             'VALUE' => $addon['directory'],
                             'NAME' => $addon['name'],

@@ -47,7 +47,47 @@ if (!class_exists('CAT_Backend_Users'))
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function bygroup()
+        {
+            if(!CAT_Object::user()->hasPerm('users_membership'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $self = self::getInstance();
+            $id   = CAT_Backend::getRouteParams()[0];
+            $data = CAT_Groups::getMembers($id);
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo json_encode($data,true);
+                return;
+            }
+        }   // end function group()
         
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function delete()
+        {
+            if(!CAT_Object::user()->hasPerm('groups_delete'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $id   = CAT_Backend::getRouteParams()[0];
+            if(CAT_Users::deleteUser($id)!==true)
+            {
+                echo CAT_Object::json_error('Unable to delete the user');
+            }
+            else
+            {
+                echo CAT_Object::json_success('User successfully deleted');
+            }
+        }   // end function delete()
+
         /**
          *
          * @access public
@@ -55,13 +95,28 @@ if (!class_exists('CAT_Backend_Users'))
          **/
         public static function index()
         {
-            $self = self::getInstance();
-            $tpl_data = array();
+            $self  = self::getInstance();
+            $data  = CAT_Users::getUsers();
+            if(count($data))
+            {
+                foreach($data as $i => $user)
+                {
+                    $data[$i]['groups'] = CAT_Users::getUserGroups($user['user_id']);
+                }
+            }
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo json_encode($data,true);
+                return;
+            }
+            $tpl_data = array(
+                'users' => $data
+            );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_users', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function media()
-        
+        }   // end function index()
 
     } // class CAT_Helper_Users
 

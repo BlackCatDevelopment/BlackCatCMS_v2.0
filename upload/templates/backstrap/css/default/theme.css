@@ -255,6 +255,9 @@ table.dataTable thead .sorting:after {
 .fa-roles:before {
   content: "\f02e";
 }
+.fa-pages:before {
+  content: "\f0c5";
+}
 /* Slide panel for page tree */
 #slide-panel {
     border-radius: 0;
@@ -282,3 +285,21 @@ table.dataTable thead .sorting:after {
 #slide-panel.open{
     right:0;
 }
+
+ul.tools{list-style: none outside none;}
+ul.tools li{width:100%;display:inline-block;float:left;}
+
+/* two column widget layout */
+@media(min-width:768px) {
+    ul.tools li{width:49%;margin-right:1%;}
+    ul.tools li:nth-child(3n){clear:left;}
+}
+/* three column widget layout */
+@media(min-width:1025px) {
+    ul.tools li{width:32%;margin-right:1%;}
+    ul.tools li:nth-child(3n){clear:unset;}
+    ul.tools li:nth-child(4n){clear:left;}
+}
+
+/* Fuel UX */
+.repeater-title{font-weight:900;}

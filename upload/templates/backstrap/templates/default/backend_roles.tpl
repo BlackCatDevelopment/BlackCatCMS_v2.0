@@ -27,7 +27,7 @@
 
         {include 'legend.tpl'}
 
-        {if $perms.roles_add}
+        {if $PERMS.roles_add}
         <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/roles/create">
             {translate('Create new')}
             <div class="form-group">

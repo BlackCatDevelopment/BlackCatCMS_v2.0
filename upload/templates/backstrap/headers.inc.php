@@ -41,13 +41,6 @@ if (defined('CAT_PATH')) {
 
 $pg = CAT_Helper_Page::getInstance();
 
-/*
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-*/
 $mod_headers = array(
     'backend' => array(
         'meta' => array(
@@ -60,8 +53,9 @@ $mod_headers = array(
         'css' => array(
             array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap.min.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap-editable.css',),
-            array('file'=>'templates/backstrap/css/metisMenu.min.css',),
+            array('file'=>'modules/lib_bootstrap/vendor/css/fuelux.min.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
+            array('file'=>'templates/backstrap/css/metisMenu.min.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(

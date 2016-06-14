@@ -61,7 +61,9 @@ $LANG = array(
 
     // --------------- Globals ---------------
     'Create new'    => 'Neu erstellen',
+    'Delete'        => 'Löschen',
     'Description'   => 'Beschreibung',
+    'Remove'        => 'Entfernen',
 
     // --------------- Backend ---------------
     'Logout'        => 'Abmelden',
@@ -72,6 +74,7 @@ $LANG = array(
     'Admintools'    => 'Admin Werkzeuge',
     'Groups'        => 'Gruppen',
     'Media'         => 'Dateien',
+    'Pages'         => 'Seiten',
     'Roles'         => 'Rollen',
     'Settings'      => 'Einstellungen',
 
@@ -80,6 +83,12 @@ $LANG = array(
     'Title'         => 'Name',
     'Permissions'   => 'Rechte',
     'Users'         => 'Benutzer',
+
+    // --------------- Backend -> Users ---------------
+    'Display name'  => 'Anzeigename',
+    'Edit group members' => 'Gruppenmitglieder bearbeiten',
+    'Login name'    => 'Loginname',
+    'User ID'       => 'Benutzer ID',
 
     // --------------- Backend -> Groups ---------------
     'Group ID'      => 'Gruppen ID',
