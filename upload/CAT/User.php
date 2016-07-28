@@ -18,17 +18,21 @@ if (!class_exists('CAT_User'))
 
     class CAT_User extends CAT_Object
     {
-        protected $_config = array( 'loglevel' => 7 );
+        protected        $_config   = array();
         // array to hold the user data
-        protected $user    = array();
+        protected        $user      = array();
         // array to hold the user roles
-        protected $roles   = array();
+        protected        $roles     = array();
         // array to hold the permissions
-        protected $perms   = array();
+        protected        $perms     = array();
         // array to hold the user groups
-        protected $groups  = array();
+        protected        $groups    = array();
+        // last user error
+        protected        $lasterror = NULL;
         // cache already loaded users
-        protected static $users = array();
+        protected static $users     = array();
+        // log level
+        protected static $loglevel  = \Monolog\Logger::EMERGENCY;
 
         /**
          * create a new user object
@@ -43,7 +47,7 @@ if (!class_exists('CAT_User'))
             if(!$id) {      // get ID from session
                 $id = CAT_Helper_Validate::getInstance()->fromSession('USER_ID','numeric');
             }
-            $this->log()->logDebug(sprintf('id: [%d]',$id));
+            $this->log()->debug(sprintf('id: [%d]',$id));
             if($id) {
                 $this->initUser($id); // load user
             }
@@ -86,6 +90,16 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return
          **/
+        public function getError()
+        {
+            return $this->lasterror;
+        }   // end function getError()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public function getGroups()
         {
             return $this->groups;
@@ -100,6 +114,17 @@ if (!class_exists('CAT_User'))
         {
             return $this->perms;
         }   // end function getPerms()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function setError($msg)
+        {
+            $this->log()->debug($msg);
+            $this->lasterror = $msg;
+        }   // end function setError()
 
         /**
          *
@@ -121,11 +146,9 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return boolean
          **/
-        public function authenticate()
+        public function authenticate($tfa=false)
         {
             $this->reset();
-
-            $self  = self::getInstance();
 
             $field = CAT_Helper_Validate::sanitizePost('username_fieldname');
             $user  = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
@@ -134,33 +157,39 @@ if (!class_exists('CAT_User'))
             $field = CAT_Helper_Validate::sanitizePost('password_fieldname');
             $pass  = sha1(CAT_Helper_Validate::sanitizePost($field));
 
-            $self->log()->logDebug(sprintf('Trying to authenticate user [%s]',$name));
+            $this->log()->debug(sprintf('Trying to authenticate user [%s]',$name));
 
             $get_user = CAT_Helper_DB::getInstance()->query(
                 'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `username`=:name AND `password`=:pw AND `active`=1',
                 array('name'=>$name,'pw'=>$pass)
             );
 
-            if($get_user->rowCount() != 0)
+            if($get_user->rowCount() != 0) // user found and password ok
             {
     			$id = $get_user->fetch(\PDO::FETCH_ASSOC);
                 $this->initUser($id['user_id']);
+                // 2-Step Auth
+                if(ENABLE_TFA && $tfa)
+                {
+                    $field = CAT_Helper_Validate::sanitizePost('tfa_fieldname');
+                    $token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
+                    $tfa   = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE);
+                    if($tfa->verifyCode($this->get('tfa_secret'),$token) !== true)
+                    {
+                        $this->reset();
+                        $this->setError('Two step authentication failed!');
+                        return false;
+                    }
+
+                }
                 return true;
             }
             else
             {
-                $self->log()->logDebug('No such user, user not active, or invalid password!');
+                $this->setError('No such user, user not active, or invalid password!');
             }
             return false;
         }   // end function authenticate()
-
-        /**
-         * handle user login
-         **/
-        public function login()
-        {
-// ------------------- ????????????????????????????? ---------------------------
-        }   // end function login()
 
         /**
          * handle user login
@@ -198,6 +227,25 @@ if (!class_exists('CAT_User'))
                 ));
             }
         }   // end function logout()
+
+        /**
+         * create a new secret for a user
+         *
+         * @access public
+         * @return binary  QRCode image
+         **/
+        public function createSecret()
+        {
+            $ignore = new CAT_Helper_QRCode(); // just to make sure the helper is loaded
+            $mp = new CAT_Helper_QRCodeProvider(); // needed for image creation
+            $tfa = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
+            $secret = $tfa->createSecret(); // generate a new secret
+            $this->db()->query(
+                'UPDATE `:prefix:rbac_users` SET `secret`=? WHERE `username`=?',
+                array($secret,$this->get('username'))
+            );
+            return $tfa->getQRCodeImageAsDataUri($this->get('display_name'), $secret);
+        }   // end function createSecret()
 
         /**
          *
@@ -284,23 +332,23 @@ echo "</textarea>";
          **/
         protected function initUser($id)
         {
-            $this->log()->logDebug(sprintf('init user with id: [%d]',$id));
+            $this->log()->debug(sprintf('init user with id: [%d]',$id));
             // read user from DB
             $get_user = CAT_Helper_DB::getInstance()->query(
-                'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder` FROM `:prefix:rbac_users` WHERE user_id=:id',
+                'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_secret` FROM `:prefix:rbac_users` WHERE user_id=:id',
                 array('id'=>$id)
             );
             // load data into object
     		if($get_user->rowCount() != 0)
             {
     			$this->user = $get_user->fetch(\PDO::FETCH_ASSOC);
-                $this->log()->logDebug('user data:',$this->user);
+                $this->log()->debug('user data:'.print_r($this->user,1));
                 $this->initRoles();
-                $this->log()->logDebug('user roles:',$this->roles);
+                $this->log()->debug('user roles:'.print_r($this->roles,1));
                 $this->initGroups();
-                $this->log()->logDebug('user groups:',$this->groups);
+                $this->log()->debug('user groups:'.print_r($this->groups,1));
                 $this->initPerms();
-                $this->log()->logDebug('user permissions:',$this->perms);
+                $this->log()->debug('user permissions:'.print_r($this->perms,1));
                 // cache
                 self::$users[$id] = $this->user;
             }

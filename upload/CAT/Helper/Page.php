@@ -33,7 +33,6 @@ if (!class_exists('CAT_Helper_Page'))
     class CAT_Helper_Page extends CAT_Object
     {
         protected      $_config             = array(
-            'loglevel'  => 8,
             'forbidden_l0' => array( // configurables will be added later
                 'account',
                 'framework',
@@ -52,32 +51,33 @@ if (!class_exists('CAT_Helper_Page'))
                 'upgrade-script.php'
             ),
         );
-        private static $instance;
-        private static $space               = '    '; // space before header items
-        private static $pages               = array();
-        private static $pages_by_visibility = array();
-        private static $pages_by_parent     = array();
-        private static $pages_by_id         = array();
-        private static $pages_sections      = array();
-        private static $pages_editable      = 0;
-        private static $pages_seo           = array();
+        protected static $loglevel            = \Monolog\Logger::EMERGENCY;
+        private   static $instance            = NULL;
+        private   static $space               = '    '; // space before header items
+        private   static $pages               = array();
+        private   static $pages_by_visibility = array();
+        private   static $pages_by_parent     = array();
+        private   static $pages_by_id         = array();
+        private   static $pages_sections      = array();
+        private   static $pages_editable      = 0;
+        private   static $pages_seo           = array();
 
         // header components
-        private static $css                 = array();
-        private static $meta                = array();
-        private static $js                  = array();
-        private static $jquery              = array();
-        private static $jquery_core         = false;
-        private static $jquery_ui_core      = false;
+        private   static $css                 = array();
+        private   static $meta                = array();
+        private   static $js                  = array();
+        private   static $jquery              = array();
+        private   static $jquery_core         = false;
+        private   static $jquery_ui_core      = false;
 
         // scan dirs
-        private static $css_search_path     = array();
-        private static $js_search_path      = array();
+        private   static $css_search_path     = array();
+        private   static $js_search_path      = array();
 
         // footer components
-        private static $script              = array();
-        private static $f_jquery            = array();
-        private static $f_js                = array();
+        private   static $script              = array();
+        private   static $f_jquery            = array();
+        private   static $f_js                = array();
 
         /**
          * the constructor loads the available pages from the DB and stores it
@@ -799,7 +799,7 @@ if (!class_exists('CAT_Helper_Page'))
             $file = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.$tpl.'/footers.inc.php');
             if (file_exists($file))
             {
-                self::getInstance()->log()->logDebug(sprintf('adding footer items for backend theme [%s]', $tpl));
+                self::getInstance()->log()->debug(sprintf('adding footer items for backend theme [%s]', $tpl));
                 self::_load_footers_inc($file, 'backend', 'templates/'.$tpl);
             } // end loading theme
 
@@ -810,13 +810,13 @@ if (!class_exists('CAT_Helper_Page'))
             if ($tool)
             {
                 $path = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/'.$tool.'/tool.php');
-                self::getInstance()->log()->logDebug(sprintf('handle admin tool [%s] - path [%s]', $tool, $path));
+                self::getInstance()->log()->debug(sprintf('handle admin tool [%s] - path [%s]', $tool, $path));
                 if (file_exists($path))
                 {
                     $file = CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $tool . '/footers.inc.php');
                     if (file_exists($file))
                     {
-                        self::getInstance()->log()->logDebug(sprintf('adding footer items for admin tool [%s]', $_REQUEST['tool']));
+                        self::getInstance()->log()->debug(sprintf('adding footer items for admin tool [%s]', $_REQUEST['tool']));
                         self::_load_footers_inc($file, 'backend', 'templates/' . $tpl);
                     }
                 }
@@ -851,7 +851,7 @@ if (!class_exists('CAT_Helper_Page'))
         public static function getBackendHeaders($section)
         {
             $self = self::$instance;
-            $self->log()->logDebug('get backend headers for section:',$section);
+            $self->log()->debug('get backend headers for section ['.$section.']');
 
             // -----------------------------------------------------------------
             // -----                    backend theme                      -----
@@ -859,7 +859,7 @@ if (!class_exists('CAT_Helper_Page'))
             $file = CAT_Helper_Directory::sanitizePath(CAT_PATH . '/templates/' . DEFAULT_THEME . '/headers.inc.php');
             if (file_exists($file))
             {
-                self::$instance->log()->logDebug(sprintf('adding items for backend theme [%s]', DEFAULT_THEME));
+                self::$instance->log()->debug(sprintf('adding items for backend theme [%s]', DEFAULT_THEME));
                 self::_load_headers_inc($file, 'backend', 'templates/' . DEFAULT_THEME, $section);
             } // end loading theme
 
@@ -869,7 +869,7 @@ if (!class_exists('CAT_Helper_Page'))
             if (isset($_REQUEST['tool']))
             {
                 $path = CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $_REQUEST['tool'] . '/tool.php');
-                self::$instance->log()->logDebug(sprintf('handle admin tool [%s] - path [%s]', $_REQUEST['tool'], $path));
+                self::$instance->log()->debug(sprintf('handle admin tool [%s] - path [%s]', $_REQUEST['tool'], $path));
 
                 if (file_exists($path))
                 {
@@ -879,7 +879,7 @@ if (!class_exists('CAT_Helper_Page'))
                     $file = CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $_REQUEST['tool'] . '/headers.inc.php');
                     if (file_exists($file))
                     {
-                        self::$instance->log()->logDebug(sprintf('adding items for admin tool [%s]', $_REQUEST['tool']));
+                        self::$instance->log()->debug(sprintf('adding items for admin tool [%s]', $_REQUEST['tool']));
                         self::_load_headers_inc($file, 'backend', 'modules/' . $_REQUEST['tool'], $section);
                     }
                 }
@@ -889,7 +889,7 @@ if (!class_exists('CAT_Helper_Page'))
             // -----------------------------------------------------------------
             else
             {
-                self::$instance->log()->logDebug('Loading sections');
+                self::$instance->log()->debug('Loading sections');
                 self::_load_sections('backend');
             }
 
@@ -1110,7 +1110,7 @@ frontend.css and template.css are added in _get_css()
             $file = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.$tpl.'/footers.inc.php');
             if (file_exists($file))
             {
-                self::$instance->log()->logDebug(sprintf('adding footer items for frontend template [%s]', $tpl));
+                self::$instance->log()->debug(sprintf('adding footer items for frontend template [%s]', $tpl));
                 self::_load_footers_inc($file, 'frontend', 'templates/' . $tpl);
             } // end loading theme
 
@@ -1148,15 +1148,15 @@ frontend.css and template.css are added in _get_css()
             // -----------------------------------------------------------------
             $tpl  = CAT_Registry::get('TEMPLATE');
             $file = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.$tpl.'/headers.inc.php');
-            self::$instance->log()->logDebug(sprintf('searching for file [%s]', $file));
+            self::$instance->log()->debug(sprintf('searching for file [%s]', $file));
             if (file_exists($file))
             {
-                self::$instance->log()->logDebug(sprintf('adding items for frontend template [%s]', $tpl));
+                self::$instance->log()->debug(sprintf('adding items for frontend template [%s]', $tpl));
                 self::_load_headers_inc($file, 'frontend', 'templates/'.$tpl);
             }
             else
             {
-                self::$instance->log()->logDebug('no headers.inc.php');
+                self::$instance->log()->debug('no headers.inc.php');
             }
 
             // add template path to CSS search path (frontend only)
@@ -1270,7 +1270,7 @@ frontend.css and template.css are added in _get_css()
             // don't do this twice
             if (defined('CAT_HEADERS_SENT'))
             {
-                self::$instance->log()->logDebug('headers already sent, returning');
+                self::$instance->log()->debug('headers already sent, returning');
                 return;
             }
 
@@ -1279,12 +1279,11 @@ frontend.css and template.css are added in _get_css()
             {
                 $for = 'frontend';
             }
-            self::$instance->log()->logDebug('creating headers for ['.$for.'], page id: ['.$page_id.']');
+            self::$instance->log()->debug('creating headers for ['.$for.'], page id: ['.$page_id.']');
 
             // add default
             $default = "
 		var WB_URL							  = '" . CAT_URL . "',
-			LEPTON_URL						  = '" . CAT_URL . "',
             CAT_URL                           = '" . CAT_URL . "';
             ";
 
@@ -2455,7 +2454,7 @@ frontend.css and template.css are added in _get_css()
                     CAT_Helper_Page::$css[] = $css;
                 }
             }
-            self::$instance->log()->logDebug('CSS',CAT_Helper_Page::$css);
+            self::$instance->log()->debug('CSS',CAT_Helper_Page::$css);
         } // end function _analyze_css()
 
         /**
@@ -2475,7 +2474,7 @@ frontend.css and template.css are added in _get_css()
 
             // INTERNAL NOTE: $section should be a string, but there were
             // cases it wasn't, so we check here
-            $self->log()->logDebug(
+            $self->log()->debug(
                 sprintf(
                     'analyzing javascripts for [%s], path_prefix [%s], section [%s]',
                     $for,$path_prefix,(is_array($section) ? var_export($section,1) : $section )
@@ -2491,19 +2490,18 @@ frontend.css and template.css are added in _get_css()
 
             // $check_paths is a reversed array of $path_prefix parts; these
             // parts will be added to every $arr item until the file is found
-                $check_paths = array();
-                if ($path_prefix != '')
-                {
-                    $check_paths = explode('/', $path_prefix);
-                    $check_paths = array_reverse($check_paths);
-                }
+            $check_paths = array();
+            if ($path_prefix != '')
+            {
+                $check_paths = explode('/', $path_prefix);
+                $check_paths = array_reverse($check_paths);
+            }
 
             // validator is needed to sanitize URL
-                    $val = CAT_Helper_Validate::getInstance();
+            $val = CAT_Helper_Validate::getInstance();
 
             foreach ($arr as $index => $item)
             {
-
                 if(is_array($item))
                     continue;
 
@@ -2513,10 +2511,10 @@ frontend.css and template.css are added in _get_css()
                 if (
                        preg_match('/^http(s)?:/', $item, $m1) // abs. URL
                     || preg_match('#/(modules|templates)/#i', $item, $m2)
-                                        ) {
-                    $self->log()->logDebug('m1',$m1);
-                    $self->log()->logDebug('m2',$m2);
-                    $self->log()->logDebug('abs. URL');
+                ) {
+                    $self->log()->debug('m1',$m1);
+                    $self->log()->debug('m2',$m2);
+                    $self->log()->debug('abs. URL');
                     $ref[] = CAT_Helper_Page::$space
                            . '<script type="text/javascript" src="'
                            . $val->sanitize_url( (isset($m2[0]) ? CAT_URL : '' ) .'/'.$item)
@@ -2526,7 +2524,7 @@ frontend.css and template.css are added in _get_css()
                 // try to combine $item with $path_prefix
                 if ($path_prefix != '' && file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$path_prefix.'/'.$item)))
                 {
-                    $self->log()->logDebug('matched by path_prefix');
+                    $self->log()->debug('matched by path_prefix');
                     $ref[] = CAT_Helper_Page::$space
                            . '<script type="text/javascript" src="'
                            . $val->sanitize_url(CAT_URL.'/'.$path_prefix.'/'.$item)
@@ -2542,7 +2540,7 @@ frontend.css and template.css are added in _get_css()
                         $add_to_path = $subdir.'/'.$add_to_path;
                     if(file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$add_to_path.'/'.$item)))
                                 {
-                        $self->log()->logDebug('matched by check_paths');
+                        $self->log()->debug('matched by check_paths');
                         array_push( CAT_Helper_Page::$js_search_path, $add_to_path.'/'.$item);
                         /*$ref[] = CAT_Helper_Page::$space
                                . '<script type="text/javascript" src="'
@@ -2551,9 +2549,9 @@ frontend.css and template.css are added in _get_css()
                         continue;
                     }
                 }
-                $self->log()->logDebug('NO MATCH!');
+                $self->log()->debug('NO MATCH!');
             }
-            $self->log()->logDebug('complete result:',$ref);
+            $self->log()->debug('complete result:',$ref);
         } // end function _analyze_javascripts()
 
         /**
@@ -2635,7 +2633,7 @@ frontend.css and template.css are added in _get_css()
                     }
                 }
             }
-            self::$instance->log()->logDebug('jQuery',$static);
+            self::$instance->log()->debug('jQuery',$static);
         } // end function _analyze_jquery_components()
 
         /**
@@ -2865,7 +2863,7 @@ frontend.css and template.css are added in _get_css()
                     }
                 }
             }
-            self::$instance->log()->logDebug('CSS',CAT_Helper_Page::$css);
+            self::$instance->log()->debug('CSS',CAT_Helper_Page::$css);
         } // end function _load_css()
 
         /**
@@ -2900,7 +2898,7 @@ frontend.css and template.css are added in _get_css()
             }
             else
             {
-                self::$instance->log()->logDebug(sprintf('no $mod_footers for [%s]',$for));
+                self::$instance->log()->debug(sprintf('no $mod_footers for [%s]',$for));
             }
         } // end function _load_footers_inc()
 
@@ -2947,7 +2945,7 @@ frontend.css and template.css are added in _get_css()
             }
             else
             {
-                self::$instance->log()->logDebug(sprintf('no $mod_headers for [%s]',$for));
+                self::$instance->log()->debug(sprintf('no $mod_headers for [%s]',$for));
             }
         }   // end function _load_headers_inc()
 
@@ -2989,7 +2987,7 @@ frontend.css and template.css are added in _get_css()
                     }
                 }
             }
-            self::$instance->log()->logDebug('JS',CAT_Helper_Page::$js);
+            self::$instance->log()->debug('JS',CAT_Helper_Page::$js);
         } // end function _load_js()
 
         /**
@@ -3009,7 +3007,7 @@ frontend.css and template.css are added in _get_css()
             {
                 $sections     = self::getSections($page_id);
                 $wysiwyg_seen = false;
-                self::$instance->log()->logDebug('sections:',$sections);
+                self::$instance->log()->debug('sections:',$sections);
                 if (is_array($sections) && count($sections))
                 {
                     global $current_section;
@@ -3023,7 +3021,7 @@ frontend.css and template.css are added in _get_css()
                             // find header definition file
                             if (file_exists($file))
                             {
-                                self::$instance->log()->logDebug(sprintf('loading headers.inc.php for module [%s]',$module));
+                                self::$instance->log()->debug(sprintf('loading headers.inc.php for module [%s]',$module));
                                 $current_section = $section['section_id'];
                                 self::_load_headers_inc($file, $for, 'modules/' . $module, $current_section);
                             }
@@ -3038,7 +3036,7 @@ frontend.css and template.css are added in _get_css()
                         {
                             if ( file_exists(CAT_PATH.'/modules/'.WYSIWYG_EDITOR.'/headers.inc.php') )
                             {
-                                self::$instance->log()->logDebug('adding headers.inc.php for wysiwyg');
+                                self::$instance->log()->debug('adding headers.inc.php for wysiwyg');
                         self::_load_headers_inc(
                             CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/'.WYSIWYG_EDITOR.'/headers.inc.php'),
                             $for,

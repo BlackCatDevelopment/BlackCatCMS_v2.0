@@ -62,7 +62,8 @@ if (!class_exists('CAT_Backend_Roles'))
 
         public static function edit()
         {
-// ----- TODO: check permissions -----
+            if(!CAT_Object::user()->hasPerm('roles_edit'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
             $val = CAT_Helper_Validate::getInstance();
             $field = $val->sanitizePost('name');
             $id    = $val->sanitizePost('pk');
@@ -80,11 +81,7 @@ if (!class_exists('CAT_Backend_Roles'))
             $self = self::getInstance();
             $tpl_data = array(
                 'roles' => CAT_Roles::getInstance()->getRoles(),
-                'perms'  => CAT_User::getInstance()->getPerms(),
             );
-echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( $tpl_data );
-echo "</textarea>";
             CAT_Backend::print_header();
             $self->tpl()->output('backend_roles', $tpl_data);
             CAT_Backend::print_footer();

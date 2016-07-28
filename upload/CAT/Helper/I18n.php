@@ -23,58 +23,52 @@
  *
  */
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
+if(!class_exists('CAT_Object',false))
+{
     @include dirname(__FILE__).'/../Object.php';
 }
-if ( ! class_exists( 'CAT_Helper_Array', false ) ) {
-    @include dirname(__FILE__).'/Array.php';
-}
-if ( ! class_exists( 'CAT_Helper_Directory', false ) ) {
-    @include dirname(__FILE__).'/Directory.php';
-}
 
-if ( ! class_exists( 'CAT_Helper_I18n', false ) )
+if(!class_exists('CAT_Helper_I18n',false))
 {
 	class CAT_Helper_I18n extends CAT_Object
 	{
-	    protected      $_config
-            = array( 'defaultlang' => 'EN', 'langPath' => '/languages', 'workdir' => NULL, 'loglevel' => 8 );
+	    protected        $_config
+            = array( 'defaultlang' => 'EN', 'langPath' => '/languages', 'workdir' => NULL );
 	    // array to store language strings
-	    private static $_lang               = array();
+	    private static   $_lang               = array();
 	    // default language
-	    private static $_current_lang       = NULL;
+	    private static   $_current_lang       = NULL;
 	    // remember already loaded files
-	    private        $_loaded             = array();
-	    // accessor to path helper
-	    private        $_path               = NULL;
+	    private          $_loaded             = array();
 	    // match counter for parseFile(); you can get the result using getMatchCount()
-	    private        $_last_matches       = 0;
-	    
-	    public  static $_translated         = array();
-	    public  static $_store_translations = false;
-        private static $instances           = array();
-        private static $search_paths        = array();
+	    private          $_last_matches       = 0;
+        // log level
+        protected static $loglevel            = \Monolog\Logger::EMERGENCY;
+        // already translated strings
+	    public  static   $_translated         = array();
+
+	    public  static   $_store_translations = false;
+        // available instances (one per language)
+        private static   $instances           = array();
+        // lang file search paths
+        private static   $search_paths        = array();
 
 	    /**
 	     * private constructor; use getInstance() to load this class
 	     **/
-	    public function __construct( $options = array() )
+	    public function __construct($options=array())
 	    {
-	        parent::__construct( $options );
-	        if ( ! isset($options['lang']) )
+	        parent::__construct($options);
+	        if(!isset($options['lang']))
 	        {
-	            if ( defined('LANGUAGE') )
+	            if(defined('LANGUAGE'))
 				{
 	            	$options['lang'] = LANGUAGE;
 				}
 	        }
-	        if ( isset($options['lang']) )
+	        if(isset($options['lang']))
 	        {
 	        	self::$_current_lang = $options['lang'];
-			}
-			if ( ! is_object( $this->_path ) )
-			{
-			    $this->_path = CAT_Helper_Directory::getInstance();
 			}
 	        $this->init();
 	    } // end function __construct()
@@ -92,15 +86,18 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
         }   // end function getInstance()
 
 	    /**
+	     * initialize
 	     *
-	     *
-	     *
-	     *
+	     * @access public
+	     * @param  string  $var - name of the $LANG var (optional)
+	     * @return void
 	     **/
 	    public function init( $var = NULL )
 	    {
-	        $this->log()->logDebug( 'lang var: '.$var );
-	        $stack  = debug_backtrace();
+            if($var)
+	            $this->log()->debug('lang var: '.$var);
+
+	        $stack  = debug_backtrace(); // for automatic file search
             $caller = array_shift($stack);
 
             while (
@@ -115,7 +112,8 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	            $lang_files = $this->getBrowserLangs();
 	        else
 	            $lang_files = array(self::$_current_lang);
-            $this->log()->logDebug('lang files:', $lang_files);
+
+            $this->log()->debug('lang files:', $lang_files);
 
             if ($caller )
     	        if(file_exists(CAT_Helper_Directory::sanitizePath(dirname($caller['file']).$this->_config['langPath'])))
@@ -124,23 +122,32 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
     	            $this->_config['workdir'] = CAT_Helper_Directory::sanitizePath(dirname($caller['file']).'/../'.$this->_config['langPath']);
                 else
                     $this->_config['workdir'] = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/languages');
-            $this->log()->logDebug('workdir path:',$this->_config['workdir']);
+            $this->log()->debug('workdir path: ['.$this->_config['workdir'].']');
 
             self::$search_paths[] = $this->_config['workdir'];
             self::$search_paths   = array_unique(self::$search_paths);
 
-            // add template
-            if(CAT_Backend::isBackend() && file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath'])))
-                self::$search_paths[] = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']);
+            // add backend template
+            if(
+                   CAT_Backend::isBackend()
+                && file_exists(CAT_Helper_Directory::sanitizePath(
+                       CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']
+                   ))
+            ) {
+                self::$search_paths[] = CAT_Helper_Directory::sanitizePath(
+                    CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']
+                );
+            }
 
 	        // add default lang
 	        $lang_files[] = 'EN';
-	        $lang_files   = array_unique( $lang_files );
-	        $this->log()->logDebug( 'language files to search for: ', $lang_files );
-	        foreach ( $lang_files as $l )
+	        $lang_files   = array_unique($lang_files);
+	        $this->log()->debug( 'language files to search for: '.print_r($lang_files,1));
+
+	        foreach($lang_files as $l)
 	        {
 	            $file = $l . '.php';
-	            if ( $this->addFile( $file, NULL, $var ) )
+	            if($this->addFile($file,NULL,$var))
 	            {
 	                break;
 	            }
@@ -148,21 +155,24 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	    } // end function init()
 
 	    /**
+	     * add a language file
 	     *
-	     *
-	     *
-	     *
+	     * @access public
+	     * @param  string  $file
+	     * @param  string  $path
+	     * @param  string  $var
+	     * @return boolean
 	     **/
-	    public function addFile( $file, $path = NULL, $var = NULL )
+	    public function addFile($file, $path=NULL, $var=NULL)
 	    {
-	        $this->log()->logDebug( 'FILE ['.$file.'] PATH ['.$path.'] VAR ['.$var.']' );
+	        $this->log()->debug('FILE ['.$file.'] PATH ['.$path.'] VAR ['.$var.']');
 	        $check_var = 'LANG';
 
-	        if ( isset( $var ) )
+	        if(isset($var))
 	        {
-	            $var = str_ireplace( '$', '', $var );
-	            eval( 'global $' . $var . ';' );
-	            eval( "\$lang_var = & \$$var;" );
+	            $var = str_ireplace('$', '', $var);
+	            eval('global $' . $var . ';');
+	            eval("\$lang_var = & \$$var;");
 	            $check_var = $var;
 	        }
 
@@ -176,7 +186,7 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	            $filename = CAT_Helper_Directory::sanitizePath($path.'/'.$file);
     	        if ( file_exists($filename) && ! $this->isLoaded($filename) )
     	        {
-    	            $this->log()->logDebug( 'found language file: ', $filename );
+    	            $this->log()->debug('found language file: '.$filename);
     	            $this->checkFile($filename,$check_var);
     	        }
             }
@@ -188,55 +198,56 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(!$this->isLoaded($file))
             {
-    	        $this->log()->logDebug( 'language file does not exist: ', $file );
+    	        $this->log()->debug('language file does not exist: '.$file);
                 return false;
             }
 
             return true;
-
 	    } // end function addFile ()
 	    
 	    /**
+	     * checks if the given file is a valid language file
 	     *
-	     *
-	     *
-	     *
+	     * @param  string  $file
+	     * @param  string  $check_var
+	     * @param  boolean $check_only
+	     * @return boolean
 	     **/
-		public function checkFile( $file, $check_var, $check_only = false )
+		public function checkFile($file, $check_var, $check_only=false)
 		{
 
-            $this->log()->logDebug(sprintf(
+            $this->log()->debug(sprintf(
                 'checking file [%s] for var [%s], check_only [%s]',
                 $file, $check_var, $check_only
             ));
 
-			{
+			{ // "sandbox"
 				// require the language file
 			    require $file ;
 
 				// check if the var is defined now
 			    if ( isset( ${$check_var} ) )
 			    {
-                    $this->log()->logDebug('found $check_var');
+                    $this->log()->debug('found $check_var');
                     $isIndexed = array_values( ${$check_var} ) === ${$check_var};
-                    if ( $isIndexed )
+                    if($isIndexed)
                     {
-                        $this->log()->logDebug('indexed, returning false');
+                        $this->log()->debug('indexed, returning false');
                         return false;
                     }
-			        if ( $check_only )
+			        if($check_only)
 			        {
 			        	return ${$check_var};
 					}
 					else
 					{
 		                self::$_lang = array_merge( self::$_lang, ${$check_var} );
-		                if ( preg_match( "/(\w+)\.php/", $file, $matches ) )
+		                if(preg_match( "/(\w+)\.php/", $file, $matches))
 		                {
-		                    self::$_current_lang = $matches[ 1 ];
+		                    self::$_current_lang = $matches[1];
 		                }
 		                $this->_loaded[$file] = 1;
-		                $this->log()->logDebug( 'loaded language file: ', $file );
+		                $this->log()->debug('loaded language file: ['.$file.']');
 		                return true;
 					}
 	            }
@@ -277,13 +288,13 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	    {
 	        if ( file_exists( $path ) )
 	        {
-	            $this->log()->logDebug( 'setting language path to: ', $path );
-	            $this->_config[ 'langPath' ] = $path;
-	            $this->init( $var );
+	            $this->log()->debug('setting language path to: '.$path);
+	            $this->_config['langPath'] = $path;
+	            $this->init($var);
 	        }
 	        else
 	        {
-	            $this->printError( 'language file path does not exist: ' . $path );
+	            $this->printError('language file path does not exist: '.$path);
 	        }
 
 	    } // end function setPath ()
@@ -297,13 +308,21 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	     **/
 	    public function getLang()
 	    {
-            if ( ! isset(self::$_current_lang) || self::$_current_lang === NULL )
+            if(!isset(self::$_current_lang) || self::$_current_lang === NULL)
             {
                 $langs = $this->getBrowserLangs();
                 return $langs[1];
             }
 	        return self::$_current_lang;
 	    } // end function getLang()
+
+        /**
+         * shortcut to translate() (for the lazy ones...)
+         **/
+        public function t($msg,$attr=array())
+        {
+            return $this->translate($msg,$attr);
+        }   // end function t()
 
 	    /**
 	     * try to find the given message in the language array
@@ -317,26 +336,26 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	     * @return string
 	     *
 	     **/
-	    public function translate( $msg, $attr = array() )
+	    public function translate($msg, $attr=array())
 	    {
-	        $this->log()->logDebug( 'translate: '.$msg );
-	        if ( empty( $msg ) || is_bool( $msg ) )
+	        $this->log()->debug('translate: '.$msg);
+	        if(empty($msg) || is_bool($msg))
 	        {
 	            return $msg;
 	        }
-	        if ( self::$_store_translations )
+	        if(self::$_store_translations) // caching
 	        {
 	            self::$_translated[] = $msg;
 	        }
-	        if ( array_key_exists( $msg, self::$_lang ) )
+	        if(array_key_exists($msg, self::$_lang))
 	        {
-	            $msg = self::$_lang[ $msg ];
+	            $msg = self::$_lang[$msg];
 	        }
-	        if ( is_array( $attr ) )
+	        if(is_array($attr))
 	        {
-		        foreach ( $attr as $key => $value )
+		        foreach($attr as $key => $value)
 		        {
-					$msg = preg_replace( "~{{\s*$key\s*}}~i", $value, $msg );
+					$msg = preg_replace("~{{\s*$key\s*}}~i", $value, $msg);
 		        }
 			}
 	        return $msg;
@@ -350,16 +369,16 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	     * @return array
 	     *
 	     **/
-	    public function dump( $prefix = NULL )
+	    public function dump($prefix=NULL)
 	    {
-	        if ( $prefix )
+	        if ($prefix)
 	        {
 	            $dump = array();
-	            foreach ( self::$_lang as $k => $v )
+	            foreach(self::$_lang as $k => $v)
 	            {
-	                if ( preg_match( "/^$prefix/", $k ) )
+	                if(preg_match("/^$prefix/", $k))
 	                {
-	                    $dump[ $k ] = $v;
+	                    $dump[$k] = $v;
 	                }
 	            }
 	            return $dump;
@@ -380,22 +399,27 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 		 *     false if no such file or no strings found
 		 *
 		 **/
-		public function parseFile( $file )
+		public function parseFile($file)
 		{
-		    if ( ! file_exists( $file ) ) {
+		    if(!file_exists($file))
+            {
 		        return false;
 			}
 			$this->_last_matches = 0;
-			$string = implode( '', file($file) );
+			$string = implode('', file($file));
 			
-			if ( $string ) {
+			if($string)
+            {
 			    $tokens  = token_get_all($string);
 				$strings = array();
 				$count   = 0;
-				foreach( $tokens as $i => $c ) {
-		        	if ( is_array($c) ) {
+				foreach($tokens as $i => $c)
+                {
+		        	if(is_array($c))
+                    {
 		        	    $n = $i + 1;
-		        	    if ( token_name($c[0]) == 'T_STRING' && $c[1] == 'translate' && $tokens[$n] == '(' ) {
+		        	    if(token_name($c[0]) == 'T_STRING' && $c[1] == 'translate' && $tokens[$n] == '(')
+                        {
 		        	        // start new stack
 		        	        $stack  = array();
 		        	        // starting line
@@ -405,22 +429,23 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 							// move on until we find a comma or a closing bracket
 							$c = $tokens[++$n];
 							while (
-							    ( is_array($c) || $c != ')' )
+							    (is_array($c) || $c != ')')
 							) {
-							    if ( $c[0] != 371 && $c[0] != 309 ) // omit T_WHITESPACE and vars
+							    if($c[0] != 371 && $c[0] != 309) // omit T_WHITESPACE and vars
 							    {
 									$stack[] = $c[1];
-							}
+							    }
 								$c = $tokens[++$n];
-								if ( $c == ',' ) {
+								if($c == ',')
+                                {
 								    break;
 								}
 							}
 							
-							$text = trim( implode('',$stack) );
-							if ( $text != '' )
+							$text = trim(implode('',$stack));
+							if($text != '')
 							{
-								$strings[] = array( 'line' => $start, 'text' => $text );
+								$strings[] = array('line' => $start, 'text' => $text);
 							}
 						}
 		        	}
@@ -447,9 +472,9 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 		 *
 		 *
 		 **/
-		public function isLoaded( $file )
+		public function isLoaded($file)
 		{
-		    if ( isset( $this->_loaded[$file] ) )
+		    if(isset($this->_loaded[$file]))
 		    {
 		        return true;
 			}
@@ -494,56 +519,60 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
 	    public function getBrowserLangs($strict_mode=true)
 	    {
 
-            if ( ! isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) )
+            if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
             {
-                return $this->_config[ 'defaultlang' ];
+                return $this->_config['defaultlang'];
             }
 
 	        $browser_langs = array();
-	        $lang_variable = $_SERVER[ 'HTTP_ACCEPT_LANGUAGE' ];
+	        $lang_variable = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 
-	        if ( empty( $lang_variable ) )
+	        if(empty($lang_variable))
 	        {
-	            return $this->_config[ 'defaultlang' ];
+	            return $this->_config['defaultlang'];
 	        }
 
-	        $accepted_languages = preg_split( '/,\s*/', $lang_variable );
+	        $accepted_languages = preg_split('/,\s*/', $lang_variable);
 	        $current_q          = 0;
 
-	        foreach ( $accepted_languages as $accepted_language )
+	        foreach($accepted_languages as $accepted_language)
 	        {
 	            // match valid language entries
-	            $res = preg_match( '/^([a-z]{1,8}(?:-[a-z]{1,8})*)(?:;\s*q=(0(?:\.[0-9]{1,3})?|1(?:\.0{1,3})?))?$/i', $accepted_language, $matches );
+	            $res = preg_match(
+                    '/^([a-z]{1,8}(?:-[a-z]{1,8})*)(?:;\s*q=(0(?:\.[0-9]{1,3})?|1(?:\.0{1,3})?))?$/i',
+                    $accepted_language,
+                    $matches
+                );
 
 	            // invalid syntax
-	            if ( !$res )
+	            if(!$res)
 	                continue;
 
 	            // get language code
-	            $lang_code = explode( '-', $matches[ 1 ] );
+	            $lang_code = explode('-', $matches[1]);
 
-	            if ( isset( $matches[ 2 ] ) )
-	                $lang_quality = (float) $matches[ 2 ];
+	            if(isset($matches[2]))
+	                $lang_quality = (float) $matches[2];
 	            else
 	                $lang_quality = 1.0;
 
-	            while ( count( $lang_code ) )
+	            while(count($lang_code))
 	            {
 	                $browser_langs[] = array(
-	                     'lang' => strtoupper( join( '-', $lang_code ) ),
+	                    'lang' => strtoupper(join('-', $lang_code)),
 	                    'qual' => $lang_quality
 	                );
 	                // don't use abbreviations in strict mode
-	                if ( $strict_mode )
+	                if($strict_mode)
 	                    break;
 
-	                array_pop( $lang_code );
+	                array_pop($lang_code);
 	            }
 	        }
 
 	        // order array by quality
 	        $sorter = new CAT_Helper_Array();
-	        $langs  = $sorter->ArraySort( $browser_langs, 'qual', 'desc', true );
+	        $langs  = $sorter->ArraySort($browser_langs, 'qual', 'desc', true);
 	        $ret    = array();
 	        foreach ( $langs as $lang )
 	            $ret[] = $lang[ 'lang' ];
@@ -562,7 +591,7 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
          **/
         public static function getUsedLangs($guest_only=true,$langs_only=false)
         {
-            $vis   = ( $guest_only ? 'public' : NULL );
+            $vis   = ($guest_only ? 'public' : NULL);
             $pages = CAT_Helper_Page::getPagesByVisibility($vis);
             $langs = array();
             foreach($pages as $id)
@@ -574,12 +603,11 @@ if ( ! class_exists( 'CAT_Helper_I18n', false ) )
                 }
                 else
                 {
-                if(!isset($langs[$lang])) $langs[$lang] = array();
-                $langs[$lang][] = array('page_id'=>$id, 'menu_title'=>CAT_Helper_Page::properties($id,'menu_title'));
-	}
+                    if(!isset($langs[$lang])) $langs[$lang] = array();
+                    $langs[$lang][] = array('page_id'=>$id, 'menu_title'=>CAT_Helper_Page::properties($id,'menu_title'));
+	            }
             }
             return $langs;
         }   // end function getUsedLangs()
-
-}
+    }
 }

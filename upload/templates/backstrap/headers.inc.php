@@ -62,7 +62,7 @@ $mod_headers = array(
             array(
                 'core'    => true,
                 'ui'      => true,
-                'plugins' => array ('cattranslate'),
+                'plugins' => array ('cattranslate','cookie'),
             )
         ),
         'js' => array(

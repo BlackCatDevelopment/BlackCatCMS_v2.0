@@ -240,7 +240,8 @@ table.dataTable thead .sorting:after {
 .fa-settings:before {
   content: "\f085";
 }
-.fa-addons:before {
+.fa-addons:before,
+.fa-module:before {
   content: "\f12e";
 }
 .fa-admintools:before {
@@ -257,6 +258,9 @@ table.dataTable thead .sorting:after {
 }
 .fa-pages:before {
   content: "\f0c5";
+}
+.fa-template:before {
+  content: "\f03e";
 }
 /* Slide panel for page tree */
 #slide-panel {
@@ -303,3 +307,9 @@ ul.tools li{width:100%;display:inline-block;float:left;}
 
 /* Fuel UX */
 .repeater-title{font-weight:900;}
+
+/* Dashboard */
+html body.fuelux div#wrapper div#page-wrapper div.row.flex div.col-lg-4.col-md-8 div.panel.panel-primary div.panel-heading div.row div.col-xs-2.text-right button.btn.btn-primary{padding:0;border:0;}
+button.btn.btn-primary.collapsed span:before {
+  content: "\f070";
+}

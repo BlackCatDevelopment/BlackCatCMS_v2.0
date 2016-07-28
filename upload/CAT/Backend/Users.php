@@ -33,7 +33,7 @@ if (!class_exists('CAT_Backend_Users'))
     class CAT_Backend_Users extends CAT_Object
     {
         // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
+        protected $_config         = array();
         protected static $instance = NULL;
 
         /**

@@ -18,10 +18,11 @@ if (!class_exists('CAT_Roles'))
 
     class CAT_Roles extends CAT_Object
     {
-        protected        $_config  = array( 'loglevel' => 7 );
+        protected        $_config  = array();
         protected        $roles    = array();
         protected        $perms    = array();
         protected static $instance = NULL;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
         /**
          * create a new roles object

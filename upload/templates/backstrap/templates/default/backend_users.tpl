@@ -14,6 +14,7 @@
                 <tr>
                     <td>
                         <span class="fa fa-fw{if $user.user_id == 1} fa-anchor{/if}"></span>
+                        <span class="fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{else}green{/if}"></span>
                         {if $PERMS.users_delete && $user.user_id != 1}<a href="#" class="ajax" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                     </td>
                     <td>{$user.user_id}</td>

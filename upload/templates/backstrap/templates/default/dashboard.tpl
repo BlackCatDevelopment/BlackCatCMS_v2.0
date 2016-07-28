@@ -16,7 +16,7 @@
 
 {if ! $dashboard}
 <div class="alert alert-info">
-    {translate('This is your dashboard, but it\'s empty because you do not have superuser permissions. Use the page tree to edit pages. Use the top links to navigate through the backend.')}
+    {translate('This is your dashboard, but it\'s empty because you do not have any widgets to show.')}
 </div>
 {else}
 {for row 0 $dashboard.row_count-1}{* render rows *}
@@ -33,20 +33,25 @@
                         <div>{$dashboard.columns.$col.widgets.$row.settings.widget_title}</div>
                     </div>
                     <div class="col-xs-2 text-right">
-                        <div data-action="close" data-widget="{$dashboard.columns.$col.widgets.$row.widget_path}" class="fa fa-eye{if $dashboard.columns.$col.widgets.$row.isMinimized}-slash{/if}"></div>
-                        <div data-action="remove" data-widget="{$dashboard.columns.$col.widgets.$row.widget_path}" class="fa fa-eraser"></div>
+                        <button class="btn btn-primary{if $dashboard.columns.$col.widgets.$row.isMinimized} collapsed{/if}" type="button" data-toggle="collapse" data-target="#collpanel_{$col}_{$row}" aria-expanded="false" aria-controls="collpanel_{$col}_{$row}"><span class="fa fa-eye"></span></button>
+                        <button class="btn btn-primary eraser" data-widget="{$dashboard.columns.$col.widgets.$row.widget_path}" type="button" data-module="{$dashboard.columns.$col.widgets.$row.module_directory}" data-name="{$dashboard.columns.$col.widgets.$row.settings.widget_title}" data-toggle="modal" data-target="#confirm"><span class="fa fa-eraser"></span></button>
                     </div>
                 </div>
             </div>
-            <div class="panel-body">
-                {$dashboard.columns.$col.widgets.$row.content}
+            <div id="collpanel_{$col}_{$row}" class="panel-collapse collapse{if ! $dashboard.columns.$col.widgets.$row.isMinimized} in{/if}">
+                <div class="panel-body">
+                    {$dashboard.columns.$col.widgets.$row.content}
+                </div>
             </div>
         </div>
     </div>
     {/for}
 </div>
 {/for}
+{include(file='modal.tpl' modal_id='confirm' modal_title='Remove widget', modal_text='Do you really want to remove this widget from your dashboard?')}
 {/if}
 
+<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#confirm">
+  Launch demo modal
+</button>
 
-                

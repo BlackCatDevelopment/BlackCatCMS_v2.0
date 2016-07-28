@@ -1,27 +1,15 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
+ *   @copyright       2013 - 2016 Black Cat Development
  *   @link            http://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
  *   @category        CAT_Core
  *   @package         CAT_Core
  *
- */
+ **/
 
 if (!class_exists('CAT_Helper_Validate'))
 {
@@ -32,17 +20,21 @@ if (!class_exists('CAT_Helper_Validate'))
 
     class CAT_Helper_Validate extends CAT_Object
     {
-        protected      $_config             = array( 'loglevel' => 8 );
-        private static $instance;
+        private   static $instance = NULL;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
+        /**
+         * get an instance of the validator class
+         *
+         * @access public
+         * @return object
+         **/
         public static function getInstance()
         {
             if (!self::$instance)
-            {
                 self::$instance = new self();
-            }
             return self::$instance;
-        }
+        }   // end function getInstance()
 
         public function __call($method, $args)
         {
@@ -65,7 +57,7 @@ if (!class_exists('CAT_Helper_Validate'))
             $func = 'is_'.$as;
             if ( ! function_exists($func) )
             {
-                CAT_Object::getInstance()->printFatalError( 'No such validation method: '.$as );
+                CAT_Object::getInstance()->printFatalError('No such validation method: '.$as);
             }
             if ( ! $func($value) ) return false;
             return $value;
@@ -75,14 +67,19 @@ if (!class_exists('CAT_Helper_Validate'))
          * global method to get data from globals
          *
          * @access public
-         * @param  string  $global - name of the superglobal
-         * @param  string  $key    - name of the key/var to get
+         * @param  string  $global  - name of the superglobal
+         * @param  string  $key     - name of the key/var to get
          * @param  string  $require - value type (scalar, numeric, array)
+         * @param  boolean $escape  - wether to use add_slashes(), default false
          * @return mixed
          **/
-        public static function get( $global, $key, $require = NULL, $escape = false )
+        public static function get($global, $key, $require=NULL, $escape=false )
         {
-            self::getInstance()->log()->logDebug(sprintf('Get key [%s] from global var [%s] validate as [%s]',$key,$global,$require));
+            $self = self::getInstance();
+            $self->log()->addDebug(sprintf(
+                'Get key [%s] from global var [%s]',$key,$global
+            ));
+
             $glob = array();
             if ( isset($GLOBALS[$global]) )
             {
@@ -91,13 +88,15 @@ if (!class_exists('CAT_Helper_Validate'))
             $value = isset($glob[$key]) ? $glob[$key] : NULL;
             if ( $value && $require )
             {
+                $self->log()->addDebug(sprintf('validate as [%s]',$require));
                 $value = self::check($value,$require);
             }
             if ( $value && $escape )
             {
+                $self->log()->addDebug('add slashes');
                 $value = self::add_slashes($value);
             }
-            self::$instance->log()->logDebug('returning value:',$value);
+            $self->log()->addDebug('returning value [{value}]',array('value'=>$value));
             return $value;
         }   // end function get()
 
@@ -154,11 +153,10 @@ if (!class_exists('CAT_Helper_Validate'))
         /**
          * dump all items; you should NEVER use this method in production code!
          *
-         *
-         *
+         * @access public
+         * @return void
          **/
         public function dump() {
-
             echo "<h2>CAT_Helper_Validate DUMP</h2>",
                  "<h3>\$_GET Array</h3>";
             var_dump($_GET);
@@ -166,7 +164,6 @@ if (!class_exists('CAT_Helper_Validate'))
             var_dump($_POST);
             echo "<h3>\$_SERVER Array</h3>";
             var_dump($_SERVER);
-
         }   // end function dump()
 
         /**
@@ -225,7 +222,9 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function sanitizePost( $field, $require=NULL, $escape = false )
         {
-            self::$instance->log()->logDebug(sprintf('get field [%s] from $_POST, require type [%s], escape [%s]',$field,$require,$escape));
+            self::$instance->log()->addDebug(sprintf(
+                'get field [%s] from $_POST, require type [%s], escape [%s]',$field,$require,$escape
+            ));
             return self::get('_POST',$field,$require,$escape);
         }   // end function sanitizePost()
 
@@ -241,7 +240,9 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function sanitizeGet($field,$require=NULL,$escape=false)
         {
-            self::$instance->log()->logDebug(sprintf('get field [%s] from $_GET, require type [%s], escape [%s]',$field,$require,$escape));
+            self::$instance->log()->addDebug(sprintf(
+                'get field [%s] from $_GET, require type [%s], escape [%s]',$field,$require,$escape
+            ));
             return self::get('_GET',$field,$require,$escape);
         }   // end function sanitizeGet()
 

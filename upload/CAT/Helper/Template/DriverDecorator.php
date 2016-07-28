@@ -27,11 +27,13 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
 {
     class CAT_Helper_Template_DriverDecorator extends CAT_Helper_Template
     {
-
-        private $te;
-        private $dirh;
-        private $seen  = array();
-        private $paths = array(
+        public    $template_block;
+        protected $_config      = array();
+        protected $last         = NULL;
+        private   $te           = NULL;
+        private   $dirh         = NULL;
+        private   $seen         = array();
+        private   $paths        = array(
             'current'           => NULL,
             'frontend'          => NULL,
             'frontend_fallback' => NULL,
@@ -39,12 +41,9 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
             'backend_fallback'  => NULL,
             'workdir'           => NULL
         );
-        private $search_order = array(
+        private   $search_order = array(
             'current', 'frontend', 'frontend_fallback', 'backend', 'backend_fallback', 'workdir'
         );
-        public  $template_block;
-        protected $_config = array( 'loglevel' => 8 );
-        protected $last    = NULL;
 
         public function __construct( $obj )
         {
@@ -90,8 +89,10 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
         }
 
         /**
+         * reset the template search path
          *
          * @access public
+         * @param  string  $context (frontend|backend)
          * @return
          **/
         public function resetPath($context='frontend')

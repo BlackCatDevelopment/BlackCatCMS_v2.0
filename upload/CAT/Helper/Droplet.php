@@ -29,8 +29,8 @@ if (!class_exists('CAT_Helper_Droplet')) {
         @include dirname(__FILE__).'/../Object.php';
     }
 
-    if(file_exists(CAT_PATH.'/modules/'.SEARCH_LIBRARY.'/search.droplets.php'))
-        require_once CAT_PATH.'/modules/lib_search/search.droplets.php';
+    if(defined('SEARCH_LIBRARY') && file_exists(CAT_PATH.'/modules/'.SEARCH_LIBRARY.'/search.droplets.php'))
+        require_once CAT_PATH.'/modules/'.SEARCH_LIBRARY.'/search.droplets.php';
 
     class CAT_Helper_Droplet extends CAT_Object    {
 
@@ -48,8 +48,9 @@ if (!class_exists('CAT_Helper_Droplet')) {
         const type_javascript         = 'javascript';
         const type_undefined          = 'undefined';
 
-        protected      $_config       = array( 'loglevel' => 8 );
-        private static $instance      = NULL;
+        protected        $_config     = array();
+        private   static $instance    = NULL;
+        protected static $loglevel    = \Monolog\Logger::EMERGENCY;
 
         /**
          * create / get an instance (singleton)

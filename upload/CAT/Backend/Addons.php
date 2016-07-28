@@ -56,7 +56,11 @@ if (!class_exists('CAT_Backend_Addons'))
         public static function index()
         {
             $self = self::getInstance();
-            $tpl_data = array();
+            $data = CAT_Helper_Addons::get_addons(0,NULL,NULL,NULL,false,true);
+            $tpl_data = array(
+                'modules' => $data,
+                'modules_json' => json_encode($data, JSON_NUMERIC_CHECK),
+            );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_addons', $tpl_data);
             CAT_Backend::print_footer();

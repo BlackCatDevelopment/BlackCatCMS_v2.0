@@ -1,18 +1,6 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
  *   @copyright       2013, Black Cat Development
@@ -32,11 +20,8 @@ if (!class_exists('CAT_Helper_Widget'))
 
     class CAT_Helper_Widget extends CAT_Object
     {
-        private static $instance;
-        protected      $_config = array(
-                           'loglevel' => 4
-                       );
-        protected      $debugLevel = 4;
+        private   static $instance;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
         public static function getInstance()
         {
@@ -276,10 +261,14 @@ if (!class_exists('CAT_Helper_Widget'))
             {
                 // scan for info.php
                 $root = explode('/',$widget['widget_path']);
+                $widget['module_directory'] = $root[1];
                 $info = CAT_Helper_Addons::checkInfo(CAT_PATH.'/modules/'.$root[1]);
-                if(is_array($info) && count($info) && isset($info['module_name']))
+                if(is_array($info) && count($info))
                 {
-                    $widget['module_name'] = $info['module_name'];
+                    $widget['module_name']
+                        =  isset($info['module_name'])
+                        ? $info['module_name']
+                        : $root[1];
                 }
                 if ( file_exists(CAT_PATH.'/modules/'.$root[1].'/languages/'.LANGUAGE.'.php') )
                 {

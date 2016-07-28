@@ -1,76 +1,63 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
- *   @copyright       2013, 2014, Black Cat Development
+ *   @copyright       2013 - 2016 Black Cat Development
  *   @link            http://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
  *   @category        CAT_Core
  *   @package         CAT_Core
  *
- */
+ **/
 
-/**
- *
- * Base class for all Helper classes; provides some common methods
- *
- */
-if ( ! class_exists( 'CAT_Object', false ) ) {
-
-    if ( ! class_exists( 'CAT_Helper_KLogger', false ) ) {
-        @include dirname(__FILE__).'/Helper/KLogger.php';
-    }
-
+if(!class_exists('CAT_Object',false))
+{
     class CAT_Object
     {
+        // log level
+        private   static $loglevel   = \Monolog\Logger::EMERGENCY;
 
-        // array to store config options
-        protected $_config        = array( 'loglevel' => 8 );
+        protected        $_config    = NULL;
         // Language helper object handle
-        protected static $lang    = NULL;
+        protected static $lang       = NULL;
         // database handle
-        protected static $db      = NULL;
+        protected static $db         = NULL;
         // current user
-        protected static $userobj = NULL;
+        protected static $userobj    = NULL;
         // parser
-        protected static $tplobj  = NULL;
-        // KLogger object handle
-        protected        $logObj  = NULL;
-        
-        // Log levels
-        const EMERG  = 0;  // Emergency: system is unusable
-        const ALERT  = 1;  // Alert: action must be taken immediately
-        const CRIT   = 2;  // Critical: critical conditions
-        const ERR    = 3;  // Error: error conditions
-        const WARN   = 4;  // Warning: warning conditions
-        const NOTICE = 5;  // Notice: normal but significant condition
-        const INFO   = 6;  // Informational: informational messages
-        const DEBUG  = 7;  // Debug: debug messages
-        const OFF    = 8;
+        protected static $tplobj     = NULL;
+        // Monolog logger handle
+        protected static $logger     = NULL;
+        // current error state
+        protected static $errorstate = 500;
+        // HTTP status
+        protected static $state      = array(
+            '200' => 'Success',
+            '201' => 'Created',
+            '202' => 'Accepted',
+            '301' => 'Moved permanently',
+            '400' => 'Bad request',
+            '401' => 'Access denied',
+            '403' => 'Forbidden',
+            '404' => 'Not found',
+            '409' => 'Conflict',
+            '429' => 'Too many requests',
+            '500' => 'Internal Server Error',
+        );
 
         /**
          * inheritable constructor; allows to set object variables
          **/
-        public function __construct ( $options = array() ) {
-            if ( is_array( $options ) ) {
-                $this->config( $options );
+        public function __construct($options=array())
+        {
+            if(is_array($options))
+            {
+                $this->config($options);
             }
             // allow to set log level on object creation
             if ( isset( $this->_config['loglevel'] ) ) {
-                $this->debugLevel = $this->_config['loglevel'];
+                $this->setLogLevel($this->_config['loglevel']);
             }
             // allow to enable debugging on object creation; this will override
             // 'loglevel' if both are set
@@ -78,16 +65,22 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
                 $this->debug(true);
             }
         }   // end function __construct()
-        
+
+        /**
+         * inheritable __destruct
+         **/
         public function __destruct() {}
 
+        /**
+         * inheritable __call
+         **/
         public function __call($method, $args)
         {
-            if ( ! isset($this) || ! is_object($this) )
+            if(!isset($this) || !is_object($this))
                 return false;
-            if ( method_exists( $this, $method ) )
+            if(method_exists($this, $method))
                 return call_user_func_array(array($this, $method), $args);
-        }
+        }   // end function __call()
 
 // =============================================================================
 //   Accessor functions
@@ -107,7 +100,7 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
             if ( ! self::$db || ! is_object(self::$db) )
             {
                 if ( ! CAT_Registry::exists('CAT_PATH',false) )
-                    CAT_Registry::define('CAT_PATH',dirname(__FILE__).'/../..');
+                    CAT_Registry::define('CAT_PATH',dirname(__FILE__).'/..');
                 self::$db = CAT_Helper_DB::getInstance();
             }
             return self::$db;
@@ -121,12 +114,78 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
          **/
         public static function lang()
         {
-            if ( ! is_object(CAT_Object::$lang) )
+            if (!is_object(CAT_Object::$lang))
             {
                 CAT_Object::$lang = CAT_Helper_I18n::getInstance(CAT_Registry::get('LANGUAGE',NULL,'EN'));
             }
             return CAT_Object::$lang;
         }   // end function lang()
+
+        /**
+         * accessor to Monolog logger
+         **/
+        public static function log()
+        {
+            // global logger
+            if(!is_object(CAT_Object::$logger))
+            {
+                // default logger; will set the log level to the global default
+                // set in CAT_Object
+                $logger = new CAT_Object_LoggerDecorator(new \Monolog\Logger('CAT'));
+
+                $bubble = false;
+                $errorStreamHandler = new \Monolog\Handler\StreamHandler(
+                    CAT_PATH.'/temp/logs/core_error.log', \Monolog\Logger::ERROR, $bubble
+                );
+                $emergStreamHandler = new \Monolog\Handler\StreamHandler(
+                    CAT_PATH.'/temp/logs/core_critical.log', \Monolog\Logger::CRITICAL, $bubble
+                );
+
+                $logger->pushHandler($errorStreamHandler);
+                $logger->pushHandler($emergStreamHandler);
+
+                $logger->pushProcessor(new \Monolog\Processor\PsrLogMessageProcessor());
+
+                CAT_Object::$logger = $logger;
+
+                CAT_Registry::set('CAT.logger.CAT_Object',$logger);
+            }
+            // specific logger
+            $class    = get_called_class();
+            $loglevel = self::getLogLevel();
+#echo "<br /><br />loglevel for class -$class- from class::getLogLevel() - $loglevel<br />";
+            if($loglevel != CAT_Object::$loglevel || $loglevel == \Monolog\Logger::DEBUG)
+            {
+#echo "enable loglevel -$loglevel- for class -$class-<br />";
+                $logger = CAT_Registry::get('CAT.logger.'.$class);
+#echo "registry logger -$logger-<br />";
+                if(!$logger)
+                {
+#echo "creating new logger<br />";
+                    $logger = new CAT_Object_LoggerDecorator(new \Monolog\Logger('CAT.'.$class));
+                    $stream = new \Monolog\Handler\StreamHandler(
+                        CAT_PATH.'/temp/logs/core_'.$class.'_'.date('m-d-Y').'.log',$class::$loglevel,false
+                    );
+                    $stream->setFormatter(new \Monolog\Formatter\LineFormatter(
+                        "[%datetime%] [%channel%.%level_name%]  %message%  [%extra%]\n"
+                    ));
+                    $logger->pushHandler($stream);
+                    $logger->pushProcessor(new \Monolog\Processor\PsrLogMessageProcessor());
+                    #$logger->pushProcessor(new \Monolog\Processor\IntrospectionProcessor());
+#echo "saving new logger to registry<br />";
+                    CAT_Registry::set('CAT.logger.'.$class,$logger);
+#echo "registry logger after creation<br />";
+#echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+#print_r( CAT_Registry::get('CAT.logger.'.$class) );
+#echo "</textarea>";
+                }
+                return $logger;
+            }
+            else {
+#echo "returning default logger<br />";
+                return CAT_Object::$logger;
+            }
+        }   // end function log ()
 
         /**
          * accessor to current user object
@@ -140,7 +199,7 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
                 self::$userobj = CAT_User::getInstance();
             return self::$userobj;
         }   // end function user()
-        
+
         /**
          * accessor to current template object
          *
@@ -160,12 +219,15 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
                     'CAT_BUILD'           => CAT_Registry::get('CAT_BUILD'),
                     'CAT_DATE_FORMAT'     => CAT_Registry::get('CAT_DATE_FORMAT'),
                     'LANGUAGE'            => CAT_Registry::get('LANGUAGE'),
-                    
                 ));
             }
             return self::$tplobj;
         }   // end function tpl()
-        
+
+// =============================================================================
+// various helper functions
+// =============================================================================
+
         /**
          * set config values
          *
@@ -183,13 +245,15 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
          *
          **/
         public function config( $option, $value = NULL ) {
-            if ( is_array( $option ) )
-                $this->_config = array_merge( $this->_config, $option );
+            if(!is_array($this->_config))
+                $this->_config = array();
+            if(is_array($option))
+                $this->_config = array_merge($this->_config, $option);
             else
                 $this->_config[$option] = $value;
             return $this;
         }   // end function config()
-        
+
         /**
          * create a guid; used by the backend, but can also be used by modules
          *
@@ -209,104 +273,193 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
                 substr($s,20);
             return $guidText;
         }   // end function createGUID()
-        
+
+// =============================================================================
+//   JSON output helper functions
+// =============================================================================
+
         /**
-         * prints a formatted error message
+         * checks for 'ACCEPT' request header; returns true if exists and
+         * value is 'application/json'
          *
          * @access public
-         * @param  string  $message - error message
-         * @param  string  $link    - page to forward to
-         * @param  boolean $print_header
-         * @param  mixed   $args    - additional args to print
+         * @return boolean
+         **/
+        public static function asJSON()
+        {
+            $headers = getallheaders();
+            if(isset($headers['Accept']) && preg_match('~application/json~i',$headers['Accept']))
+                return true;
+            else
+                return false;
+        }   // end function asJSON()
+
+        /**
+         * calls json_result() to format a success message
+         *
+         * @access public
+         * @param  string  $message
+         * @param  boolean $exit
+         * @return JSON
+         **/
+        public static function json_success($message,$exit=true)
+        {
+            self::json_result(true,$message,$exit);
+        }   // end function json_success()
+
+        /**
+         * calls json_result() to format an error message
+         *
+         * @access public
+         * @param  string  $message
+         * @param  boolean $exit
+         * @return JSON
+         **/
+        public static function json_error($message,$exit=true)
+        {
+            self::json_result(false,$message,$exit);
+        }   // end function json_error()
+
+        /**
+         * creates an array with 'success' and 'message' keys and encodes it
+         * to JSON using json_encode(); $message will be translated using the
+         * lang() method
+         *
+         * the JSON result is echo'ed; if $exit is set to true, exit()
+         * is called
+         *
+         * if no header was sent, sets 'application/json' as content-type
+         *
+         * @access public
+         * @param  boolean $success
+         * @param  string  $message
+         * @param  boolean $exit
+         * @return void
+         **/
+        public static function json_result($success,$message,$exit=true)
+        {
+            if(!headers_sent())
+                header('Content-type: application/json');
+            echo json_encode(array(
+                'success' => $success,
+                'message' => self::lang()->translate($message)
+            ));
+            if($exit) exit();
+        }   // end function json_result()
+
+// =============================================================================
+//  LOGGING / DEBUGGING
+// =============================================================================
+
+        /**
+         * enable or disable debugging at runtime
+         *
+         * @access public
+         * @param  boolean  enable (TRUE) / disable (FALSE)
          *
          **/
-        public static function printError( $message = NULL, $link = 'index.php', $print_header = true, $args = NULL )
+        public function debug($bool)
         {
-            $print_footer = false;
-            $caller       = debug_backtrace();
-
-            // remove first item (it's the printError() method itself)
-            array_shift($caller);
-
-            // if called by printFatalError(), shift again...
-            if ( isset( $caller[0]['function'] ) && $caller[0]['function'] == 'printFatalError' ) {
-                array_shift($caller);
-            }
-
-            $caller_class = isset( $caller[0]['class'] )
-                          ? $caller[0]['class']
-                          : NULL;
-
-            // remove path info from file
-            $file     = ( isset($caller[1]) && isset($caller[1]['file']) )
-                      ? basename( $caller[1]['file'] )
-                      : (
-                          ( isset($caller[0]) && isset($caller[0]['file']) )
-                          ? basename( $caller[0]['file'] )
-                          : NULL
-                        );
-            $line     = ( isset($caller[1]) && isset($caller[1]['line'])     )
-                      ? $caller[1]['line']
-                      : (
-                          ( isset($caller[0]) && isset($caller[0]['line'])     )
-                          ? $caller[0]['line']
-                          : NULL
-                        );
-            $function = ( isset($caller[1]) && isset($caller[1]['function']) )
-                      ? $caller[1]['function']
-                      : (
-                          ( isset($caller[0]) && isset($caller[0]['function']) )
-                          ? $caller[0]['function']
-                          : NULL
-                        );
-
-            if (true === is_array($message))
-                $message = implode("<br />", $message);
-
-            if($file)
+            $class = get_called_class();
+            if ($bool === true)
             {
-                $logger = CAT_Helper_KLogger::instance(CAT_PATH.'/temp/logs',2);
-                $logger->logFatal(sprintf(
-                    'Fatal error with message [%s] emitted in [%s] line [%s] method [%s]',
-                    $message,$file,$line,$function
-                ));
-                if($args) $logger->logFatal(var_export($args,1));
+                self::log()->addDebug('enable debugging for class {class}',array('class'=>$class));
+                $class::$loglevel = \Monolog\Logger::DEBUG;
             }
+            else
+            {
+                self::log()->addDebug('resetting loglevel to default for class {class}',array('class'=>$class));
+                $class::$loglevel = CAT_Object::$loglevel;
+            }
+        }   // end function debug()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getLogLevel()
+        {
+            $class = get_called_class();
+            return $class::$loglevel;
+        }
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function setLogLevel($level='EMERGENCY')
+        {
+#echo "setLogLevel()<br />";
+echo "<pre>";
+print_r(debug_backtrace());
+echo "</pre>";
+            // map old KLogger levels
+            if(is_numeric($level))
+            {
+                switch($level) {
+                    case 8:
+                        $level = 'EMERGENCY';
+                        break;
+                    default:
+                        $level = 'DEBUG';
+                        break;
+                }
+            }
+            $class = get_called_class();
+echo "setLogLevel called for class $class, old level ", $class::getLogLevel(), ", new level $level<br />";
+            $class::$loglevel = constant('\Monolog\Logger::'.$level);
+echo "level now: ", $class::$loglevel, "<br />";
+        }   // end function setLogLevel()
+        
+
+// =============================================================================
+//  ERROR HANDLING
+// =============================================================================
+
+        public static function errorstate($id=NULL)
+        {
+            if($id)
+                CAT_Object::$errorstate = $id;
+            return CAT_Object::$errorstate;
+        }   // end function errorstate()
+
+        /**
+         * print an error message; this will set the HTTP status code to 500
+         *
+         * the error message will be translated (if translation is available)
+         *
+         * @access public
+         * @param  string   $message
+         * @param  string   $link         - URL for forward to
+         * @param  boolean  $print_header - wether to print the page header
+         * @param  array    $args
+         * @return void
+         **/
+        public static function printError($message=NULL, $link='index.php', $print_header=true, $args=NULL)
+        {
+            if(!$message)
+                'unknown error';
+            self::log()->addError($message);
+            self::errorstate(500);
 
             $message = CAT_Object::lang()->translate($message);
+            $errinfo = CAT_Object::lang()->t(self::$state[self::errorstate()]);
 
-            // avoid "headers already sent" error
-            if ( ! headers_sent() && $print_header )
+            $print_footer = false;
+            if(!headers_sent() && $print_header)
             {
-                $print_footer = true;
+                $print_footer = true; // print header also means print footer
                 if (!is_object(self::$tplobj) || ( !CAT_Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE')) )
                 {
                     self::err_page_header();
-            }
+                }
             }
 
             if (!is_object(self::$tplobj) || ( !CAT_Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE')) )
             {
-                echo CAT_Object::lang()->translate('Ooops... A fatal error occured while processing your request!'),
-                     "<br /><br />",
-                     CAT_Object::lang()->translate('Error message'),
-                     ":<br />",
-                     CAT_Object::lang()->translate($message),
-                     "<br /><br />";
-                echo CAT_Object::lang()->translate("We're sorry!");
-            }
-            else
-            {
-                self::$tplobj->output(
-                    'error.tpl',
-                    array(
-                        'message'  => $message,
-                        'file'     => $file,
-                        'line'     => $line,
-                        'function' => $function,
-                        'link'     => $link,
-                    )
-                );
+                require dirname(__FILE__).'/templates/error_content.php';
             }
 
             if ($print_footer && !is_object(self::$tplobj))
@@ -322,10 +475,11 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
          * see printError() for @params
          *
          * @access public
-         *
+         * @return void
          **/
-        public static function printFatalError( $message = NULL, $link = 'index.php', $print_header = true, $args = NULL ) {
-            CAT_Object::printError( $message, $link, $print_header, $args );
+        public static function printFatalError($message=NULL, $link='index.php', $print_header=true, $args=NULL) {
+            self::log()->addAlert($message);
+            CAT_Object::printError($message, $link, $print_header, $args);
             exit;
         }   // end function printFatalError()
 
@@ -339,13 +493,13 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
          *  @param  boolean $auto_exit   - optional flag to call exit() (default) or not
          *  @return void    exit()s
          */
-    	public static function printMsg($message, $redirect = 'index.php', $auto_footer = true, $auto_exit = true)
+    	public static function printMsg($message, $redirect='index.php', $auto_footer=true, $auto_exit=true)
     	{
     		if (true === is_array($message))
     			$message = implode("<br />", $message);
 
-    		self::$tplobj->setPath(CAT_THEME_PATH . '/templates');
-    		self::$tplobj->setFallbackPath(CAT_THEME_PATH . '/templates');
+    		self::$tplobj->setPath(CAT_THEME_PATH.'/templates');
+    		self::$tplobj->setFallbackPath(CAT_THEME_PATH.'/templates');
 
     		self::$tplobj->output('success',array(
                 'MESSAGE'        => CAT_Object::lang()->translate($message),
@@ -370,7 +524,7 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
                         $caller_class::print_footer();
     			}
                 else {
-                    //echo "unable to print footer - no such method $caller_class -> print_footer()";
+                    self::log()->error("unable to print footer - no such method $caller_class -> print_footer()");
                 }
                 if($auto_exit)
                     exit();
@@ -378,167 +532,63 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
         }   // end function printMsg()
 
         /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function asJSON()
-        {
-            $headers = getallheaders();
-            if(isset($headers['Accept']) && preg_match('~application/json~i',$headers['Accept']))
-                return true;
-            else
-                return false;
-        }   // end function asJSON()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function json_success($message,$exit=true)
-        {
-            self::json_result(true,$message,$exit);
-        }   // end function json_success()
-        
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function json_error($message,$exit=true)
-        {
-            self::json_result(false,$message,$exit);
-        }   // end function json_error()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function json_result($success,$message,$exit=true)
-        {
-            if(!headers_sent())
-                header('Content-type: application/json');
-            echo json_encode(array(
-                'success' => $success,
-                'message' => self::lang()->translate($message)
-            ));
-            if($exit) exit();
-        }   // end function json_result()
-
-        /**
+         * prints (requires) error_footer.php
          *
          * @access private
-         * @return
-         **/
-        private static function err_page_header()
-        {
-                echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
-  <title>BlackCat CMS - Fatal Error</title>
-    <style type="text/css">
-        body{font-family: HelveticaNeue,Helvetica,Arial,Verdana,sans-serif;font-size:1.3em;line-height: 1.5em;background-color:#2C2C2C;color:#fff;}
-        .fc_header{background-color:#0e1115;border-bottom:1px dashed #2d2d2d;top:0;color:#900;font-size:.9em;left:0;padding-bottom:5px;padding-top:5px;position:absolute;text-align:center;width:100%;z-index:1;margin:0;}
-        .fc_error{width:100%;height:100%;position:absolute;top:150px;text-align:center;}
-        .fc_license{background-color:#0e1115;border-top:1px dashed #2d2d2d;bottom:0;color:#9e9e9e;font-size:.7em;left:0;padding-bottom:5px;padding-top:5px;position:absolute;text-align:center;width:100%;z-index:1;margin:0;}
-        a {color: #5aa2da;text-decoration: none;}
-    </style>
-</head>
-<body>
-    <div class="fc_header">
-        <h1>BlackCat CMS Fatal Error</h1>
-    </div>
-    <div class="fc_error">
-';
-        }   // end function err_page_header()
-        
-        /**
-         *
-         * @access private
-         * @return
+         * @return void
          **/
         private static function err_page_footer()
         {
-            echo '
-    </div>
-    <div class="fc_license">
-		<p>
-            <a target="_blank" title="Black Cat CMS Core" href="http://blackcat-cms.org">Black Cat CMS Core</a> is released under the
-			<a target="_blank" title="Black Cat CMS Core is GPL" href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>.<br>
-			<a target="_blank" title="Black Cat CMS Bundle" href="http://blackcat-cms.org">Black Cat CMS Bundle</a> is released under several different licenses.
-		</p>
-	</div>
-</body>
-</html>
-';
+            require dirname(__FILE__).'/templates/error_footer.php';
+            return;
         }   // end function err_page_footer()
-        
-
-        
-// =============================================================================
-//  LOGGING / DEBUGGING
-// =============================================================================
-        
-        /**
-         * enable or disable debugging at runtime
-         *
-         * @access public
-         * @param  boolean  enable (TRUE) / disable (FALSE)
-         *
-         **/
-        public function debug( $bool ) {
-            if ( $bool === true )
-                $this->debugLevel = 7; // 7 = Debug
-            else
-                $this->debugLevel = 8; // 8 = OFF
-        }   // end function debug()
 
         /**
-         * Accessor to KLogger class; this makes using the class significant faster!
+         * prints (requires) error_header.php; also sets HTTP status header
+         * and $_SERVER['REDIRECT_STATUS']
          *
-         * @access public
-         * @return object
-         *
+         * @access private
+         * @return void
          **/
-        public function log () {
-            // 8 = OFF
-            if ( $this->debugLevel < 8 )
-            { 
-                if ( ! is_object( $this->logObj ) )
-                {
-                    if ( ! CAT_Registry::exists('CAT_PATH',false) )
-                        CAT_Registry::define('CAT_PATH',dirname(__FILE__).'/..',1);
-                    $debug_dir = CAT_PATH.'/temp/logs'
-                               . ( $this->debugLevel == 7 ? '/debug_'.get_class($this) : '' );
-                    if(get_class($this) != 'CAT_Helper_Directory')
-                        $debug_dir = CAT_Helper_Directory::sanitizePath($debug_dir);
-                    if ( ! file_exists( $debug_dir ) )
-                        if(get_class($this) != 'CAT_Helper_Directory')
-                            CAT_Helper_Directory::createDirectory( $debug_dir, 0777 );
-                        else
-                            mkdir($debug_dir,0777);
-                    $this->logObj = CAT_Helper_KLogger::instance( $debug_dir, $this->debugLevel );
-                }
-                return $this->logObj;
-            }
-            return $this;
-        }   // end function log ()
+        private static function err_page_header()
+        {
+            header('HTTP/1.1 '.self::$errorstate.' '.self::$state[self::$errorstate]);
+		    header('Status: '.self::$errorstate.' '.self::$state[self::$errorstate]);
+		    $_SERVER['REDIRECT_STATUS'] = self::$errorstate;
+            require dirname(__FILE__).'/templates/error_header.php';
+            return;
+        }   // end function err_page_header()
+    }
+}
 
-        /**
-         * Fake KLogger access methods if debugLevel is set to 8 (=OFF)
-         **/
-        public function logInfo  () {}
-        public function logNotice() {}
-        public function logWarn  () {}
+
+/**
+ * This class adds the old logging method names to the new Monolog logger
+ * used since BlackCat version 2.0
+ **/
+if(!class_exists('CAT_Object_LoggerDecorator',false))
+{
+    class CAT_Object_LoggerDecorator extends \Monolog\Logger
+    {
+        private $logger = NULL;
+        public function __construct(\Monolog\Logger $logger) {
+            parent::__construct($logger->getName());
+            $this->logger = $logger;
+        }
+        public function logDebug ($msg,$args=array()) {
+            if(!is_array($args)) $args = array($args);
+            return $this->logger->addDebug($msg,$args);
+        }
+        public function logInfo  () {
+        }
+        public function logNotice() {
+        }
+        public function logWarn  () {
+        }
         public function logError () {}
         public function logFatal () {}
         public function logAlert () {}
         public function logCrit  () {}
         public function logEmerg () {}
-        public function logDebug () {}
-
     }
 }

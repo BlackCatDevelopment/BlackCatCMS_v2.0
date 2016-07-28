@@ -1,21 +1,9 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
+ *   @copyright       2013 - 2016, Black Cat Development
  *   @link            http://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
  *   @category        CAT_Core
@@ -32,17 +20,16 @@ if (!class_exists('CAT_Page', false))
 {
     class CAT_Page extends CAT_Object
     {
-
-        protected      $_config         = array( 'loglevel' => 8 );
-
         // current page
-        private        $_page_id        = NULL;
+        private          $_page_id   = NULL;
         // active blocks
-        private        $sections        = array();
+        private          $sections   = array();
         // helper handle
-        private static $helper          = NULL;
+        private   static $helper     = NULL;
         // singleton, but one instance per page_id!
-        private static $instances       = array();
+        private   static $instances  = array();
+        // loglevel
+        protected static $loglevel   = \Monolog\Logger::EMERGENCY;
 
         /**
          * get instance for page with ID $page_id
@@ -51,7 +38,7 @@ if (!class_exists('CAT_Page', false))
          * @param  integer $page_id
          * @return object
          **/
-        public static function getInstance( $page_id )
+        public static function getInstance($page_id)
         {
             if (!is_numeric($page_id))
                 self::printFatalError('Invalid page ID!');
@@ -59,7 +46,7 @@ if (!class_exists('CAT_Page', false))
                 self::$helper = CAT_Helper_Page::getInstance();
             if ($page_id==-1 || !isset(self::$instances[$page_id]))
             {
-                if ( $page_id == -1 )
+                if ($page_id == -1)
                 {
                     $page_id = self::$helper->selectPage();
                 }
@@ -117,7 +104,9 @@ if (!class_exists('CAT_Page', false))
                 $parser->setGlobals( array(
                     'username_fieldname' => CAT_Helper_Validate::getInstance()->createFieldname('username_'),
                     'password_fieldname' => CAT_Helper_Validate::getInstance()->createFieldname('password_'),
-                    'redirect_url'       => ((isset($_SESSION['HTTP_REFERER']) && $_SESSION['HTTP_REFERER'] != '') ? $_SESSION['HTTP_REFERER'] : CAT_URL ),
+                    'redirect_url'       => (
+                        (isset($_SESSION['HTTP_REFERER']) && $_SESSION['HTTP_REFERER'] != '') ? $_SESSION['HTTP_REFERER'] : CAT_URL
+                    ),
                 ));
                 $parser->setGlobals($constants);
             }
@@ -131,7 +120,6 @@ if (!class_exists('CAT_Page', false))
          **/
         public function show()
         {
-
             // ----- keep old modules happy -----
             global $wb, $admin, $database, $page_id, $section_id;
             global $TEXT;
@@ -140,11 +128,12 @@ if (!class_exists('CAT_Page', false))
                 $page_id = $this->_page_id;
             // ----- keep old modules happy -----
 
-            $this->log()->LogDebug(sprintf('showing page with ID [%s]',$page_id));
+            $this->log()->debug(sprintf('showing page with ID [%s]',$page_id));
 
             // send appropriate header
             if(CAT_Helper_Page::isMaintenance() || CAT_Registry::get('MAINTENANCE_PAGE') == $page_id)
             {
+                $this->log()->debug('Maintenance mode is enabled');
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
                 header('Status: 503 Service Temporarily Unavailable');
                 header('Retry-After: 7200'); // in seconds
@@ -153,6 +142,7 @@ if (!class_exists('CAT_Page', false))
             // check for 301 redirect (needs the SEO Tool)
             if(CAT_Helper_Page::isRedirected($page_id))
             {
+                $this->log()->debug('Redirecting');
                 header('HTTP/1.1 301 Moved Permanently', TRUE, 301);
             }
 
@@ -162,19 +152,19 @@ if (!class_exists('CAT_Page', false))
             // page of type menu_link
             if(CAT_Sections::isMenuLink($this->_page_id))
             {
+                $this->log()->debug('handle manu link');
                 $this->showMenuLink();
             }
             else
             {
                 $do_filter = false;
-
                 // use output filter (if any)
                 if(file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/blackcatFilter/filter.php')))
                 {
                     include_once CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/blackcatFilter/filter.php');
                     if(function_exists('executeFilters'))
                     {
-                        $this->log()->LogDebug('enabling output filters');
+                        $this->log()->debug('enabling output filters');
                         $do_filter = true;
                     }
                 }
@@ -183,36 +173,43 @@ if (!class_exists('CAT_Page', false))
 
                 // including the template; it may calls different functions
                 // like page_content() etc.
+                $this->log()->debug('including template');
+
                 ob_start();
                     require CAT_TEMPLATE_DIR.'/index.php';
                     $output = ob_get_contents();
                 ob_clean();
 
                 // droplets
+                $this->log()->debug('executing droplets');
                 CAT_Helper_Droplet::process($output);
 
                 // output filtering
                 if ( $do_filter )
                 {
-                    $this->log()->LogDebug('executing output filters');
+                    $this->log()->debug('executing output filters');
                     executeFilters($output);
                 }
 
                 // use HTMLPurifier to clean up the output
                 if( defined('ENABLE_HTMLPURIFIER') && true === ENABLE_HTMLPURIFIER )
                 {
-                    $this->log()->LogDebug('executing HTML Purifier');
+                    $this->log()->debug('executing HTML Purifier');
                     $output = CAT_Helper_Protect::purify($output);
                 }
 
-                $this->log()->LogDebug('print output');
+                $this->log()->debug('print output');
 
                 if(!headers_sent())
                 {
+                    $this->log()->debug('sending content-type header');
                     $properties  = self::properties($page_id);
-                    echo header('content-type:text/html; charset='.(isset($properties['default_charset']) ? $properties['default_charset'] : 'utf-8'));
+                    echo header(
+                        'content-type:text/html; charset='
+                        .(isset($properties['default_charset']) ? $properties['default_charset'] : 'utf-8')
+                    );
                 }
-
+                $this->log()->debug('echo the output');
                 echo $output;
             }
         }   // end function show()
@@ -286,7 +283,6 @@ if (!class_exists('CAT_Page', false))
          **/
         public function getPageContent($block = 1)
         {
-
             // keep old modules happy
             global $wb, $admin, $database, $page_id, $section_id, $parser;
             // old style language files
@@ -335,7 +331,7 @@ if (!class_exists('CAT_Page', false))
                     global $parser, $section_id;
                     foreach ($sections as $section)
                     {
-                        self::$helper->log()->logDebug('sections for this block', $sections);
+                        self::$helper->log()->addDebug('sections for this block', $sections);
                         $section_id = $section['section_id'];
                         $module     = $section['module'];
                         // make a anchor for every section.

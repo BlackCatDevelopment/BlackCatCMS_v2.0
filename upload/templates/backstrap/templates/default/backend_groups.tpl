@@ -48,7 +48,7 @@
         </form>
         {/if}
 
-        {include 'fuelux_repeater.tpl'}
+        {include(file='fuelux_repeater.tpl' repeater_id='bs_rep_groups' repeater_title='Users')}
 
         <script type="text/javascript">
         //<![CDATA[

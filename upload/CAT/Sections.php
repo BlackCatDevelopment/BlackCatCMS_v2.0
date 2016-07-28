@@ -32,7 +32,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	class CAT_Sections extends CAT_Object
 	{
 	
-        protected      $_config  = array( 'loglevel' => 7 );
+        protected      $_config  = array();
 
         private static $active   = array();
         private static $instance = NULL;

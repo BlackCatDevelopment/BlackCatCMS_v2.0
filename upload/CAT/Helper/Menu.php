@@ -33,34 +33,26 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
 {
 	class CAT_Helper_Menu extends CAT_Object
 	{
-        /**
-         * enable/disable logging/debugging
-         * 8 = off
-         * 7 = debug
-         **/
-	    protected $_config
-			= array(
-                 'loglevel'             => 8,
-			);
+        protected static $loglevel        = \Monolog\Logger::EMERGENCY;
         /**
          * holds local instance
          **/
-        private static $instance;
+        private   static $instance;
         /**
          * wbList accessor
          **/
-        private static $list            = NULL;
+        private   static $list            = NULL;
         /**
          * this maps SM2 classes to wbList settings
          **/
-        private static $sm2_classes     = array(
+        private   static $sm2_classes     = array(
             'menu-current' => 'current_li_class',
             'menu_current' => 'current_li_class',
         );
         /**
          * this maps some settings to shorter aliases
          **/
-        private static $alias_map       = array(
+        private   static $alias_map       = array(
             'prefix'       => 'css_prefix',
             'first'        => 'first_li_class',
             'last'         => 'last_li_class',
@@ -129,16 +121,17 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
          **/
         public static function breadcrumbMenu(array &$options = array())
         {
+            self::log()->debug('breadcrumbMenu');
             self::checkPageId($pid);
             self::checkOptions($options);
             $self = self::getInstance();
-            $self->log()->LogDebug(sprintf('create a breadcrumbMenu for page with id [%s]',$pid));
-            $self->log()->LogDebug('options:',$options);
+            self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu       = array();
             // get the level of the current page
             $level    = CAT_Helper_Page::properties($pid,'level');
             // get the path
             $subpages = array_reverse(CAT_Helper_Page::getPageTrail($pid,false,true));
+            self::log()->debug('level [{level}] pages [{pages}]',array('level'=>$level,'pages'=>print_r($subpages,1)));
             // add the pages to the menu
             foreach($subpages as $id)
             {
@@ -147,10 +140,22 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
             }
             // check if the current page should be shown
             if(!isset($options['show_current']) || !$options['show_current'])
+            {
                 array_shift($menu); // remove last item = current page
-            $self->log()->LogDebug('pages:',$menu);
+            }
+            else
+            {
+                if(isset($options['link_current']) && !$options['link_current'])
+                {
+                    $item = array_shift($menu);
+                    $item['href'] = NULL;
+                    array_unshift($menu,$item);
+                }
+            }
+            $self->log()->debug('pages: '.print_r($menu,1));
             // set root id to the root parent to make the listbuilder work
-            $options['root_id'] = CAT_Helper_Page::getRootParent($pid);
+            #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
+            $options['root_id'] = 0;
             // return the menu
             return self::$list->buildList($menu,$options);
         }   // end function breadcrumbMenu()
@@ -165,16 +170,18 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
          **/
         public static function fullMenu($menu_number=NULL,array &$options = array())
         {
+            self::log()->debug('fullMenu - menu number [{num}]',array('num'=>$menu_number));
             $pid = NULL;
             self::checkPageId($pid);
             self::checkOptions($options);
+            self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu = $menu_number
                   ? CAT_Helper_Page::getPagesForMenu($menu_number)
                   : CAT_Helper_Page::getPages()
                   ;
 // -----------------------------------------------------------------------------
 // ----- !!!FIX ME!!! ----------------------------------------------------------
-            //$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
+            #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
             $options['root_id'] = 0;
 // -----------------------------------------------------------------------------
             return self::$list->buildList($menu,$options);
@@ -195,15 +202,15 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
             self::checkPageId($pid);
             self::checkOptions($options);
             $self = self::getInstance();
-            $self->log()->LogDebug(sprintf('create a siblingsmenu for page with id [%s]',$pid));
-            $self->log()->LogDebug('options:',$options);
+            $self->log()->debug(sprintf('create a siblingsmenu for page with id [%s]',$pid));
+            $self->log()->debug('options:',$options);
             // get the menu number
             $menu_no  = CAT_Helper_Page::properties($pid,'menu');
             // get the level of the current/given page
             $level    = CAT_Helper_Page::properties($pid,'level');
             // pages
             $menu     = CAT_Helper_Page::getPagesForLevel($level,$menu_no);
-            $self->log()->LogDebug('pages:',$menu);
+            $self->log()->debug('pages:',$menu);
             // set root id to the parent page to make the listbuilder work
             $options['root_id'] = CAT_Helper_Page::properties($pid,'parent');
             // return the menu
@@ -265,12 +272,15 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
                     $lbopt[str_replace('-','_',$key)] = $value;
                     continue;
                 }
+/**
+ *??????????????????????????????????????????????????????????????????????????????
                 list($key,$value) = explode( ':', $opt );
                 if(array_key_exists($key,self::$sm2_classes))
                     $key = self::$sm2_classes[$key];
                 if(array_key_exists($key,self::$alias_map))
                     $key = self::$alias_map[$key];
                 $lbopt[str_replace('-','_',$key)] = $value;
+**/
             }
             self::init_list()->set($lbopt);
             $options = $lbopt;

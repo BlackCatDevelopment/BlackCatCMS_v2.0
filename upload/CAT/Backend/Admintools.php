@@ -55,8 +55,43 @@ if (!class_exists('CAT_Backend_Admintools'))
          **/
         public static function index()
         {
-            $self = self::getInstance();
-            $tpl_data = array();
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('tools_list'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $tools = CAT_Helper_Addons::get_addons(0,'module','tool');
+            if(count($tools))
+            {
+                foreach($tools as $tool)
+                {
+                    // check if the user is allowed to see this item
+                    #if(!$user->get_permission($tool['directory'],$tool['type']))
+                    #    continue;
+
+                    // check if a module description exists for the displayed backend language
+                    $module_description = false;
+                    $icon               = false;
+                    $language_file      = CAT_PATH.'/modules/'.$tool['VALUE'].'/languages/' . $self->lang()->getLang() . '.php';
+                    if ( true === file_exists($language_file) )
+                        require $language_file;
+                    // Check whether icon is available for the admintool
+                    if ( file_exists(CAT_PATH.'/modules/'.$tool['VALUE'].'/icon.png') )
+                    {
+                        list($width, $height, $type, $attr) = getimagesize(CAT_PATH.'/modules/'.$tool['VALUE'].'/icon.png');
+                        // Check whether file is 32*32 pixel and is an PNG-Image
+                        $icon = ($width == 32 && $height == 32 && $type == 3)
+                              ? CAT_URL.'/modules/'.$tool['VALUE'].'/icon.png'
+                              : false;
+                    }
+                    $tpl_data['tools'][] = array(
+                        'TOOL_NAME'        => $tool['NAME'],
+                        'TOOL_DIR'         => $tool['VALUE'],
+                        'ICON'             => $icon,
+                        'TOOL_DESCRIPTION' => (!$module_description?$tool['description']:$module_description),
+                    );
+                }
+            }
+            $tpl_data['tools_count'] = count($tpl_data['tools']);
+
             CAT_Backend::print_header();
             $self->tpl()->output('backend_admintools', $tpl_data);
             CAT_Backend::print_footer();

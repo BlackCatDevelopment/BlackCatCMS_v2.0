@@ -1,18 +1,6 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
  *   @copyright       2013 - 2016 Black Cat Development
@@ -21,7 +9,7 @@
  *   @category        CAT_Core
  *   @package         CAT_Core
  *
- */
+ **/
 
 if (defined('CAT_PATH')) {
 	include(CAT_PATH.'/framework/class.secure.php');
@@ -53,11 +41,23 @@ if (!class_exists('CAT_Backend', false))
     class CAT_Backend extends CAT_Object
     {
 
-        protected      $_config  = array( 'loglevel' => 7 );
         private static $instance = array();
         private static $form     = NULL;
         private static $route    = NULL;
         private static $params   = NULL;
+        private static $mainmenu = array(
+            'dashboard',
+            'pages',
+            'media',
+            'settings',
+            'addons',
+            'admintools',
+            'users',
+            'groups',
+            'roles',
+            'preferences'
+        );
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
         public static function getInstance($section_name='Start',$section_permission='start',$auto_header=true,$auto_auth=true)
         {
@@ -111,7 +111,7 @@ if (!class_exists('CAT_Backend', false))
 
             // handle the route
             // special cases: login. logout and authenticate
-            if(preg_match('~^(login|authenticate|logout)~',self::$route,$m))
+            if(preg_match('~^(login|authenticate|logout|qr)~',self::$route,$m))
             {
                 $func = $m[1];
                 $self->log()->logDebug(sprintf('calling func [%s]',$func));
@@ -196,8 +196,10 @@ if (!class_exists('CAT_Backend', false))
                     $self->tpl()->setGlobals('DEFAULT_THEME_VARIANT','default');
                 }
             }
-            if(CAT_Registry::get('DEFAULT_THEME_VARIANT') != '' && file_exists(CAT_THEME_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME_VARIANT')))
-            {
+            if(
+                   CAT_Registry::get('DEFAULT_THEME_VARIANT') != ''
+                && file_exists(CAT_THEME_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME_VARIANT'))
+            ) {
                 $self->tpl()->setPath(CAT_THEME_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME_VARIANT'),'backend');
             }
         }   // end function initPaths()
@@ -253,7 +255,9 @@ if (!class_exists('CAT_Backend', false))
 
             if(!$current) $current = self::$route;
 
-            foreach(array_values(array('dashboard','pages','media','settings','addons','admintools','users','groups','roles','preferences')) as $item)
+            // for each item in the main menu, check if the user is allowed
+            // to access that section; if not, don't show the menu entry
+            foreach(array_values(self::$mainmenu) as $item)
             {
                 if($self->user()->hasPerm($item))
                 {
@@ -266,7 +270,7 @@ if (!class_exists('CAT_Backend', false))
                 }
             }
             return $menu;
-        }
+        }   // end function getMainMenu()
 
         /**
          *
@@ -364,7 +368,12 @@ if (!class_exists('CAT_Backend', false))
         public static function authenticate()
         {
             $self = self::getInstance();
-            if($self->user()->authenticate() === true)
+            if(ENABLE_TFA)
+            {
+                $qr = CAT_Helper_Validate::sanitizePost('qrcode_fieldname');
+
+            }
+            if($self->user()->authenticate(ENABLE_TFA) === true)
             {
                 $self->log()->logDebug('Authentication succeeded');
                 $_SESSION['USER_ID'] = $self->user()->get('user_id');
@@ -375,8 +384,12 @@ if (!class_exists('CAT_Backend', false))
                 ));
                 exit;
             }
-            $self->log()->logDebug('Authentication failed!');
-            header('Location: '.CAT_ADMIN_URL.'/login');
+            else
+            {
+                self::json_error('Authentication failed!');
+            }
+            #$self->log()->logDebug('Authentication failed!');
+            #header('Location: '.CAT_ADMIN_URL.'/login');
             exit;
         }   // end function authenticate()
 
@@ -397,8 +410,8 @@ if (!class_exists('CAT_Backend', false))
                 'USERNAME_FIELDNAME'    => $username_fieldname,
                 'PASSWORD_FIELDNAME'    => CAT_Helper_Validate::createFieldname('password_'),
                 'USERNAME'              => CAT_Helper_Validate::sanitizePost($username_fieldname),
+                'ENABLE_TFA'            => ENABLE_TFA,
             );
-
             $self->log()->logDebug('printing login page');
             $parser->output('login',$tpl_data);
         }   // end function login()

@@ -57,13 +57,22 @@ $LANG = array(
     'A group with the same name already exists!' => 'Es existiert bereits eine Gruppe mit diesem Namen!',
     'A role with the same name already exists!' => 'Es existiert bereits eine Rolle mit diesem Namen!',
     'Access denied' => 'Zugriff verweigert',
+    "An internal error occured. We're sorry for inconvenience." => 'Es ist ein interner Fehler aufgetreten. Wir bitten um Entschuldigung.',
+    'Authentication failed!' => 'Autorisierung fehlgeschlagen!',
+    'Click to dismiss' => 'Zum Schließen anklicken',
+    'No such user, user not active, or invalid password!' => 'Benutzer nicht vorhanden, nicht aktiv, oder Kennwort falsch!',
+    'Sorry, there was an error' => 'Entschuldigung, ein Fehler ist aufgetreten',
+    'Two step authentication failed!' => 'Zwei-Faktor Authentifizierung fehlgeschlagen!',
     'You are not allowed for the requested action' => 'Sie sind nicht berechtigt, die Aktion auszuführen',
 
     // --------------- Globals ---------------
+    'Cancel'        => 'Abbrechen',
     'Create new'    => 'Neu erstellen',
     'Delete'        => 'Löschen',
     'Description'   => 'Beschreibung',
     'Remove'        => 'Entfernen',
+    'Save changes'  => 'Speichern',
+    'Type'          => 'Typ',
 
     // --------------- Backend ---------------
     'Logout'        => 'Abmelden',
@@ -78,6 +87,15 @@ $LANG = array(
     'Roles'         => 'Rollen',
     'Settings'      => 'Einstellungen',
 
+    // --------------- Backend -> Dashboard ---------------
+    'Do you really want to remove this widget from your dashboard?' => 'Soll dieses Widget wirklich vom Dashboard entfernt werden?',
+    'Remove widget' => 'Widget entfernen',
+
+
+    // --------------- Backend -> Addons ---------------
+    'Installed'     => 'Installiert',
+    'Upgraded'      => 'Aktualisiert',
+
     // --------------- Backend -> Roles ---------------
     'Role ID'       => 'Rollen ID',
     'Title'         => 'Name',
@@ -88,6 +106,8 @@ $LANG = array(
     'Display name'  => 'Anzeigename',
     'Edit group members' => 'Gruppenmitglieder bearbeiten',
     'Login name'    => 'Loginname',
+    'Two-Step Authentication disabled' => 'Zwei-Faktor Authentifizierung deaktiviert',
+    'Two-Step Authentication enabled' => 'Zwei-Faktor Authentifizierung aktiviert',
     'User ID'       => 'Benutzer ID',
 
     // --------------- Backend -> Groups ---------------
@@ -95,6 +115,9 @@ $LANG = array(
 
     // --------------- Login page ---------------
     'Login'         => 'Anmelden',
+    'Please enter your code' => 'Bitte den Code eingeben',
+    'Scan the following image with your app and enter the code below' => 'Bitte das Image mit einer entsprechenden App scannen und den Code unten eintragen',
+    'Two-Step Authentication' => 'Zwei-Faktor-Authentifizierung',
     'Your username' => 'Benutzername',
     'Your password' => 'Kennwort',
 );

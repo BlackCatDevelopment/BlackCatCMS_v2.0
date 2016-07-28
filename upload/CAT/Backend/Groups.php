@@ -77,7 +77,8 @@ if (!class_exists('CAT_Backend_Groups'))
 
         public static function edit()
         {
-// ----- TODO: check permissions -----
+            if(!CAT_Object::user()->hasPerm('groups_edit'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
             $val = CAT_Helper_Validate::getInstance();
             $field = $val->sanitizePost('name');
             $id    = $val->sanitizePost('pk');
@@ -95,7 +96,6 @@ if (!class_exists('CAT_Backend_Groups'))
             $self = self::getInstance();
             $tpl_data = array(
                 'groups' => CAT_Groups::getInstance()->getGroups(),
-                'perms'  => CAT_User::getInstance()->getPerms(),
             );
             foreach($tpl_data['groups'] as $i => $g)
             {
@@ -107,8 +107,34 @@ if (!class_exists('CAT_Backend_Groups'))
             CAT_Backend::print_header();
             $self->tpl()->output('backend_groups', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function media()
-        
+        }   // end function index()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function users()
+        {
+            if(!CAT_Object::user()->hasPerm('groups_users'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $self  = self::getInstance();
+            $id    = CAT_Backend::getRouteParams()[0];
+            $users = CAT_Groups::getInstance()->getMembers($id);
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo json_encode($users,true);
+                return;
+            }
+
+            $tpl_data = array(
+                'members' => $users
+            );
+            CAT_Backend::print_header();
+            $self->tpl()->output('backend_groups_members', $tpl_data);
+            CAT_Backend::print_footer();
+        }   // end function users()
 
     } // class CAT_Helper_Groups
 

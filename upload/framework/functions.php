@@ -59,7 +59,7 @@ if (!defined('FUNCTIONS_FILE_LOADED'))
     // include helpers
 	global $dirh, $arrayh, $logger;
 	$dirh   = CAT_Helper_Directory::getInstance();
-	$logger = new CAT_Helper_KLogger( CAT_PATH.'/temp', $debug_level );
+	$logger = CAT_Object::log();
 
     /**
      * get additions for page header (css, js, meta)

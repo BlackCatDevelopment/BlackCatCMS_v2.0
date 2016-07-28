@@ -32,14 +32,10 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
 
     class CAT_Helper_Addons extends CAT_Object
     {
-        // array to store config options
-        protected      $_config = array(
-                           'loglevel' => 4
-                       );
-        protected      $debugLevel = 4;
-        private static $error = NULL;
-        private static $instance = NULL;
-        private static $states = array(
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        private   static $error    = NULL;
+        private   static $instance = NULL;
+        private   static $states   = array(
                            '.0' => 'dev',
                            '.1' => 'preview',
                            '.2' => 'alpha',
@@ -47,7 +43,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                            '.8' => 'rc',
                            '.9' => 'final'
                        );
-        private static $info_vars_full = array(
+        private   static $info_vars_full = array(
                            'module' => array(
                                'module_license',
                                'module_author',
@@ -85,7 +81,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                                'language_guid'
                            )
                        );
-        private static $info_vars_mandatory = array(
+        private   static $info_vars_mandatory = array(
                            'module' => array(
                                'module_author',
                                'module_name',
@@ -107,8 +103,8 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                                'language_author'
                            )
                        );
-        private static $module_functions = array( 'page', 'library', 'tool', 'snippet', 'wysiwyg', 'widget' );
-        private static $template_functions = array(
+        private   static $module_functions = array( 'page', 'library', 'tool', 'snippet', 'wysiwyg', 'widget' );
+        private   static $template_functions = array(
                            'template', // frontend
                            'theme'     // backend
                        );
@@ -214,86 +210,66 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          * @param boolean $check_permission (default: false) - wether to check module permissions (BE call) or not
          * @return array
          */
-        public static function get_addons( $selected = 1, $type = '', $function = '', $order = 'name', $check_permission = false )
+        public static function get_addons($selected=1, $type=NULL, $function=NULL, $order='name', $check_permission=false, $find_icon=false )
         {
-            $self = self::getInstance();
+            $q = CAT_Helper_DB::qb()
+                ->select('*')
+                ->from(sprintf('%saddons',CAT_TABLE_PREFIX));
 
-            if ( CAT_Backend::isBackend() )
-                $check_permission = true;
-            $and          = '';
-            $get_type     = '';
-            $get_function = '';
-            $where        = '';
-
-            if ( is_array( $type ) )
+            if($type)
             {
-                $get_type = '( ';
-                $and      = ' AND ';
-                foreach ( $type as $item )
+                if(is_array($type))
                 {
-                    $get_type .= 'type = \'' . htmlspecialchars( $item ) . '\'' . $and;
+                    foreach($type as $item)
+                    {
+                        $q->andWhere('type = '.$q->createNamedParameter($item));
+                    }
                 }
-                $get_type = substr( $get_type, 0, -5 ) . ' )';
-            }
-            else if ( $type != '' )
-            {
-                $and      = ' AND ';
-                $get_type = 'type = \'' . htmlspecialchars( $type ) . '\'';
-            }
-
-            if ( is_array( $function ) )
-            {
-                $get_function = $and . '( ';
-                foreach ( $function as $item )
+                else
                 {
-                    $get_function .= 'function = \'' . htmlspecialchars( $item ) . '\' AND ';
+                    $q->andWhere('type = '.$q->createNamedParameter($type));
                 }
-                $get_function = substr( $get_function, 0, -5 ) . ' )';
-            }
-            else if ( $function != '' )
-            {
-                $get_function = $and . 'function = \'' . htmlspecialchars( $function ) . '\'';
             }
 
-            if ( $get_type || $get_function )
-                $where = 'WHERE ';
-
-            // ==================
-            // ! Get all addons
-            // ==================
-            $addons_array = array();
-            $addons       = $self->db()->query(
-                sprintf(
-                    "SELECT * FROM `:prefix:addons` %s%s%s ORDER BY 'type' ASC, '%s' ASC",
-                    $where, $get_type, $get_function, htmlspecialchars($order)
-                )
-            );
-            if ( $addons->rowCount() > 0 )
+            if($function)
             {
-                $counter = 1;
-                while ( $addon = $addons->fetchRow() )
+                if(is_array($function))
                 {
-                    if (
-                           !$check_permission
-                        || (
-                               $addon['type'] != 'language'
-//                            && CAT_Users::get_permission( $addon['directory'], $addon['type'] )
-                           )
-                        || $addon['type'] == 'language'
-                    ) {
-                        $addons_array[ $counter ] = array_merge( $addon, array(
-                            'VALUE' => $addon['directory'],
-                            'NAME' => $addon['name'],
-                            'SELECTED' => ( $selected == $counter || $selected == $addon['name'] || $selected == $addon['directory'] ) ? true : false
-                        ) );
-                        $counter++;
+                    foreach($function as $item)
+                    {
+                        $q->andWhere('function = '.$q->createNamedParameter($item));
+                    }
+                }
+                else
+                {
+                    $q->andWhere('function = '.$q->createNamedParameter($function));
+                }
+            }
+
+            $q->orderBy('type', 'ASC');
+            if($order && $order != 'name')
+                $q->addOrderBy($order, 'ASC NULLS FIRST');
+
+            $data = $q->execute()->fetchAll();
+
+            if($find_icon)
+            {
+                foreach($data as $i => $addon)
+                {
+                    $icon = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
+                    $data[$i]['icon'] = '';
+                    if(file_exists($icon)){
+                        list($width, $height, $type_of, $attr) = getimagesize($icon);
+                        // Check whether file is 32*32 pixel and is an PNG-Image
+                        $data[$i]['icon']
+                            = ($width == 32 && $height == 32 && $type_of == 3)
+                            ? CAT_URL.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png'
+                            : false
+                            ;
                     }
                 }
             }
-            // reorder array
-            $addons_array = CAT_Helper_Array::ArraySort( $addons_array, $order, 'asc', true );
-
-            return $addons_array;
+            return $data;
         } // end function get_addons()
 
         /*******************************************************************************
@@ -525,7 +501,6 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     // check required CMS version
                     case 'CAT_VERSION':
                     case 'WB_VERSION':
-                    case 'LEPTON_VERSION':
                     case 'VERSION':
                         list( $status, $msg[] ) = self::checkCMSVersion( $key, $value );
                         // increase counter if required
@@ -596,7 +571,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                                 $actual_setting = ( $temp = ini_get( $setting ) ) ? $temp : 0;
                                 $status         = ( $actual_setting == $values );
                                 $msg[]          = array(
-                                     'key' => 'PHP_SETTINGS',
+                                    'key' => 'PHP_SETTINGS',
                                     'check' => '&nbsp;&nbsp; ' . ( $setting ),
                                     'required' => $values,
                                     'actual' => $actual_setting,
@@ -1720,10 +1695,6 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     }
                 }
                 // check platform (WB/LEPTON/BC)
-                if(isset($lepton_platform)&&!isset($module_platform))
-                {
-                    $return_values['cms_name'] = 'LEPTON';
-                }
                 if(isset($module_platform))
                 {
                     if(!self::versionCompare($module_platform,'2.x','<='))
@@ -2014,9 +1985,6 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 case 'WB_VERSION': // we support WB 2.8.3
                     $this_version = '2.8.3';
                     break;
-                case 'LEPTON_VERSION': // we support LEPTON 1.x
-                    $this_version = '1.2';
-                    break;
                 default:
                     $this_version = CAT_Registry::get( 'CAT_VERSION' );
                     break;
@@ -2051,7 +2019,6 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             // define desired precheck order
             $key_order = array(
                 'CAT_VERSION',
-                'LEPTON_VERSION',
                 'WB_VERSION',
                 'CAT_ADDONS',
                 'WB_ADDONS',

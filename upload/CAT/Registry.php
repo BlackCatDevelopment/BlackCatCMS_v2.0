@@ -1,18 +1,6 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
  *   @copyright       2013, Black Cat Development
@@ -21,7 +9,7 @@
  *   @category        CAT_Core
  *   @package         CAT_Core
  *
- */
+ **/
 
 if (!class_exists('CAT_Object', false))
 {
@@ -32,14 +20,11 @@ if (!class_exists('CAT_Registry', false))
 {
     class CAT_Registry extends CAT_Object
     {
-
-        protected      $_config         = array( 'loglevel' => 8 );
-
         // singleton
-        private static $instance        = NULL;
-
-        private static $REGISTRY        = array();
-        private static $GLOBALS         = array();
+        private   static $instance = NULL;
+        private   static $REGISTRY = array();
+        private   static $GLOBALS  = array();
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
         /**
          * get singleton
@@ -49,11 +34,9 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function getInstance()
         {
-            if (!self::$instance)
-            {
-                self::$instance = new self();
-            }
-            return self::$instance;
+            if (!CAT_Registry::$instance)
+                CAT_Registry::$instance = new CAT_Registry();
+            return CAT_Registry::$instance;
         }   // end function getInstance()
 
         /**
@@ -65,7 +48,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function defined($key)
         {
-            return self::exists($key);
+            return CAT_Registry::exists($key);
         }   // end function defined()
 
         /**
@@ -76,8 +59,8 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function dump()
         {
-            var_dump(self::$REGISTRY);
-            }
+            var_dump(CAT_Registry::$REGISTRY);
+        }
 
         /**
          * check if a global var exists; same as defined()
@@ -89,14 +72,14 @@ if (!class_exists('CAT_Registry', false))
          *
          **/
         public static function exists($key,$empty_allowed=true)
+        {
+            if(isset(CAT_Registry::$REGISTRY[$key]) || defined($key))
             {
-            if(isset(self::$REGISTRY[$key]) || defined($key))
-                {
                 if(
                        ! $empty_allowed
                     && (
                             (
-                              isset(self::$REGISTRY[$key]) && self::$REGISTRY[$key] == ''
+                              isset(CAT_Registry::$REGISTRY[$key]) && CAT_Registry::$REGISTRY[$key] == ''
                             )
                          ||
                             (
@@ -107,7 +90,7 @@ if (!class_exists('CAT_Registry', false))
                     return false;
                 }
                 return true;
-                }
+            }
             return false;
         }   // end function exists()
 
@@ -120,18 +103,18 @@ if (!class_exists('CAT_Registry', false))
          *                            i.e. 'array' => is_array()
          * @param  mixed   $default - default value to return if the key is not found
          **/
-        public static function get( $key, $require=NULL, $default=NULL )
+        public static function get($key, $require=NULL, $default=NULL)
         {
             $return_value = NULL;
-            if(isset(self::$REGISTRY[$key]))
+            if(isset(CAT_Registry::$REGISTRY[$key]))
             {
                 if($require)
                 {
-                    $return_value = CAT_Helper_Validate::check(self::$REGISTRY[$key],$require);
+                    $return_value = CAT_Helper_Validate::check(CAT_Registry::$REGISTRY[$key],$require);
                 }
                 else
                 {
-                    $return_value = self::$REGISTRY[$key];
+                    $return_value = CAT_Registry::$REGISTRY[$key];
                 }
             }
             if(!$return_value)
@@ -154,7 +137,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function define($key, $value=NULL)
         {
-            return self::register($key,$value,true,true);
+            return CAT_Registry::register($key,$value,true,true);
         }
 
         /**
@@ -163,22 +146,24 @@ if (!class_exists('CAT_Registry', false))
          * @access public
          * @param  string  $key
          * @param  mixed   $value
-         * @param  boolean $as_const - use define() to set as constant; this is for backward compatibility as WB works with global constants very much
+         * @param  boolean $as_const - use define() to set as constant; this is
+         *                             for backward compatibility as WB works
+         *                             with global constants very much
          *                             default: false
          * @param  boolean $is_set   - from settings table
          *                             default: false
          **/
-        public static function register( $key, $value=NULL, $as_const=false, $is_set=false )
+        public static function register($key, $value=NULL, $as_const=false, $is_set=false)
         {
-            if ( ! is_array($key) )
+            if(!is_array($key))
             {
-                $key = array( $key => $value );
+                $key = array($key => $value);
             }
-                foreach ( $key as $name => $value )
+            foreach ( $key as $name => $value )
             {
-                    self::$REGISTRY[$name] = $value;
-                if ( $as_const && ! defined($name) ) define($name,$value);
-                if ( $is_set ) self::$GLOBALS[$name] = $value;
+                CAT_Registry::$REGISTRY[$name] = $value;
+                if($as_const && ! defined($name)) define($name,$value);
+                if($is_set) self::$GLOBALS[$name] = $value;
             }
         }   // end function register()
 
@@ -187,7 +172,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function set($key,$value=NULL,$as_const=false)
         {
-            return self::register($key,$value,$as_const);
+            return CAT_Registry::register($key,$value,$as_const);
         }   // end function set()
 
         /**
@@ -197,8 +182,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function getSettings()
         {
-            return self::$GLOBALS;
+            return CAT_Registry::$GLOBALS;
         }   // end function getSettings()
-        
     }
 }

@@ -1,0 +1,9 @@
+{
+    "name": "BlackCatDevelopment/BlackCatCMS_v2.0",
+    "require": {
+        "php" : "^5.6 || ^7.0",
+        "chillerlan/php-qrcode": "dev-master",
+        "monolog/monolog": ">=1.20.0 <2.0",
+        "robthree/twofactorauth": "^1.5"
+    }
+}

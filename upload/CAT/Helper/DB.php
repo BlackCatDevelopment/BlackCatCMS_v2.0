@@ -1,18 +1,6 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *   @author          Black Cat Development
  *   @copyright       2013, 2014, Black Cat Development
@@ -28,19 +16,17 @@ require dirname(__FILE__).'/../../modules/lib_doctrine/Doctrine/Common/ClassLoad
 
 if ( !class_exists( 'CAT_Helper_DB' ) )
 {
-    //set_exception_handler(array("CAT_PDOExceptionHandler", "exceptionHandler"));
-
     class CAT_Helper_DB extends PDO
     {
         public  static $exc_trace = false;
 
-        private static $instance = NULL;
-        private static $conn     = NULL;
-        private static $prefix   = NULL;
-        private static $qb       = NULL;
+        private static $instance  = NULL;
+        private static $conn      = NULL;
+        private static $prefix    = NULL;
+        private static $qb        = NULL;
 
-        private $lasterror       = NULL;
-        private $classLoader     = NULL;
+        private $lasterror        = NULL;
+        private $classLoader      = NULL;
 
         /**
          * constructor; initializes Doctrine ClassLoader and sets up a database
@@ -526,7 +512,7 @@ class CAT_PDOStatementDecorator
     public function fetchRow($type=PDO::FETCH_ASSOC)
     {
         // this is for backward compatibility
-        if($type===MYSQL_ASSOC) $type = PDO::FETCH_ASSOC;
+        if($type=='MYSQL_ASSOC') $type = PDO::FETCH_ASSOC;
         return $this->pdo_stmt->fetch($type);
     }
 }
@@ -599,12 +585,12 @@ class CAT_PDOExceptionHandler
         }
 
         try {
-            $logger = CAT_Helper_KLogger::instance(CAT_PATH.'/temp/logs',2);
-            $logger->logFatal(sprintf(
+            $logger = CAT_Object::log();
+            $logger->emergency(sprintf(
                 'Exception with message [%s] emitted in [%s] line [%s]',
                 $exception->getMessage(),$exception->getFile(),$exception->getLine()
             ));
-            $logger->logFatal($msg);
+            $logger->emergency($msg);
         } catch ( Exception $e ) {}
 
         // log or echo as you please

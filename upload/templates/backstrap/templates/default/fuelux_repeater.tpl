@@ -18,6 +18,7 @@
       </div>
       {if $repeater_header_right}
       <div class="repeater-header-right">
+        {if $repeater_filter_menu}
         <div class="btn-group selectlist repeater-filters" data-resize="auto">
           <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
             <span class="selected-label">&nbsp;</span>
@@ -25,12 +26,15 @@
             <span class="sr-only">{translate('Toggle Filters')}</span>
           </button>
           <ul class="dropdown-menu" role="menu">
-            <li data-value="all" data-selected="true"><a href="#">all</a></li>
-            <li data-value="some"><a href="#">some</a></li>
-            <li data-value="others"><a href="#">others</a></li>
+            {foreach $repeater_filter_menu item}
+            <li data-value="{$item}"><a href="#">{$item}</a></li>
+            {/foreach}
           </ul>
           <input class="hidden hidden-field" name="filterSelection" readonly="readonly" aria-hidden="true" type="text"/>
         </div>
+        {/if}
+        {if $repeater_button_group}{include(file=$repeater_button_group)}{/if}
+
         <div class="btn-group repeater-views" data-toggle="buttons">
           <label class="btn btn-default active">
             <input name="repeaterViews" type="radio" value="list"><span class="glyphicon glyphicon-list"></span>
