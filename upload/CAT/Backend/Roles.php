@@ -32,8 +32,6 @@ if (!class_exists('CAT_Backend_Roles'))
 
     class CAT_Backend_Roles extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
         protected static $instance = NULL;
 
         /**
@@ -48,9 +46,16 @@ if (!class_exists('CAT_Backend_Roles'))
             return self::$instance;
         }   // end function getInstance()
 
+        /**
+         * create role
+         *
+         * @access public
+         * @return
+         **/
         public static function create()
         {
-            if(!CAT_Object::user()->hasPerm('roles_add'))
+            $self = self::getInstance();
+            if(!$self->user()->hasPerm('roles_add'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $val   = CAT_Helper_Validate::getInstance();
             $name  = $val->sanitizePost('role_name');
@@ -58,18 +63,25 @@ if (!class_exists('CAT_Backend_Roles'))
             if(CAT_Roles::getInstance()->exists($name))
                 CAT_Object::json_error('A role with the same name already exists!');
             CAT_Roles::getInstance()->addRole($name,$desc);
-        }
+        }   // end function create()
 
+        /**
+         * edit role
+         *
+         * @access public
+         * @return
+         **/
         public static function edit()
         {
-            if(!CAT_Object::user()->hasPerm('roles_edit'))
+            $self = self::getInstance();
+            if(!$self->user()->hasPerm('roles_edit'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $val = CAT_Helper_Validate::getInstance();
             $field = $val->sanitizePost('name');
             $id    = $val->sanitizePost('pk');
             $value = $val->sanitizePost('value');
             CAT_Roles::getInstance()->set($field,$value,$id);
-        }
+        }   // end function edit()
 
         /**
          *
@@ -78,15 +90,70 @@ if (!class_exists('CAT_Backend_Roles'))
          **/
         public static function index()
         {
-            $self = self::getInstance();
+            $self  = self::getInstance();
+            $roles = $self->roles()->getRoles();
+
+            // counter
+            foreach($roles as $i => $r)
+            {
+                $users = $self->roles()->getUsers($r['role_id']);
+                $perms = $self->perms()->getPerms($r['role_id']);
+                $roles[$i]['user_count'] = count($users);
+                $roles[$i]['perm_count'] = count($perms);
+            }
+
             $tpl_data = array(
-                'roles' => CAT_Roles::getInstance()->getRoles(),
+                'roles' => $roles,
+                'perms' => $self->perms()->getPerms(),
             );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_roles', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function media()
+        }   // end function index()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function saveperms()
+        {
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('roles_perms'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $role_id  = CAT_Backend::getRouteParams()[0];
+            $selected = CAT_Helper_Validate::sanitizePost('perms');
+            // get old data
+            $perms    = $self->perms()->getPerms($role_id);
+            // extract the ids
+            $ids      = array_column($perms, 'perm_id');
+            // save new
+            foreach(array_values($selected) as $perm_id)
+            {
+                // added
+                if(!in_array($perm_id,$ids))
+                {
+                    $self->db()->query(
+                        'INSERT INTO `:prefix:rbac_rolepermissions` VALUES ( ?, ?, ? )',
+                        array($role_id, $perm_id, time())
+                    );
+                }
+            }
+            foreach(array_values($ids) as $perm_id)
+            {
+                // removed
+                if(!in_array($perm_id,$selected))
+                {
+                    $self->db()->query(
+                        'DELETE FROM `:prefix:rbac_rolepermissions` WHERE `role_id`=? AND `perm_id`=?',
+                        array($role_id,$perm_id)
+                    );
+                }
+            }
+            echo CAT_Object::json_success('Success');
+        }   // end function saveperms()
         
+
 
     } // class CAT_Helper_Roles
 

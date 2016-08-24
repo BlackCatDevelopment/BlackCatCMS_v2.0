@@ -30,11 +30,6 @@ if ( ! class_exists( 'CAT_Object', false ) ) {
 if ( ! class_exists( 'CAT_Helper_ListBuilder', false ) ) {
 	class CAT_Helper_ListBuilder extends CAT_Object
 	{
-	    protected $_config
-			= array(
-                 'loglevel'             => 7,
-			);
-
         private static $instance;
 
         public static function getInstance($reset=false)
@@ -552,21 +547,18 @@ if ( ! class_exists( 'CAT_Helper_ListBuilder', false ) ) {
          *
          * @access  public
          * @param   array   $items - flat array (reference!)
-         * @param
+         * @param   number  $min   - min level to show
          * @return  array
          **/
         public static function buildRecursion ( &$items, $min = -9 )
         {
-            if ( ! empty( $items ) && ! is_array( $items ) )
+            // check if $items is an array
+            if(!empty($items) && !is_array($items))
             {
                 return NULL;
             }
-            if ( isset($items['__is_recursive']) )
-            {
-                return $items;
-            }
             // if there's only one item, no recursion to do
-            if ( ! ( count( $items ) > 1 ) )
+            if ( !(count($items) > 1))
             {
                 return $items;
             }
@@ -574,6 +566,12 @@ if ( ! class_exists( 'CAT_Helper_ListBuilder', false ) ) {
             $tree    = array();
             $root_id = -1;
             $self    = self::getInstance(false);
+
+            // check if the $items array is already multi-dimensional
+            if(CAT_Helper_Array::ArrayKeyExists($self->_config['__children_key'],$items))
+            {
+                return $items;
+            }
 
             // spare some typing...
             $ik      = $self->_config['__id_key'];
@@ -597,22 +595,22 @@ if ( ! class_exists( 'CAT_Helper_ListBuilder', false ) ) {
             //
             // http://www.tommylacroix.com/2008/09/10/php-design-pattern-building-a-tree/
             //
-            foreach ( $items as $id => &$node )
+            foreach($items as $id => &$node)
             {
                 // skip nodes with depth < min level
-                if ( isset( $node[$lk] ) && $node[$lk] <= $min )
+                if(isset($node[$lk]) && $node[$lk] <= $min)
                 {
                     continue;
                 }
 
                 // avoid error messages on missing parent key
-                if ( ! isset( $node[$pk] ) )
+                if(!isset($node[$pk]))
                 {
                     $node[$pk] = null;
                 }
 
                 // root node
-                if ( $node[$pk] === null && $root_id < 0 )
+                if($node[$pk] === null && $root_id < 0)
                 {
                     $tree[$id] = &$node;
                     $root_id   = $id;
@@ -621,19 +619,18 @@ if ( ! class_exists( 'CAT_Helper_ListBuilder', false ) ) {
                 else
                 {
                     // avoid warnings on missing children key
-                    if ( ! isset($items[$node[$pk]][$ck]) || ! is_array($items[$node[$pk]][$ck]) )
+                    if(!isset($items[$node[$pk]][$ck]) || !is_array($items[$node[$pk]][$ck]))
                     {
                         $items[$node[$pk]][$ck] = array();
                     }
                     $items[$node[$pk]][$ck][] = &$node;
                 }
-
             }
-            if ( ! empty($tree) && is_array($tree) && count( $tree ) > 0 )
+
+            if(!empty($tree) && is_array($tree) && count($tree) > 0)
             {
-                // mark tree as already seen
-                $tree[$root_id][$ck]['__is_recursive'] = 1;
-                $tree = $tree[$root_id][$ck];
+                if(isset($tree[$root_id]))
+                    $tree = $tree[$root_id][$ck];
             }
 
             return $tree;

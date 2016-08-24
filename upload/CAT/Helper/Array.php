@@ -133,6 +133,25 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
             }
             return $result;
         }   // end function ArrayFilterByKey()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function ArrayKeyExists($key,&$array)
+        {
+            if(!is_array($array))   return false;
+            if(isset($array[$key])) return true;
+            foreach($array as $elem)
+            {
+                if(is_array($elem))
+                {
+                    return self::ArrayKeyExists($elem,$key);
+                }
+            }
+            return false;
+        }   // end function ArrayKeyExists()
         
 
         /**

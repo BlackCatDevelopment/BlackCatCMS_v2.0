@@ -40,24 +40,13 @@ if (!class_exists('CAT_Backend', false))
 
     class CAT_Backend extends CAT_Object
     {
+        protected static $loglevel = \Monolog\Logger::DEBUG;
 
-        private static $instance = array();
-        private static $form     = NULL;
-        private static $route    = NULL;
-        private static $params   = NULL;
-        private static $mainmenu = array(
-            'dashboard',
-            'pages',
-            'media',
-            'settings',
-            'addons',
-            'admintools',
-            'users',
-            'groups',
-            'roles',
-            'preferences'
-        );
-        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        private   static $instance = array();
+        private   static $form     = NULL;
+        private   static $route    = NULL;
+        private   static $params   = NULL;
+        private   static $menu     = NULL;
 
         public static function getInstance($section_name='Start',$section_permission='start',$auto_header=true,$auto_auth=true)
         {
@@ -84,17 +73,24 @@ if (!class_exists('CAT_Backend', false))
             // no route yet
             if(!self::$route)
             {
-                self::$route
-                    = isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] :
-                      isset($_SERVER['PATH_INFO'])      ? $_SERVER['PATH_INFO']      :
-                      isset($_SERVER['REQUEST_URI'])    ? $_SERVER['REQUEST_URI']    : '/'
-                    ;
+                foreach(array_values(array('REQUEST_URI','REDIRECT_SCRIPT_URL','SCRIPT_URL','ORIG_PATH_INFO','PATH_INFO')) as $key)
+                {
+                    if(isset($_SERVER[$key]))
+                    {
+                        self::$route = $_SERVER[$key];
+                        break;
+                    }
+                }
+                if(!self::$route) { self::$route = '/'; }
+                // remove params
+                if(stripos(self::$route,'?'))
+                    list(self::$route,$ignore) = explode('?',self::$route,2);
                 $path_prefix = str_ireplace(
                     CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
                     '',
                     CAT_Helper_Directory::sanitizePath(CAT_PATH)
                 );
-                $self->log()->logDebug(sprintf(
+                $self->log()->debug(sprintf(
                     'document root [%s], CAT_PATH [%s], current route [%s], route prefix (rel. path to doc root) [%s]',
                     $_SERVER['DOCUMENT_ROOT'], CAT_Helper_Directory::sanitizePath(CAT_PATH), self::$route, $path_prefix
                 ));
@@ -107,14 +103,13 @@ if (!class_exists('CAT_Backend', false))
                 if(!strpos(self::$route,'/',0))
                     self::$route = substr(self::$route,1,strlen(self::$route));
             }
-            $self->log()->logDebug(sprintf('resulting route [%s]',self::$route));
-
+            $self->log()->debug(sprintf('resulting route [%s]',self::$route));
             // handle the route
             // special cases: login. logout and authenticate
             if(preg_match('~^(login|authenticate|logout|qr)~',self::$route,$m))
             {
                 $func = $m[1];
-                $self->log()->logDebug(sprintf('calling func [%s]',$func));
+                $self->log()->debug(sprintf('calling func [%s]',$func));
                 return self::$func();
             }
             else
@@ -134,6 +129,13 @@ if (!class_exists('CAT_Backend', false))
                     // second item (if exists) is the function name; if
                     // no function name is available, use index()
                     $function   = (count($route) ? array_shift($route) : 'index');
+                    // the given param may be an item id
+                    $parm       = NULL;
+                    if(is_numeric($function))
+                    {
+                        $parm     = $function;
+                        $function = 'index';
+                    }
                     // if there are any items left, save as params
                     if(count($route)) self::$params = $route;
                     // set user data as template var {$USER.<property>}
@@ -142,6 +144,7 @@ if (!class_exists('CAT_Backend', false))
                     // check the user permissions
                     if(!$self->user()->hasPerm($controller))
                     {
+                        $self->log()->error('User [{user}] tried to access controller [{controller}]',array('user'=>$self->user()->get('username'), 'controller'=>$controller));
                         CAT_Object::printFatalError('Access denied');
                     }
                     // controller class name
@@ -152,21 +155,20 @@ if (!class_exists('CAT_Backend', false))
                     try
                     {
                         $handler = $class::getInstance();
-                        if(!$self->user()->hasPerm($function))
+                        if($function != 'index' && !$self->user()->hasPerm(implode('_',array($controller,$function))))
                         {
+                            $self->log()->error('User [{user}] tried to access [{func}] in controller [{controller}]',array('user'=>$self->user()->get('username'),'func'=>$function,'controller'=>$controller));
                             CAT_Object::printFatalError('Access denied');
                         }
-                        if(method_exists($handler,$function))
-                        {
-                            return $handler::$function();
-                            exit;
-                        }
+                        return $handler::$function($parm);
+                        exit;
                     }
                     catch( Exception $e )
                     {
+echo $e->getMessage();
                         if(method_exists($self,$function))
                         {
-                            return self::$function();
+                            return self::$function($parm);
                             exit;
                         }
                     }
@@ -248,28 +250,52 @@ if (!class_exists('CAT_Backend', false))
          * @access public
          * @return array
          **/
-        public static function getMainMenu($current=NULL)
+        public static function getMainMenu($parent=NULL)
         {
-            $menu = array();
-            $self = self::getInstance();
-
-            if(!$current) $current = self::$route;
-
-            // for each item in the main menu, check if the user is allowed
-            // to access that section; if not, don't show the menu entry
-            foreach(array_values(self::$mainmenu) as $item)
+            if(!self::$menu)
             {
-                if($self->user()->hasPerm($item))
+                $self = CAT_Backend::getInstance();
+                $r = $self->db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY `parent`,`position`');
+                self::$menu = $r->fetchAll(\PDO::FETCH_ASSOC);
+                $self->log()->addDebug('main menu items from DB: '.print_r(self::$menu,1));
+                foreach(self::$menu as $i => $item)
                 {
-                    $menu[] = array(
-                        'link'    => CAT_ADMIN_URL.'/'.$item,
-                        'title'   => $self->lang()->translate(ucfirst($item)),
-                        'name'    => $item,
-                        'current' => ( $current && $current == $item ) ? true : false,
-                    );
+                    self::$menu[$i]['title'] = $self->lang()->t(ucfirst($item['name']));
+                    if($item['controller'] != '') # find controller
+                    {
+                        self::$menu[$i]['href']
+                            = CAT_ADMIN_URL.'/'
+                            . ( strlen($item['controller']) ? $item['controller'].'/' : '' )
+                            . $item['name'];
+                    }
+                    else
+                    {
+                        self::$menu[$i]['href'] = CAT_ADMIN_URL.'/'.$item['name'];
+                    }
+                    self::$menu[$i]['controller'] = ( isset($item['controller']) ? $item['controller'] : $item['name'] );
+                    if(preg_match('~'.$item['name'].'$~i',self::$route))
+                    {
+                        self::$menu[$i]['is_current'] = 1;
+                        $parents = explode('/',$item['trail']);
+                        foreach(array_values($parents) as $pid)
+                        {
+                            $path = CAT_Helper_Array::ArraySearchRecursive($pid,self::$menu,'id');
+                            self::$menu[$path[0]]['is_in_trail'] = 1;
+                        }
+                    }
                 }
             }
-            return $menu;
+            if($parent)
+            {
+                $menu = array();
+                foreach(array_values(self::$menu) as $item)
+                {
+                    if($item['parent'] == $parent) array_push($menu,$item);
+                }
+                return $menu;
+            }
+            $self->log()->addDebug('returned main menu items: '.print_r(self::$menu,1));
+            return self::$menu;
         }   // end function getMainMenu()
 
         /**
@@ -277,7 +303,7 @@ if (!class_exists('CAT_Backend', false))
          * @access public
          * @return
          **/
-        public function getRouteParams()
+        public static function getRouteParams()
         {
             return self::$params;
         }   // end function getRouteParams()
@@ -291,10 +317,30 @@ if (!class_exists('CAT_Backend', false))
         public static function print_header()
         {
             $tpl_data = array();
-            $addons   = CAT_Helper_Addons::getInstance();
+            $menu     = self::getMainMenu();
+
             // init template search paths
             self::initPaths();
-            $tpl_data['MAIN_MENU'] = self::getMainMenu();
+
+            // the original list, ordered by parent -> children (if the 
+            // templates renders the HTML output)
+            $lb = CAT_Helper_ListBuilder::getInstance()->config(array(
+                '__id_key'     => 'id',
+            ));
+            $tpl_data['MAIN_MENU'] = $lb->sort($menu,0);
+
+            // recursive list
+            $tpl_data['MAIN_MENU_RECURSIVE'] = $lb->buildRecursion($menu);
+
+            // render list (ul)
+            $l = \wblib\wbList::getInstance(array(
+                'top_ul_class'     => 'nav',
+                'ul_class'         => 'nav',
+                'current_li_class' => 'active'
+            ));
+            $tpl_data['MAIN_MENU_UL'] = $l->buildList($menu);
+
+            self::getInstance()->log()->addDebug('printing header');
             self::getInstance()->tpl()->output('header', $tpl_data);
         }   // end function print_header()
 
@@ -368,14 +414,9 @@ if (!class_exists('CAT_Backend', false))
         public static function authenticate()
         {
             $self = self::getInstance();
-            if(ENABLE_TFA)
+            if($self->user()->authenticate() === true)
             {
-                $qr = CAT_Helper_Validate::sanitizePost('qrcode_fieldname');
-
-            }
-            if($self->user()->authenticate(ENABLE_TFA) === true)
-            {
-                $self->log()->logDebug('Authentication succeeded');
+                $self->log()->debug('Authentication succeeded');
                 $_SESSION['USER_ID'] = $self->user()->get('user_id');
                 // forward
                 echo json_encode(array(
@@ -386,9 +427,10 @@ if (!class_exists('CAT_Backend', false))
             }
             else
             {
+                $self->log()->debug('Authentication failed!');
                 self::json_error('Authentication failed!');
             }
-            #$self->log()->logDebug('Authentication failed!');
+            #
             #header('Location: '.CAT_ADMIN_URL.'/login');
             exit;
         }   // end function authenticate()
@@ -401,7 +443,6 @@ if (!class_exists('CAT_Backend', false))
          **/
         public static function login()
         {
-            global $parser;
             // we need this twice
             $username_fieldname = CAT_Helper_Validate::createFieldname('username_');
             // for debugging
@@ -409,11 +450,12 @@ if (!class_exists('CAT_Backend', false))
 			$tpl_data = array(
                 'USERNAME_FIELDNAME'    => $username_fieldname,
                 'PASSWORD_FIELDNAME'    => CAT_Helper_Validate::createFieldname('password_'),
+                'TOKEN_FIELDNAME'       => CAT_Helper_Validate::createFieldname('token_'),
                 'USERNAME'              => CAT_Helper_Validate::sanitizePost($username_fieldname),
                 'ENABLE_TFA'            => ENABLE_TFA,
             );
-            $self->log()->logDebug('printing login page');
-            $parser->output('login',$tpl_data);
+            $self->log()->debug('printing login page');
+            $self->tpl()->output('login',$tpl_data);
         }   // end function login()
 
         /**

@@ -55,7 +55,12 @@ $mod_headers = array(
             array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap-editable.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/fuelux.min.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
-            array('file'=>'templates/backstrap/css/metisMenu.min.css',),
+            #array('file'=>'templates/backstrap/css/metisMenu.min.css',),
+            #array('file'=>'modules/lib_jquery/plugins/jquery.treetable/css/jquery.treetable.css',),
+            #array('file'=>'modules/lib_jquery/plugins/jquery.treetable/css/jquery.treetable.theme.default.css',),
+            array('file'=>'modules/lib_jquery/plugins/jquery.fancytree/skin-win8/ui.fancytree.min.css',),
+            array('file'=>'modules/lib_jquery/plugins/jquery.treegrid/css/jquery.treegrid.css',),
+            #array('file'=>'modules/lib_jquery/plugins/jquery.bonsai/jquery.bonsai.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(
@@ -67,7 +72,11 @@ $mod_headers = array(
         ),
         'js' => array(
             array(
-                'backend.js'
+                '/modules/lib_jquery/plugins/jquery.fancytree/jquery.fancytree-all.js',
+                '/modules/lib_jquery/plugins/jquery.treegrid/js/jquery.treegrid.js',
+                #'/modules/lib_jquery/plugins/jquery.treetable/jquery.treetable.js',
+                #'/modules/lib_jquery/plugins/jquery.qubit/jquery.qubit.js',
+                #'/modules/lib_jquery/plugins/jquery.bonsai/jquery.bonsai.js',
             )
         )
     )

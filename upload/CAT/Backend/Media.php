@@ -32,8 +32,6 @@ if (!class_exists('CAT_Backend_Media'))
 
     class CAT_Backend_Media extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
         protected static $instance = NULL;
 
         /**
@@ -61,6 +59,32 @@ if (!class_exists('CAT_Backend_Media'))
             $self->tpl()->output('backend_media', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function media()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function list()
+        {
+            $self = self::getInstance();
+            $data = CAT_Helper_Directory::scanDirectory(
+                CAT_PATH.'/media',
+                true,
+                false,
+                NULL,
+                array(),
+                array(),
+                array()
+            );
+print_r($data);
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo json_encode($data,true);
+                return;
+            }
+        }   // end function list()
         
 
     } // class CAT_Helper_Media

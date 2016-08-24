@@ -18,9 +18,7 @@ if (!class_exists('CAT_Roles'))
 
     class CAT_Roles extends CAT_Object
     {
-        protected        $_config  = array();
         protected        $roles    = array();
-        protected        $perms    = array();
         protected static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
 
@@ -34,15 +32,6 @@ if (!class_exists('CAT_Roles'))
         {
             parent::__construct();
             $this->initRoles();
-            $this->initPerms();
-            foreach($this->roles as $i => $role)
-            {
-                $perms  = $this->getPerms($role['role_id']);
-                $users  = $this->getUsers($role['role_id']);
-                $groups = $this->getGroups($role['role_id']);
-                $this->roles[$i]['perm_count'] = count($perms);
-                $this->roles[$i]['user_count'] = count($users);
-            }
         }   // end function __construct()
 
         /**
@@ -93,27 +82,17 @@ if (!class_exists('CAT_Roles'))
         {
             return $this->getRoles(array('group'=>$id));
         }   // end function getGroups()
+
         /**
-         * returns the permissions for the given role
+         * get roles (optionally filtered by given conditions)
          *
-         * @access public
-         * @param  integer  $role_id
-         * @return array
-         **/
-        public function getPerms($role_id)
-        {
-            return ( isset($this->perms[$role_id])
-                ? $this->perms[$role_id]
-                : false
-            );
-        }   // end function getPerms()
-        
-        /**
-         * get roles
          * to get the roles for a specific user, pass:
-         *    $opt = array('for'=>'user','id'=><user_id>)
+         *    $opt = array('for'=>'user','user_id'=><user_id>)
          * to get the roles for a specific group, pass:
-         *    $opt = array('for'=>'group','id'=><group_id>)
+         *    $opt = array('for'=>'group','group_id'=><group_id>)
+         * to get the users for a given role, pass:
+         *    $opt = array('for'=>'user','role_id'=><role_id>)
+         *
          * to get all roles, don't pass any options
          *
          * @access public
@@ -126,25 +105,34 @@ if (!class_exists('CAT_Roles'))
             {
                 if(!isset($opt['for']) || !in_array($opt['for'],array('user','group')))
                     return false;
+
+                $self = self::getInstance();
+
                 $table = $opt['for'];
-                $query = 'SELECT t1.`role_id`, t2.`title` '
+                $query = 'SELECT * '
                        . 'FROM `:prefix:rbac_%sroles` AS t1 '
                        . 'JOIN `:prefix:rbac_roles` AS t2 '
                        . 'ON t1.`role_id`=t2.`role_id` '
                        ;
+                $query_options = array();
 
-                if(isset($opt['id']) && strlen($opt['id']))
+                if(isset($opt['user_id']) && strlen($opt['user_id']))
                 {
                     $query .= 'WHERE t1.`'.$table.'_id`=:id';
-                    $query_options = array('id'=>$opt['id']);
+                    $query_options = array('id'=>$opt['user_id']);
                 }
-                elseif(isset($opt['group']) && strlen($opt['group']))
+                if(isset($opt['group_id']) && strlen($opt['group_id']))
                 {
                     $query .= 'WHERE t1.`'.$table.'_id`=:id';
-                    $query_options = array('id'=>$opt['id']);
+                    $query_options = array('id'=>$opt['group_id']);
+                }
+                if(isset($opt['role_id']) && strlen($opt['role_id']))
+                {
+                    $query .= 'WHERE t2.`role_id`=:id';
+                    $query_options = array('id'=>$opt['role_id']);
                 }
 
-                $sth = CAT_Helper_DB::getInstance()->query(
+                $sth = $self->db()->query(
                     sprintf($query,$table),
                     $query_options
                 );
@@ -155,13 +143,14 @@ if (!class_exists('CAT_Roles'))
         }   // end function getRoles()
 
         /**
+         * get users for given role
          *
          * @access public
-         * @return
+         * @return array
          **/
         public function getUsers($id)
         {
-            return $this->getRoles(array('user'=>$id));
+            return $this->getRoles(array('for'=>'user','role_id'=>$id));
         }   // end function getUsers()
 
         /**
@@ -179,32 +168,6 @@ if (!class_exists('CAT_Roles'))
             if(!$dbh->isError()) return true;
             else                 return false;
         }   // end function set()
-
-        /**
-         * init permissions; loads the permissions assigned to each role and
-         * stores the assignments into protected 'perms' array
-         *
-         * @access protected
-         * @return
-         **/
-        protected function initPerms()
-        {
-            if(!$this->roles) $this->initRoles();
-            if(!is_array($this->roles) || !count($this->roles)) return array();
-
-            $dbh = CAT_Helper_DB::getInstance();
-            $q   = 'SELECT * FROM `:prefix:rbac_rolepermissions` AS t1
-                   JOIN `:prefix:rbac_permissions` AS t2
-                   ON `t1`.`perm_id`=`t2`.`perm_id`'
-                 ;
-            $sth   = $dbh->query($q);
-            $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
-
-            foreach(array_values($perms) as $perm)
-            {
-                $this->perms[$perm['role_id']][] = $perm;
-            }
-        }   // end function initPerms()
 
         /**
          * init roles; loads all defined roles from the database and stores

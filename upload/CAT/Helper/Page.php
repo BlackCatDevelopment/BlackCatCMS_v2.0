@@ -155,16 +155,19 @@ if (!class_exists('CAT_Helper_Page'))
                     $direct_parent  = 0;
                     while ( false !== ( $row = $result->fetch() ) )
                     {
-                        $row['children']  = 0;
-                        $row['is_parent'] = false;
+                        $row['children']         = 0;
+                        $row['is_parent']        = false;
                         $row['has_children']     = false; // same as is_parent!
-                        $row['is_editable']      = false;
                         $row['is_in_trail']      = false;
                         $row['is_direct_parent'] = false;
                         $row['is_current']       = false;
                         $row['is_open']          = false;
                         $row['be_tree_is_open']  = isset( $_COOKIE[ session_name() . 'pageid_'.$row['page_id']] ) ? true : false; // for page tree
                         $row['href']             = CAT_URL . PAGES_DIRECTORY . $row['link'] . PAGE_EXTENSION;
+
+                        // user has modify permissions
+                        $row['is_editable']      = self::hasPagePermission($row['page_id'],'edit');
+                        $row['is_visible']       = self::hasPagePermission($row['page_id'],'view');
 
                         // mark current page
                         if (isset($page_id) && $row['page_id'] == $page_id )
@@ -233,19 +236,6 @@ if (!class_exists('CAT_Helper_Page'))
                         }
                         if($direct_parent && $page['page_id'] == $direct_parent)
                             self::$pages[$i]['is_direct_parent'] = true;
-
-                        // mark editable pages by checking user perms and page
-                        // visibility
-// --------------------- NOT READY YET! (???) ----------------------------------------
-#        				if (CAT_Users::ami_group_member($page['admin_groups']) || self::getPagePermission($page['page_id'],'admin') === true)
-#        				{
-#                            if ( $use_trash !== 'true' || $page['visibility'] !== 'deleted' )
-#                            {
-#                                self::$pages[$i]['is_editable'] = true;
-#                                self::$pages_editable++;
-#                            }
-#        				}
-// --------------------- NOT READY YET! ----------------------------------------
                     }
 
                     // resolve the trail
@@ -862,6 +852,7 @@ if (!class_exists('CAT_Helper_Page'))
                 self::$instance->log()->debug(sprintf('adding items for backend theme [%s]', DEFAULT_THEME));
                 self::_load_headers_inc($file, 'backend', 'templates/' . DEFAULT_THEME, $section);
             } // end loading theme
+            array_push(CAT_Helper_Page::$js_search_path, '/templates/'.DEFAULT_THEME, '/templates/'.DEFAULT_THEME.'/js');
 
             // -----------------------------------------------------------------
             // -----                     admin tool                        -----
@@ -1633,47 +1624,6 @@ frontend.css and template.css are added in _get_css()
         }   // end function getParentTitles()
 
         /**
-    	 * checks permission for a page
-    	 *
-    	 * @access public
-    	 * @param  int    $page_id
-    	 * @param  string $action - viewing|admin; default: admin
-    	 * @return boolean
-    	 */
-    	public static function getPagePermission($page_id,$action='admin')
-        {
-    		if ($action!='viewing') $action='admin';
-    		$action_groups = $action.'_groups';
-    		$action_users  = $action.'_users';
-            $page          = self::properties($page_id);
-    		if (is_array($page))
-            {
-				$groups = ( isset($page[$action_groups]) )
-                        ? explode(',',$page[$action_groups])
-                        : array();
-				$users  = ( isset($page[$action_users]) )
-                        ? $page[$action_users]
-                        : array();
-    		}
-
-            // check if user is in any admin group
-            $user     = CAT_User::getInstance();
-    		$in_group = $user->hasGroup($groups);
-
-            $by_user = false;
-            if(is_array($users) && is_numeric(array_search(CAT_Users::getInstance()->get_user_id(), $users)))
-            {
-                $by_user = true;
-            }
-
-    		if(!$in_group && !$by_user)
-            {
-    			return false;
-    		}
-    		return true;
-    	}   // end function getPagePermission()
-
-        /**
          * uses ListBuilder to create a dropdown list of pages
          *
          * @access public
@@ -2026,6 +1976,45 @@ frontend.css and template.css are added in _get_css()
             define( 'VISIBILITY' , 'public' );
         }   // end function getVirtualPage()
         
+        /**
+    	 * checks permission for a page
+    	 *
+    	 * @access public
+    	 * @param  int    $page_id
+    	 * @param  string $needed - required permission, default: admin
+    	 * @return boolean
+    	 */
+    	public static function hasPagePermission($page_id,$needed='admin')
+        {
+            $result  = false;
+
+            // root has all perms
+            if(self::$instance->user()->is_root()) return true;
+
+            switch($needed)
+            {
+                case 'edit':
+                    // user needs global pages_modify permission or must be owner
+                    if(
+                           self::$instance->user()->hasPerm('pages_modify')
+                        || self::$instance->user()->isOwner($page_id)
+                    ) {
+                        $result = true;
+                    }
+                    else {
+                    }
+                    break;
+                case 'view':
+                    if(
+                           self::$instance->user()->hasPerm('pages_list')
+                        || self::$instance->user()->isOwner($page_id)
+                    ) {
+                        $result = true;
+                    }
+                    break;
+            }
+            return $result;
+    	}   // end function hasPagePermission()
 
         /**
          * Work-out if the page parent (if selected) has a seperate language
@@ -2394,7 +2383,7 @@ frontend.css and template.css are added in _get_css()
                 // shown if user is allowed
                 case 'private':
                 case 'registered':
-                    if (CAT_Users::is_authenticated() == true)
+                    if (CAT_Object::user()->is_authenticated() == true)
                     {
                         // check language
                         if(CAT_Registry::get('PAGE_LANGUAGES')=='false'||(self::properties($page_id,'language')==''||self::properties($page_id,'language')==LANGUAGE))
@@ -2530,22 +2519,18 @@ frontend.css and template.css are added in _get_css()
                            . $val->sanitize_url(CAT_URL.'/'.$path_prefix.'/'.$item)
                            . '"></script>';
                             continue;
-                        }
+                }
                 // we iterate over $check_paths, adding the path parts and
                 // trying to find the file
                 $add_to_path = '';
-                            foreach ($check_paths as $subdir)
-                            {
+                foreach ($check_paths as $subdir)
+                {
                     if (!preg_match('#/'.$subdir.'/#', $item))
                         $add_to_path = $subdir.'/'.$add_to_path;
                     if(file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$add_to_path.'/'.$item)))
-                                {
+                    {
                         $self->log()->debug('matched by check_paths');
                         array_push( CAT_Helper_Page::$js_search_path, $add_to_path.'/'.$item);
-                        /*$ref[] = CAT_Helper_Page::$space
-                               . '<script type="text/javascript" src="'
-                               . $val->sanitize_url(CAT_URL.'/'.$add_to_path.'/'.$item)
-                               . '"></script>';*/
                         continue;
                     }
                 }

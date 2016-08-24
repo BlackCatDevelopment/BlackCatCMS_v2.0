@@ -33,7 +33,6 @@ if (!class_exists('CAT_Backend_Admintools'))
     class CAT_Backend_Admintools extends CAT_Object
     {
         // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
         protected static $instance = NULL;
 
         /**
@@ -63,6 +62,7 @@ if (!class_exists('CAT_Backend_Admintools'))
             {
                 foreach($tools as $tool)
                 {
+
                     // check if the user is allowed to see this item
                     #if(!$user->get_permission($tool['directory'],$tool['type']))
                     #    continue;
@@ -70,21 +70,21 @@ if (!class_exists('CAT_Backend_Admintools'))
                     // check if a module description exists for the displayed backend language
                     $module_description = false;
                     $icon               = false;
-                    $language_file      = CAT_PATH.'/modules/'.$tool['VALUE'].'/languages/' . $self->lang()->getLang() . '.php';
+                    $language_file      = CAT_PATH.'/modules/'.$tool['directory'].'/languages/' . $self->lang()->getLang() . '.php';
                     if ( true === file_exists($language_file) )
                         require $language_file;
                     // Check whether icon is available for the admintool
-                    if ( file_exists(CAT_PATH.'/modules/'.$tool['VALUE'].'/icon.png') )
+                    if ( file_exists(CAT_PATH.'/modules/'.$tool['directory'].'/icon.png') )
                     {
-                        list($width, $height, $type, $attr) = getimagesize(CAT_PATH.'/modules/'.$tool['VALUE'].'/icon.png');
+                        list($width, $height, $type, $attr) = getimagesize(CAT_PATH.'/modules/'.$tool['directory'].'/icon.png');
                         // Check whether file is 32*32 pixel and is an PNG-Image
                         $icon = ($width == 32 && $height == 32 && $type == 3)
-                              ? CAT_URL.'/modules/'.$tool['VALUE'].'/icon.png'
+                              ? CAT_URL.'/modules/'.$tool['directory'].'/icon.png'
                               : false;
                     }
                     $tpl_data['tools'][] = array(
-                        'TOOL_NAME'        => $tool['NAME'],
-                        'TOOL_DIR'         => $tool['VALUE'],
+                        'TOOL_NAME'        => $tool['name'],
+                        'TOOL_DIR'         => $tool['directory'],
                         'ICON'             => $icon,
                         'TOOL_DESCRIPTION' => (!$module_description?$tool['description']:$module_description),
                     );

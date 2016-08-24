@@ -18,7 +18,6 @@ if (!class_exists('CAT_Groups'))
 
     class CAT_Groups extends CAT_Object
     {
-        protected        $_config  = array( 'loglevel' => 7 );
         protected        $groups   = array();
         protected        $roles    = array();
         protected static $instance = NULL;
@@ -88,8 +87,10 @@ if (!class_exists('CAT_Groups'))
         
 
         /**
+         * get a list of groups; optional $user_id
          *
          * @access public
+         * @param  integer  $user_id - member id
          * @return
          **/
         public function getGroups($user_id=NULL)

@@ -22,14 +22,23 @@
                 </li>
             </ul><!-- /.navbar-top-links -->
 
+            {template sidemenu data}
+                {foreach $data item}{if $item.name != 'preferences' && $item != 1}
+                <li>
+                    <a href="{$item.href}"{if $item.is_current || $item.is_in_trail} class="active"{/if}><i class="fa fa-fw fa-{$item.name}"></i> {translate($item.title)}{if $item.children}<span class="fa arrow"></span>{/if}</a>
+                    {if $item.children && $item.is_in_trail}
+                    <ul class="nav nav-level-{$item.level + 1}">
+                        {sidemenu $item.children}
+                    </ul>
+                    {/if}
+                </li>
+                {/if}{/foreach}
+            {/template}
+
             <div class="navbar-default sidebar" role="navigation">
                 <div class="sidebar-nav navbar-collapse">
                     <ul class="nav" id="side-menu">
-                        {foreach $MAIN_MENU as menu}{if $menu.name != 'preferences'}
-                        <li>
-        					<a href="{$menu.link}" target="_self"><span class="fa fa-fw fa-{$menu.name}"></span> {$menu.title}</a>
-        				</li>
-                        {/if}{/foreach}
+                        {sidemenu $MAIN_MENU_RECURSIVE}
                     </ul>
                 </div>
             </div><!-- /.navbar-static-side -->

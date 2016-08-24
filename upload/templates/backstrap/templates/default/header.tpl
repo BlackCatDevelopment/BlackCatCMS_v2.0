@@ -10,8 +10,8 @@
     <![endif]-->
 </head>
 <body class="fuelux">
-
     <div id="wrapper">
+        {include file='backend_pagetree.tpl'}
         {include 'nav.tpl'}
         <div id="page-wrapper">
             <div class="row">
@@ -21,7 +21,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="infopanel alert-dismissible" role="alert" style="display:none">
+                    <div class="infopanel alert alert-danger alert-dismissible fade in" role="alert" style="display:none">
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <span id="message"></span>
                     </div>

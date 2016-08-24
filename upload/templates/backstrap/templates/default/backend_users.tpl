@@ -14,8 +14,8 @@
                 <tr>
                     <td>
                         <span class="fa fa-fw{if $user.user_id == 1} fa-anchor{/if}"></span>
-                        <span class="fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{else}green{/if}"></span>
-                        {if $PERMS.users_delete && $user.user_id != 1}<a href="#" class="ajax" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                        {if $PERMS.users_edit}<a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}dis{else}en{/if}abled"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                        {if $PERMS.users_delete && $user.user_id != 1}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                     </td>
                     <td>{$user.user_id}</td>
                     <td><a href="#" class="editable" data-name="title" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit" data-title="{translate('Username')}">{$user.username}</a></td>
@@ -38,6 +38,8 @@
             </tbody>
         </table>
 
+        <span class="fa fa-fw fa-lock text-success"></span> = {translate('Two-Step Authentication enabled')}
+        <span class="fa fa-fw fa-unlock yellow"></span> = {translate('Two-Step Authentication disabled')}
         {include 'legend.tpl'}
 
         {if $PERMS.users_add}
@@ -53,3 +55,37 @@
             <input type="reset" class="btn btn-link" type="button" />
         </form>
         {/if}
+
+        {include(file='fuelux_modal.tpl' modal_id='modal_users' modal_title='', modal_text='')}
+
+        <script type="text/javascript">
+        //<![CDATA[
+            $(function() {
+                $('a.delete').on('click', function(event) {
+                    event.preventDefault();
+                    // reset infopanel
+                    $('div.infopanel span#message').html('');
+                    $('div.infopanel').hide();
+                    var id = $(this).data('id');
+                    $('#myModalLabel').text(cattranslate('Delete user'));
+                    $('div.modal-body').html(cattranslate('Do you really want to delete this user?')+'<br />'+cattranslate('Name')+': '+$(this).data('name'));
+                    $('#modal_users').modal('show')
+                });
+                $('a.tfa').on('click', function(event) {
+                    event.preventDefault();
+                    var id    = $(this).data('id');
+                    var _this = $(this);
+                    $.ajax({
+                        type    : 'POST',
+                        url     : '{$CAT_ADMIN_URL}/users/tfa/' + id,
+                        dataType: 'json',
+                        success : function(data, status) {
+                            // activate for debugging:
+                            //console.log(data);
+                            _this.find('span').toggleClass('fa-unlock').toggleClass('fa-lock').toggleClass('yellow');
+                        }
+                    });
+                });
+            });
+        //]]>
+        </script>

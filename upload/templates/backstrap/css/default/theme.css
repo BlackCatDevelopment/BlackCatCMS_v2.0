@@ -1,3 +1,5 @@
+@import url(../../../../CAT/templates/error.css);
+
 /*!
  * Start Bootstrap - SB Admin 2 Bootstrap Admin Theme (http://startbootstrap.com)
  * Code licensed under the Apache License v2.0.
@@ -7,309 +9,77 @@
  * above for the original theme
  *
  */
-#wrapper {
-    width: 100%;
-    margin-right:40px;
-}
 
-#page-wrapper {
-    padding: 0 15px;
-    min-height: 568px;
-}
+#wrapper{width:100%;margin-right:40px;}
+#page-wrapper{padding:0 15px;min-height:568px;}
 
-.navbar-brand{
-    font-size: 14px;
-}
+.navbar-brand{font-size:14px;}
 
-@media(min-width:768px) {
-    #page-wrapper {
-        position: inherit;
-        margin: 0 0 0 250px;
-        padding: 15px 0 0 30px;
-    }
-    .navbar-brand{
-        font-size: 18px;
-    }
-}
+/* top navigation */
+.navbar-top-links{margin-right:0}
+.navbar-top-links li{display:inline-block}
+.navbar-top-links li:last-child{margin-right:15px}
+.navbar-top-links li a{padding:15px;min-height:50px}
+.navbar-top-links .dropdown-menu li{display:block}
+.navbar-top-links .dropdown-menu li:last-child{margin-right:0}
+.navbar-top-links .dropdown-menu li a{padding:3px 20px;min-height:0}
+.navbar-top-links .dropdown-menu li a div{white-space:normal}
+.navbar-top-links .dropdown-messages,.navbar-top-links .dropdown-tasks,.navbar-top-links .dropdown-alerts{width:310px;min-width:0}
+.navbar-top-links .dropdown-messages{margin-left:5px}
+.navbar-top-links .dropdown-tasks{margin-left:-59px}
+.navbar-top-links .dropdown-alerts{margin-left:-123px}
+.navbar-top-links .dropdown-user{right:0;left:auto}
 
-.navbar-top-links {
-    margin-right: 0;
-}
-
-.navbar-top-links li {
-    display: inline-block;
-}
-
-.navbar-top-links li:last-child {
-    margin-right: 15px;
-}
-
-.navbar-top-links li a {
-    padding: 15px;
-    min-height: 50px;
-}
-
-.navbar-top-links .dropdown-menu li {
-    display: block;
-}
-
-.navbar-top-links .dropdown-menu li:last-child {
-    margin-right: 0;
-}
-
-.navbar-top-links .dropdown-menu li a {
-    padding: 3px 20px;
-    min-height: 0;
-}
-
-.navbar-top-links .dropdown-menu li a div {
-    white-space: normal;
-}
-
-.navbar-top-links .dropdown-messages,
-.navbar-top-links .dropdown-tasks,
-.navbar-top-links .dropdown-alerts {
-    width: 310px;
-    min-width: 0;
-}
-
-.navbar-top-links .dropdown-messages {
-    margin-left: 5px;
-}
-
-.navbar-top-links .dropdown-tasks {
-    margin-left: -59px;
-}
-
-.navbar-top-links .dropdown-alerts {
-    margin-left: -123px;
-}
-
-.navbar-top-links .dropdown-user {
-    right: 0;
-    left: auto;
-}
-
-.sidebar .sidebar-nav.navbar-collapse {
-    padding-right: 0;
-    padding-left: 0;
-}
-
-.sidebar .sidebar-search {
-    padding: 15px;
-}
-
-.sidebar .arrow {
-    float: right;
-}
-
-.sidebar .fa.arrow:before {
-    content: "\f104";
-}
-
-.sidebar .active>a>.fa.arrow:before {
-    content: "\f107";
-}
-
-.sidebar .nav-second-level li,
-.sidebar .nav-third-level li {
-    border-bottom: 0!important;
-}
-
-.sidebar .nav-second-level li a {
-    padding-left: 37px;
-}
-
-.sidebar .nav-third-level li a {
-    padding-left: 52px;
-}
-
-@media(min-width:768px) {
-    .sidebar {
-        z-index: 1;
-        position: absolute;
-        width: 250px;
-        margin-top: 51px;
-    }
-
-    .navbar-top-links .dropdown-messages,
-    .navbar-top-links .dropdown-tasks,
-    .navbar-top-links .dropdown-alerts {
-        margin-left: auto;
-    }
-}
-
-.btn-outline {
-    color: inherit;
-    background-color: transparent;
-    transition: all .5s;
-}
-
-.panel .slidedown .glyphicon{
-    margin-right: 5px;
-}
-
-.login-panel {
-    margin-top: 25%;
-}
-
-.dataTables_wrapper {
-    position: relative;
-    clear: both;
-}
-
-table.dataTable thead .sorting,
-table.dataTable thead .sorting_asc,
-table.dataTable thead .sorting_desc,
-table.dataTable thead .sorting_asc_disabled,
-table.dataTable thead .sorting_desc_disabled {
-    background: 0 0;
-}
-
-table.dataTable thead .sorting_asc:after {
-    content: "\f0de";
-    float: right;
-    font-family: fontawesome;
-}
-
-table.dataTable thead .sorting_desc:after {
-    content: "\f0dd";
-    float: right;
-    font-family: fontawesome;
-}
-
-table.dataTable thead .sorting:after {
-    content: "\f0dc";
-    float: right;
-    font-family: fontawesome;
-}
-
-.btn-circle {
-    width: 30px;
-    height: 30px;
-    padding: 6px 0;
-    border-radius: 15px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 1.428571429;
-}
-
-.btn-circle.btn-lg {
-    width: 50px;
-    height: 50px;
-    padding: 10px 16px;
-    border-radius: 25px;
-    font-size: 18px;
-    line-height: 1.33;
-}
-
-.btn-circle.btn-xl {
-    width: 70px;
-    height: 70px;
-    padding: 10px 16px;
-    border-radius: 35px;
-    font-size: 24px;
-    line-height: 1.33;
-}
-
-.show-grid [class^=col-] {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.show-grid {
-    margin: 15px 0;
-}
-
-.huge {
-    font-size: 40px;
-}
-
-.navbar-title{
-    float: left;
-    font-size: 18px;
-    height: 50px;
-    line-height: 20px;
-    padding: 15px;
-}
-
-/* Font Awesome Aliases */
-.fa-media:before {
-  content: "\f1c8";
-}
-.fa-settings:before {
-  content: "\f085";
-}
-.fa-addons:before,
-.fa-module:before {
-  content: "\f12e";
-}
-.fa-admintools:before {
-  content: "\f0ad";
-}
-.fa-groups:before {
-  content: "\f0c0";
-}
-.fa-users:before {
-  content: "\f183";
-}
-.fa-roles:before {
-  content: "\f02e";
-}
-.fa-pages:before {
-  content: "\f0c5";
-}
-.fa-template:before {
-  content: "\f03e";
-}
-/* Slide panel for page tree */
-#slide-panel {
-    border-radius: 0;
-    margin: 0;
-    min-height: 100%;
-    position: absolute;
-    top: 0;
-    right: -250px;
-    transition: all 0.2s ease 0s;
-    width: 250px;
-    z-index: 9999;
-}
-#slide-panel-toggle{
-    font-size: 3em;
-    height: 60px;
-    line-height: 38px;
-    padding-left: 5px;
-    position: absolute;
-    right: -3px;
-    top: 43%;
-    vertical-align: middle;
-    width: 30px;
-}
-#slide-panel-toggle.open{right:250px;}
-#slide-panel.open{
-    right:0;
-}
-
-ul.tools{list-style: none outside none;}
-ul.tools li{width:100%;display:inline-block;float:left;}
-
-/* two column widget layout */
-@media(min-width:768px) {
-    ul.tools li{width:49%;margin-right:1%;}
-    ul.tools li:nth-child(3n){clear:left;}
-}
-/* three column widget layout */
-@media(min-width:1025px) {
-    ul.tools li{width:32%;margin-right:1%;}
-    ul.tools li:nth-child(3n){clear:unset;}
-    ul.tools li:nth-child(4n){clear:left;}
-}
+/* sidebar navigation */
+.sidebar .sidebar-nav.navbar-collapse{padding-right:0;padding-left:0;}
+.sidebar .arrow{float:right;}
+.sidebar .fa.arrow:before{content:"\f104";}
+.sidebar .active>a>.fa.arrow:before{content:"\f107";}
+.sidebar .nav-level-1 li, .sidebar .nav-level-2 li{border-bottom:0!important;}
+.sidebar .nav-level-1 li a, .sidebar .nav-level-2 li a{padding:2px 5px 2px 37px;}
+.sidebar .nav-level-2 li a{padding-left:52px;}
 
 /* Fuel UX */
 .repeater-title{font-weight:900;}
 
 /* Dashboard */
 html body.fuelux div#wrapper div#page-wrapper div.row.flex div.col-lg-4.col-md-8 div.panel.panel-primary div.panel-heading div.row div.col-xs-2.text-right button.btn.btn-primary{padding:0;border:0;}
-button.btn.btn-primary.collapsed span:before {
-  content: "\f070";
+button.btn.btn-primary.collapsed span:before{content:"\f070";}
+
+/* Font Awesome Aliases */
+.fa-media:before{content:"\f1c8";}
+.fa-settings:before{content:"\f085";}
+.fa-addons:before,.fa-module:before{content:"\f12e";}
+.fa-admintools:before{content:"\f0ad";}
+.fa-groups:before{content:"\f0c0";}
+.fa-users:before{content:"\f183";}
+.fa-roles:before{content:"\f02e";}
+.fa-permissions:before{content:"\f084";}
+.fa-pages:before{content:"\f0c5";}
+.fa-template:before{content:"\f03e";}
+.fa-public:before{content:"\f06e";}
+.fa-hidden:before{content:"\f070";}
+.fa-private:before{content:"\f084";}
+.fa-datetime:before{content:"\f017";}
+.fa-mail:before{content:"\f0e0";}
+.fa-headers:before{content:"\f0ac";}
+.fa-administration:before{content:"\f085";}
+
+/* fancytree plugin */
+table.fancytree-ext-table tbody tr td {border:0;}
+
+/******************************************************************************/
+/****** off canvas page tree **************************************************/
+/******************************************************************************/
+nav#tree{background:#f8f8f8;display:block;height:100%;overflow:auto;position:fixed;right:-100em;font-size:15px;top:51px;width:auto;min-width:15em;z-index:2000;border-left:1px solid #ccc;padding:5px;-moz-box-shadow:-5px 0 5px #ccc;-webkit-box-shadow:-5px 0 5px #ccc;box-shadow:-5px 0 5px #ccc;transition:right 0.3s ease-in-out 0s;-webkit-transition:right 0.3s ease-in-out 0s;-moz-transition:right 0.3s ease-in-out 0s;-o-transition:right 0.3s ease-in-out 0s;}
+.nav-expanded nav#tree{right:0;}
+body.nav-expanded{margin-left:0em;transition:right 0.4s ease-in-out 0s;-webkit-transition:right 0.4s ease-in-out 0s;-moz-transition:right 0.4s ease-in-out 0s;-o-transition:right 0.4s ease-in-out 0s;}
+#nav-close{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;font-size:24px;padding-right:10px;}
+
+
+@media(min-width:768px) {
+    #page-wrapper{position:inherit;margin:0 0 0 250px;padding:15px 0 0 30px;}
+    .navbar-brand{font-size:18px;}
+    .sidebar{z-index:1;position:absolute;width:250px;margin-top:51px;}
+    .navbar-top-links .dropdown-messages, .navbar-top-links .dropdown-tasks, .navbar-top-links .dropdown-alerts{margin-left:auto;}
 }

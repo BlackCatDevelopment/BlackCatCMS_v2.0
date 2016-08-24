@@ -48,10 +48,5 @@
     {/for}
 </div>
 {/for}
-{include(file='modal.tpl' modal_id='confirm' modal_title='Remove widget', modal_text='Do you really want to remove this widget from your dashboard?')}
+{include(file='fuelux_modal.tpl' modal_id='confirm' modal_title='Remove widget', modal_text='Do you really want to remove this widget from your dashboard?')}
 {/if}
-
-<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#confirm">
-  Launch demo modal
-</button>
-

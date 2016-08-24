@@ -1,4 +1,4 @@
-        {include(file='fuelux_repeater.tpl' repeater_id='bs_rep_addons' repeater_title='' repeater_button_group='backend_addons_buttongroup.tpl' repeater_header_right=1)}
+        {include(file='fuelux_repeater.tpl' repeater_id='bs_rep_addons' repeater_title='' repeater_button_group='backend_addons_buttongroup.tpl')}
 
 {literal}
         <script type="text/javascript">
@@ -14,11 +14,12 @@
             var rep  = $('div#bs_rep_addons');
 
             var addonsDataSource = function (options, callback) {
-                var items     = bs_rep_addons_filter(data),
+                var items     = data,
                     firstItem = options.pageIndex * (options.pageSize || 0),
-                    lastItem  = firstItem + (options.pageSize || 10)
-                    pages     = Math.ceil( items.length / 10 )
+                    lastItem  = firstItem + (options.pageSize || 10),
+                    pages     = Math.ceil(items.length / 10)
                     ;
+
                 // define the datasource
                 var dataSource = {
                     'page' : options.pageIndex,
@@ -34,41 +35,26 @@
                         label: '',
                         property: 'icon'
                     },{
-    					label: cattranslate('Name'),
-    					property: 'name',
-    					sortable: true
-    				},{
-    					label: cattranslate('Version'),
-    					property: 'version'
+                        label: cattranslate('Name'),
+                        property: 'name',
+                        sortable: true
                     },{
-    					label: cattranslate('Installed'),
-    					property: 'installed',
-    					sortable: true
-    				},{
-    					label: cattranslate('Upgraded'),
-    					property: 'update',
-    					sortable: true
-    				}],
+                        label: cattranslate('Version'),
+                        property: 'version'
+                    },{
+                        label: cattranslate('Installed'),
+                        property: 'install_date',
+                        sortable: true
+                    },{
+                        label: cattranslate('Upgraded'),
+                        property: 'update_date',
+                        sortable: true
+                    }],
                     'items': items.slice(firstItem,lastItem)
                 };
                 // pass the datasource back to the repeater
                 callback(dataSource);
             };
-
-            var bs_rep_addons_filter = function(data) {
-                var btn_checked = $('div.btn-group input:checked');
-                var filter = $.map(btn_checked,function(i) { return i.id.replace('btn_',''); });
-                var found = $.grep(data, function(item) {
-                    return ( $.inArray(item.type,filter) !== -1 );
-                });
-                return found;
-                //console.log(found);
-            };
-
-            $('div.btn-group').on('change',function(e) {
-                rep.repeater('clear');
-                rep.repeater('render');
-            });
 
             function customColumnRenderer(helpers, callback) {
                 // Determine what column is being rendered and review

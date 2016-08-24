@@ -32,8 +32,6 @@ if (!class_exists('CAT_Backend_Users'))
 
     class CAT_Backend_Users extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array();
         protected static $instance = NULL;
 
         /**
@@ -48,25 +46,28 @@ if (!class_exists('CAT_Backend_Users'))
             return self::$instance;
         }   // end function getInstance()
 
+
+
         /**
+         * get the list of users that are members of the given group
          *
          * @access public
          * @return
          **/
         public static function bygroup()
         {
-            if(!CAT_Object::user()->hasPerm('users_membership'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
             $self = self::getInstance();
+            if(!$self->user()->hasPerm('users_membership'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
             $id   = CAT_Backend::getRouteParams()[0];
-            $data = CAT_Groups::getMembers($id);
+            $data = CAT_Groups::getInstance()->getMembers($id);
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
                 echo json_encode($data,true);
                 return;
             }
-        }   // end function group()
+        }   // end function bygroup()
         
         /**
          *
@@ -75,7 +76,8 @@ if (!class_exists('CAT_Backend_Users'))
          **/
         public static function delete()
         {
-            if(!CAT_Object::user()->hasPerm('groups_delete'))
+            $self = self::getInstance();
+            if(!$self->user()->hasPerm('groups_delete'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $id   = CAT_Backend::getRouteParams()[0];
             if(CAT_Users::deleteUser($id)!==true)
@@ -117,6 +119,55 @@ if (!class_exists('CAT_Backend_Users'))
             $self->tpl()->output('backend_users', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function index()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function notingroup()
+        {
+            $self = self::getInstance();
+            if(!$self->user()->hasPerm('users_membership'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $id    = CAT_Backend::getRouteParams()[0];
+            $users = CAT_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo json_encode($users,true);
+                return;
+            }
+        }   // end function notingroup()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function tfa()
+        {
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('users_edit'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $id   = CAT_Backend::getRouteParams()[0];
+            $user = new CAT_User($id);
+            $tfa  = $user->get('tfa_enabled');
+            $new  = ( $tfa == 'Y' ? 'N' : 'Y' );
+            $self->db()->query(
+                'UPDATE `:prefix:rbac_users` SET `tfa_enabled`=? WHERE `user_id`=?',
+                array($new,$id)
+            );
+            if($self->db()->isError())
+            {
+                echo CAT_Object::json_error('Unable to save');
+            }
+            else
+            {
+                echo CAT_Object::json_success('Success');
+            }
+        }   // end function tfa()
+        
 
     } // class CAT_Helper_Users
 

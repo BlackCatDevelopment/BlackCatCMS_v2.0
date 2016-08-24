@@ -14,10 +14,12 @@
                 <tr>
                     <td>
                         <span class="fa fa-fw{if $group.group_builtin == 'Y'} fa-anchor{/if}"></span>
-                        {if $PERMS.groups_delete && $group.group_builtin != 'Y'}<a href="#" class="ajax" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                        {if $PERMS.groups_delete && $group.group_builtin != 'Y'}
+                        <a href="#" class="delete" data-toggle="tooltip" title="{translate('Delete group')}" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}" data-name="{$group.group_title}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>
+                        {/if}
                         {if $PERMS.groups_users}
-                        <a href="" class="members" title="{translate('Manage group members')}" data-group-id="{$group.group_id}"><span class="fa fa-fw fa-groups"></span></a>
-                        <a href="#" data-url="{$CAT_ADMIN_URL}/users" class="add_member" title="{translate('Add group members')}" data-group-id="{$group.group_id}"><span class="fa fa-fw fa-user-plus text-success"></span></a>
+                        {if $group.member_count > 0}<a href="#" class="members" data-toggle="tooltip" title="{translate('Manage group members')}" data-group-id="{$group.group_id}"><span class="fa fa-fw fa-groups"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                        <a href="#" class="add_member" data-toggle="tooltip" title="{translate('Add group members')}" data-group-id="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/users""><span class="fa fa-fw fa-user-plus text-success"></span></a>
                         {else}
                         <span class="fa fa-fw"></span>
                         {/if}
@@ -32,7 +34,9 @@
             </tbody>
         </table>
 
-        <span class="fa fa-fw fa-groups text-primary"></span> = {translate('Edit group members')} {include 'legend.tpl'}
+        <span class="fa fa-fw fa-groups text-primary"></span> = {translate('Edit group members')}
+        <span class="fa fa-fw fa-user-plus text-success"></span> = {translate('Add group members')}
+        {include 'legend.tpl'}
 
         {if $PERMS.groups_add}
         <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/groups/create">
@@ -49,9 +53,15 @@
         {/if}
 
         {include(file='fuelux_repeater.tpl' repeater_id='bs_rep_groups' repeater_title='Users')}
+        {include(file='fuelux_modal.tpl' modal_id='modal_users' modal_title='Add group members', modal_text='Choose the users you wish to add and click [Save]')}
 
         <script type="text/javascript">
         //<![CDATA[
+            function infoPanelReset() {
+                $('div.infopanel span#message').html('');
+                $('div.infopanel').hide();
+                $('div.infopanel').removeClass('alert-success').addClass('alert-danger');
+            }
             function customColumnRenderer(helpers, callback) {
                 // Determine what column is being rendered and review
                 var column = helpers.columnAttr;
@@ -62,12 +72,14 @@
                 // This will default to output the text value of the row item
                 switch(column) {
                     case 'tpl_icon_delete':
+                    {if $PERMS.users_delete}
                         if(typeof '{$PERMS.users_delete}' != 'undefined' && rowData.user_id != 1)
                         {
-                            customMarkup = '<a class="ajax" href="{$CAT_ADMIN_URL}/users/delete/'
-                                         + rowData.user_id
-                                         + '"><span class="fa fa-fw fa-trash red"></span></a>';
+                            customMarkup = '<a class="deleteuser" href="#" data-url="{$CAT_ADMIN_URL}/groups/'
+                                         + rowData.group_id + '/deleteuser/' + rowData.user_id
+                                         + '" data-username="'+rowData.username+'"><span class="fa fa-fw fa-trash red"></span></a>';
                         }
+                    {/if}
                         break;
                     default:
                         // otherwise, just use the existing text value
@@ -78,20 +90,97 @@
                 callback();
             }
             $(function() {
+                $(document).on('click', 'a.deleteuser', function(event) {
+                    event.preventDefault();
+                    // reset infopanel
+                    infoPanelReset();
+                    $('#myModalLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> '+cattranslate('Remove group member'));
+                    $('div.modal-body').html(cattranslate('Do you really want to remove this group member?')+'<br />'+cattranslate('Title')+': '+$(this).data('username'));
+                    $('#modal_users').modal('show');
+                    var _this = $(this);
+                    $('button.btn-primary').on('click',function(e) {
+                        $('#modal_users').modal('hide');
+                        $.ajax({
+                            type    : 'POST',
+                            url     : _this.data('url'),
+                            dataType: 'json',
+                            success : function(data, status) {
+                                _this.parent().parent().remove();
+                                $('div.infopanel span#message').html(cattranslate('Group member successfully removed'));
+                                $('div.infopanel').removeClass('alert-danger').addClass('alert-success').show();
+                            }
+                        });
+                    });
+                });
+                $('a.delete').on('click', function(event) {
+                    event.preventDefault();
+                    // reset infopanel
+                    infoPanelReset();
+                    var id = $(this).data('group-id');
+                    $('#myModalLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> '+cattranslate('Delete group'));
+                    $('div.modal-body').html(cattranslate('Do you really want to delete this group?')+'<br />'+cattranslate('Title')+': '+$(this).data('name'));
+                    $('#modal_users').modal('show');
+                });
                 $('a.add_member').on('click', function(event) {
+                    // reset infopanel
+                    infoPanelReset();
                     var id = $(this).data('group-id');
                     $.ajax({
                         type    : 'POST',
-                        url     : '{$CAT_ADMIN_URL}/users/bygroup/' + id,
+                        url     : '{$CAT_ADMIN_URL}/users/notingroup/' + id,
                         dataType: 'json',
                         success : function(data, status) {
                             // activate for debugging:
                             //console.log(data);
+                            // add select box to modal
+                            if(data.length)
+                            {
+                                if($('div.modal-body').find('select').length) {
+                                    $('div.modal-body select').remove();
+                                }
+                                $('div.modal-body').append('<form><select id="users" multiple="multiple">');
+                                var select = $('select#users');
+                                for(i=0;i<data.length;i++)
+                                {
+                                    select.append('<option value="'+data[i].user_id+'">'+data[i].username+'</option>');
+                                }
+                                $('#modal_users').modal('show');
+                                var _this = $(this);
+                                $('button.btn-primary').on('click',function(e) {
+                                    $('#modal_users').modal('hide');
+                                    if($('select#users :selected').length)
+                                    {
+                                        $.ajax({
+                                            type    : 'POST',
+                                            url     : '{$CAT_ADMIN_URL}/groups/addmember/',
+                                            dataType: 'json',
+                                            data    : $(_this).find('form').serialize(),
+                                            success : function(data, status) {
+                                                _this.parent().parent().remove();
+                                                $('div.infopanel span#message').html(cattranslate('Group member successfully removed'));
+                                                $('div.infopanel').removeClass('alert-danger').addClass('alert-success').show();
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                            else {
+                                $('div.infopanel span#message').html(
+                                    cattranslate('No addable users found') + '<br />' +
+                                    cattranslate('Please note') + ': ' +
+                                    cattranslate('Users of group "Administrators" and users that are already member of this group cannot be added.')
+                                );
+                                $('div.infopanel').removeClass('alert-danger').addClass('alert-warning').show();
+                            }
                         }
                     });
                 });
 
                 $('a.members').on('click', function(event) {
+                    // reset infopanel
+                    $('div.infopanel span#message').html('');
+                    $('div.infopanel').hide();
+
                     var id = $(this).data('group-id');
                     if($('#bs_rep_groups_'+id).length) {
                         // remove
@@ -107,7 +196,7 @@
                             dataType: 'json',
                             success : function(data, status) {
                                 // activate for debugging:
-                                //console.log(data);
+                                console.log(data);
                                 var rep = $('div#bs_rep_groups').clone().prop('id','bs_rep_groups_'+id),
                                     pg  = 1;
                                 if(data.length && data.length > 10) {

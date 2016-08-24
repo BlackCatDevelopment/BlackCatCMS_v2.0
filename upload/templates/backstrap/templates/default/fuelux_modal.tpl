@@ -6,7 +6,7 @@
         <h4 class="modal-title" id="myModalLabel">{translate($modal_title)}</h4>
       </div>
       <div class="modal-body">
-        {translate($modal_text)}
+        {if $modal_text}<div class="info">{translate($modal_text)}</div><br /><br />{/if}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">{translate('Cancel')}</button>

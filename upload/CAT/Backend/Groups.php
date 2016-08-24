@@ -32,8 +32,6 @@ if (!class_exists('CAT_Backend_Groups'))
 
     class CAT_Backend_Groups extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
         protected static $instance = NULL;
 
         /**
@@ -48,6 +46,16 @@ if (!class_exists('CAT_Backend_Groups'))
             return self::$instance;
         }   // end function getInstance()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function addmember()
+        {
+print_r($_REQUEST);
+        }   // end function addmember()
+
         public static function create()
         {
             if(!CAT_Object::user()->hasPerm('groups_add'))
@@ -60,9 +68,18 @@ if (!class_exists('CAT_Backend_Groups'))
             CAT_Groups::getInstance()->addGroup($name,$desc);
         }
 
+        /**
+         * delete a group; requires the group id as route param
+         *    example: /groups/delete/99
+         * prints JSON result (success or error) to STDOUT
+         *
+         * @access public
+         * @return void
+         **/
         public static function delete()
         {
-            if(!CAT_Object::user()->hasPerm('groups_delete'))
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('groups_delete'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $val   = CAT_Helper_Validate::getInstance();
             $id    = $val->sanitizePost('id');
@@ -73,8 +90,32 @@ if (!class_exists('CAT_Backend_Groups'))
                 CAT_Object::json_error('Built-in elements cannot be removed!');
             $res   = CAT_Groups::getInstance()->removeGroup($id);
             CAT_Object::json_result($res,($res?'':'Failed!'),($res?true:false));
-        }
+        }   // end function delete()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function deleteuser()
+        {
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('groups_users'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $id   = CAT_Backend::getRouteParams()[0];
+            $user = CAT_User::getInstance($id);
+            if($user->hasGroup($id))
+            {
+            }
+        }   // end function deleteuser()
+        
+
+        /**
+         * edit group attribute set by param 'name'
+         *
+         * @access public
+         * @return void
+         **/
         public static function edit()
         {
             if(!CAT_Object::user()->hasPerm('groups_edit'))
@@ -84,16 +125,40 @@ if (!class_exists('CAT_Backend_Groups'))
             $id    = $val->sanitizePost('pk');
             $value = $val->sanitizePost('value');
             CAT_Groups::getInstance()->set($field,$value,$id);
-        }
+        }   // end function edit()
         
         /**
          *
          * @access public
          * @return
          **/
-        public static function index()
+        public static function index($id=NULL)
         {
             $self = self::getInstance();
+            $params = CAT_Backend::getRouteParams();
+            if(count($params))
+            {
+                switch($params[0])
+                {
+                    case 'deleteuser':
+                        $user = new CAT_User($params[1]);
+                        if($user->hasGroup($id))
+                        {
+                         #   $self->db()->query(
+                         #       'DELETE FROM `:prefix:rbac_usergroups` WHERE `user_id`=? AND `group_id`=?',
+                         #       array($params[1],$id)
+                         #   );
+                        }
+                        break;
+                }
+                if(self::asJSON())
+                {
+                    echo header('Content-Type: application/json');
+                    echo $self::json_success('Success');
+                    return;
+                }
+            }
+
             $tpl_data = array(
                 'groups' => CAT_Groups::getInstance()->getGroups(),
             );

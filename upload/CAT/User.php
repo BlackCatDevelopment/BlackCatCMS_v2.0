@@ -27,6 +27,8 @@ if (!class_exists('CAT_User'))
         protected        $perms     = array();
         // array to hold the user groups
         protected        $groups    = array();
+        // array to hold the list of pages a user owns
+        protected        $pages     = array();
         // last user error
         protected        $lasterror = NULL;
         // cache already loaded users
@@ -53,9 +55,9 @@ if (!class_exists('CAT_User'))
             }
         }   // end function __construct()
 
-        public static function getInstance()
+        public static function getInstance($id=NULL)
         {
-            return new self();
+            return new self($id);
         }   // end function getInstance()
 
 
@@ -146,7 +148,7 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return boolean
          **/
-        public function authenticate($tfa=false)
+        public function authenticate()
         {
             $this->reset();
 
@@ -169,9 +171,9 @@ if (!class_exists('CAT_User'))
     			$id = $get_user->fetch(\PDO::FETCH_ASSOC);
                 $this->initUser($id['user_id']);
                 // 2-Step Auth
-                if(ENABLE_TFA && $tfa)
+                if(ENABLE_TFA && $this->get('tfa_enabled') == 'Y')
                 {
-                    $field = CAT_Helper_Validate::sanitizePost('tfa_fieldname');
+                    $field = CAT_Helper_Validate::sanitizePost('token_fieldname');
                     $token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
                     $tfa   = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE);
                     if($tfa->verifyCode($this->get('tfa_secret'),$token) !== true)
@@ -180,7 +182,6 @@ if (!class_exists('CAT_User'))
                         $this->setError('Two step authentication failed!');
                         return false;
                     }
-
                 }
                 return true;
             }
@@ -248,19 +249,23 @@ if (!class_exists('CAT_User'))
         }   // end function createSecret()
 
         /**
+         * checks if the user is member of the given group
          *
          * @access public
+         * @param  integer  $group
+         * @return boolean
          * @return
          **/
         public function hasGroup($group)
         {
-            if(!is_array($group)) $group = array($group);
-echo "CAT_user::hasGroup()<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( $this->groups );
-echo "</textarea>";
-            foreach($group as $item)
+            foreach(array_values($this->groups) as $gr)
             {
+                if($gr['group_id'] == $group)
+                {
+                    return true;
+                }
             }
+            return false;
         }   // end function hasGroup()
 
         /**
@@ -303,13 +308,28 @@ echo "</textarea>";
         {
             if(isset($this->user) && $this->user['user_id'] == 1)
                 return true;
-#            else
-#                // member of admin group
-#                if(in_array(1,self::get_groups_id()))
-#                    return true;
-#                else
+            else
+                // member of admin group
+                if($this->hasGroup(1))
+                    return true;
+                else
                     return false;
         }   // end function is_root()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function isOwner($page_id)
+        {
+            if(isset($this->user) && $this->is_root())
+                return true;
+            if(count($this->pages) && in_array($page_id,$this->pages))
+                return true;
+            return false;
+        }   // end function isOwner()
+        
 
         /**
          * reset the user object (to guest user)
@@ -323,6 +343,7 @@ echo "</textarea>";
             $this->roles  = array();
             $this->perms  = array();
             $this->groups = array();
+            $this->pages  = array();
         }   // end function reset()
 
         /**
@@ -335,7 +356,8 @@ echo "</textarea>";
             $this->log()->debug(sprintf('init user with id: [%d]',$id));
             // read user from DB
             $get_user = CAT_Helper_DB::getInstance()->query(
-                'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_secret` FROM `:prefix:rbac_users` WHERE user_id=:id',
+                'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_enabled`, `tfa_secret` '.
+                'FROM `:prefix:rbac_users` WHERE user_id=:id',
                 array('id'=>$id)
             );
             // load data into object
@@ -349,6 +371,8 @@ echo "</textarea>";
                 $this->log()->debug('user groups:'.print_r($this->groups,1));
                 $this->initPerms();
                 $this->log()->debug('user permissions:'.print_r($this->perms,1));
+                $this->initPages();
+
                 // cache
                 self::$users[$id] = $this->user;
             }
@@ -362,7 +386,9 @@ echo "</textarea>";
          **/
         protected function initRoles()
         {
-            $this->roles = CAT_Roles::getInstance()->getRoles(array('user'=>$this->user['user_id']));
+            $this->roles = CAT_Roles::getInstance()->getRoles(
+                array('for'=>'user','user'=>$this->user['user_id'])
+            );
         }   // end function initRoles()
 
         /**
@@ -372,42 +398,66 @@ echo "</textarea>";
          **/
         protected function initPerms()
         {
-            // superuser; has all permissions
             if($this->is_root())
             {
-                $q = 'SELECT * FROM `:prefix:rbac_permissions`';
-                $opt = NULL;
-            }
-            if(is_array($this->roles))
-            {
-                $q = 'SELECT * FROM `:prefix:rbac_rolepermissions` AS t1
-                JOIN `:prefix:rbac_permissions` AS t2
-                ON `t1`.`perm_id`=`t2`.`perm_id`
-                WHERE `t1`.`role_id`=:id';
-                $opt = array('id'=>$role['role_id']);
-            }
-
-            $sth = CAT_Helper_DB::getInstance()->query($q, $opt);
-            $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
-
-            if($this->is_root())
-            {
+                $sth = CAT_Helper_DB::getInstance()->query(
+                    'SELECT * FROM `:prefix:rbac_permissions`'
+                );
+                $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
                 foreach(array_values($perms) as $perm)
                 {
-                    $this->perms[$perm['title']] = -1;
+                    $this->perms[$perm['title']] = true;
                 }
             }
             else
             {
-                foreach(array_values($this->roles) as $role)
+                if(is_array($this->roles))
                 {
-                    foreach(array_values($perms) as $perm)
+                    foreach($this->roles as $role)
                     {
-                        $this->perms[$perm['title']] = $role['role_id'];
+                        $q = 'SELECT * FROM `:prefix:rbac_rolepermissions` AS t1
+                        JOIN `:prefix:rbac_permissions` AS t2
+                        ON `t1`.`perm_id`=`t2`.`perm_id`
+                        WHERE `t1`.`role_id`=:id';
+                        $opt = array('id'=>$role['role_id']);
+                    }
+                    if($q)
+                    {
+                        $sth = CAT_Helper_DB::getInstance()->query($q, $opt);
+                        $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                        foreach(array_values($this->roles) as $role)
+                        {
+                            foreach(array_values($perms) as $perm)
+                            {
+                                $this->perms[$perm['title']] = $role['role_id'];
+                            }
+                        }
                     }
                 }
             }
         }   // end function initPerms()
+
+        /**
+         * get the list of pages a user owns
+         *
+         * @access protected
+         * @return
+         **/
+        protected function initPages()
+        {
+            if(!$this->is_root())
+            {
+                $q = 'SELECT * FROM `:prefix:rbac_pageowner` AS t1
+                WHERE `t1`.`owner_id`=?';
+                $sth = CAT_Helper_DB::getInstance()->query($q,array($this->user['user_id']));
+                $pages = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                foreach(array_values($pages) as $pg)
+                {
+                    $this->pages[] = $pg['page_id'];
+                }
+            }
+        }   // end function initPages()
+        
         
 
         /**

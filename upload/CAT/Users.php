@@ -76,21 +76,32 @@ if ( ! class_exists( 'CAT_Users', false ) )
          **/
         public static function getUsers($opt=NULL)
         {
-            $q = 'SELECT * FROM `:prefix:rbac_users` AS `t1` ';
-            $p = array();
+            $self = self::getInstance();
+            $q    = 'SELECT * FROM `:prefix:rbac_users` AS `t1` ';
+            $p    = array();
             if(is_array($opt))
             {
                 if(isset($opt['group_id']))
                 {
-                    $q .= 'JOIN `:prefix_usergroups` AS `t2` '
+                    $q .= 'LEFT OUTER JOIN `:prefix:rbac_usergroups` AS `t2` '
                        .  'ON `t1`.`user_id`=`t2`.`user_id` '
-                       .  'WHERE `t2`.`group_id`=:id'
+                       .  'WHERE ((`t2`.`group_id`'
+                       .  ( isset($opt['not_in_group']) ? '!' : '' )
+                       .  '=:id'
                        ;
                     $p['id'] = $opt['group_id'];
+                    if(isset($opt['not_in_group']))
+                    {
+                        // skip users in admin group
+                        $q .= ' AND `t2`.`group_id` != 1 ) OR `t2`.`group_id` IS NULL )';
+                    }
+                    else
+                    {
+                        $q .= '))';
+                    }
                 }
             }
-            $dbh  = CAT_Helper_DB::getInstance();
-            $sth  = $dbh->query($q,$p);
+            $sth  = CAT_Helper_DB::getInstance()->query($q,$p);
             return $sth->fetchAll(\PDO::FETCH_ASSOC);
         }   // end function getUsers()
 

@@ -32,8 +32,6 @@ if (!class_exists('CAT_Backend_Addons'))
 
     class CAT_Backend_Addons extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
         protected static $instance = NULL;
 
         /**
@@ -57,6 +55,11 @@ if (!class_exists('CAT_Backend_Addons'))
         {
             $self = self::getInstance();
             $data = CAT_Helper_Addons::get_addons(0,NULL,NULL,NULL,false,true);
+            foreach($data as $i => $item)
+            {
+                $data[$i]['install_date'] = CAT_Helper_DateTime::getDate($item['installed']);
+                $data[$i]['update_date'] = CAT_Helper_DateTime::getDate($item['upgraded']);
+            }
             $tpl_data = array(
                 'modules' => $data,
                 'modules_json' => json_encode($data, JSON_NUMERIC_CHECK),

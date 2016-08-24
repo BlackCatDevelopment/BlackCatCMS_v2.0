@@ -32,10 +32,14 @@ if (!class_exists('CAT_Backend_Settings'))
 
     class CAT_Backend_Settings extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 7 );
-        protected static $instance = NULL;
+        protected static $instance    = NULL;
         protected static $perm_prefix = 'settings_';
+        private   static $regions     = NULL;
+
+        public static function __callstatic($name,$arguments)
+        {
+            call_user_func([__CLASS__, 'index'] ,$name);
+        }   // end function __callstatic()
 
         /**
          *
@@ -45,36 +49,11 @@ if (!class_exists('CAT_Backend_Settings'))
         public static function getInstance()
         {
             if(!is_object(self::$instance))
+            {
                 self::$instance = new self();
+            }
             return self::$instance;
         }   // end function getInstance()
-
-        /**
-         * get the main menu (settings sections)
-         * checks the user priviledges
-         *
-         * @access public
-         * @return array
-         **/
-        public static function getMainMenu($current=NULL)
-        {
-            $menu = array();
-            $self = self::getInstance();
-
-            foreach(array_values(array('seo','frontend','headers','backend','system','users','datetime','searchblock','server','mail','security','sysinfo')) as $item)
-            {
-                if($self->user()->hasPerm(self::$perm_prefix.$item))
-                {
-                    $menu[] = array(
-                        'link'             => CAT_ADMIN_URL.'/settings/'.$item,
-                        'title'            => $self->lang()->translate(ucfirst($item)),
-                        'name'             => $item,
-                        'current'          => ( $current && $current == $item ) ? true : false
-                    );
-                }
-            }
-            return $menu;
-        }
 
         /**
          * get data from settings table
@@ -94,30 +73,26 @@ if (!class_exists('CAT_Backend_Settings'))
          * @access public
          * @return
          **/
-        public static function index()
+        public static function index($region='?')
         {
-            $self = self::getInstance();
-            $tpl_data = array(
-                'SETTINGS_MENU' => self::getMainMenu(),
-            );
+            $self = CAT_Backend_Settings::getInstance();
+            if(!self::$regions)
+            {
+                self::$regions  = array();
+                $regions = CAT_Backend::getMainMenu(4);
+                foreach(array_values($regions) as $r)
+                    array_push(self::$regions,$r['name']);
+            }
 
-            // add default form
-            $form = CAT_Backend::getInstance()->getForms('settings');
-            $form->setForm('seo');
-            $form->set('contentonly',true);
-            $values = self::getSettingsTable();
-            $form->setData($values);
-            //$tpl_data['form'] = $form->getForm();
-
-            $tpl_data['content'] = $self->tpl()->get(
-                'backend_settings_seo',
-                array('values'=>$values,'form'=>$form->getForm())
-            );
-
+            if($region=='?' || !in_array($region,self::$regions)) // invalid call!
+            {
+                $region = 'index';
+            }
+            
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_settings', $tpl_data);
+            $self->tpl()->output('backend_settings',array('region'=>$self->lang()->t(ucfirst($region))));
             CAT_Backend::print_footer();
-        }   // end function Settings()
+        }   // end function mail()
         
 
     } // class CAT_Helper_Settings

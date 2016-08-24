@@ -18,6 +18,7 @@
                 <form name="login" action="{$CAT_ADMIN_URL}/authenticate" method="post">
                     <input type="hidden" name="username_fieldname" value="{$USERNAME_FIELDNAME}" />
 					<input type="hidden" name="password_fieldname" value="{$PASSWORD_FIELDNAME}" />
+                    <input type="hidden" name="token_fieldname" value="{$TOKEN_FIELDNAME}" />
                     <div>
                         <div class="form-group">
                             <div class="input-group">
@@ -28,15 +29,16 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <div class="input-group-addon"><span class="fa fa-key fa-fw"></span></div>
-                                <input type="password" class="form-control" required="required" name="{$PASSWORD_FIELDNAME}" id="{$PASSWORD_FIELDNAME}" placeholder="******" />
+                                <input type="password" class="form-control" required="required" name="{$PASSWORD_FIELDNAME}" id="{$PASSWORD_FIELDNAME}" placeholder="{translate('Your password')}" />
                             </div>
                         </div>
                         {if $ENABLE_TFA}
                         <div class="form-group">
                             <div class="input-group">
-                                <div class="input-group-addon"><span class="fa fa-key fa-lock"></span></div>
-                                <input type="text" class="form-control" required="required" name="tfa_{$USERNAME_FIELDNAME}" id="tfa_{$USERNAME_FIELDNAME}" placeholder="{translate('Please enter your code')}" />
+                                <div class="input-group-addon"><span class="fa fa-fw fa-lock"></span></div>
+                                <input type="text" class="form-control" name="{$TOKEN_FIELDNAME}" id="{$TOKEN_FIELDNAME}" placeholder="{translate('Your OTP code (PIN)')}" aria-describedby="{$TOKEN_FIELDNAME}helpBlock" />
                             </div>
+                            <span id="{$TOKEN_FIELDNAME}helpBlock" class="help-block">{translate('If you have Two Step Authentication enabled, you will have to enter your one time password here. Leave this empty otherwise.')}</span>
                         </div>
                         {/if}
                         <div class="form-group">
@@ -65,15 +67,15 @@
 
         var username_fieldname	= $('form').find('input[name=username_fieldname]').val(),
 			password_fieldname	= $('form').find('input[name=password_fieldname]').val(),
-            tfa_fieldname       = 'tfa_' + username_fieldname,
+            token_fieldname     = $('form').find('input[name=token_fieldname]').val(),
 			dates				= {
 				'username_fieldname': username_fieldname,
 				'password_fieldname': password_fieldname,
-                'tfa_fieldname'     : tfa_fieldname,
+                'token_fieldname'   : token_fieldname,
 			};
 		dates[username_fieldname]	= $('input#' + username_fieldname).val();
 		dates[password_fieldname]	= $('input#' + password_fieldname).val();
-        dates[tfa_fieldname]	    = $('input#' + tfa_fieldname).val();
+        dates[token_fieldname]	    = $('input#' + token_fieldname).val();
 
         $.ajax({
 			type:		'POST',
