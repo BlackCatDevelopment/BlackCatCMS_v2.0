@@ -49,10 +49,10 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
 	class CAT_Helper_Array extends CAT_Object
 	{
 
-        private static $Needle  = NULL;
-        private static $Key     = NULL;
-        protected      $_config = array( 'loglevel' => 8 );
-        private static $instance;
+        protected static $loglevel  = \Monolog\Logger::EMERGENCY;
+        private   static $Needle    = NULL;
+        private   static $Key       = NULL;
+        private   static $instance  = NULL;
 
         public function __call($method, $args)
         {
@@ -124,6 +124,7 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
          **/
         public static function ArrayFilterByKey(&$array, $key, $value)
         {
+            if(!is_array($array)) return false;
             $result = array();
             foreach ($array as $k => $elem) {
                 if (isset($elem[$key]) && $elem[$key] == $value) {

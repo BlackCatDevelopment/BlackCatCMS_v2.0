@@ -40,13 +40,18 @@ if (!class_exists('CAT_Backend', false))
 
     class CAT_Backend extends CAT_Object
     {
-        protected static $loglevel = \Monolog\Logger::DEBUG;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        //protected static $loglevel = \Monolog\Logger::DEBUG;
 
         private   static $instance = array();
         private   static $form     = NULL;
         private   static $route    = NULL;
         private   static $params   = NULL;
         private   static $menu     = NULL;
+        // public routes (do not check for authentication)
+        private   static $public   = array(
+            'login','authenticate','logout','qr','tfa'
+        );
 
         public static function getInstance($section_name='Start',$section_permission='start',$auto_header=true,$auto_auth=true)
         {
@@ -59,6 +64,14 @@ if (!class_exists('CAT_Backend', false))
                         'CHARSET'  => (defined('DEFAULT_CHARSET')) ? DEFAULT_CHARSET : "utf-8",
                     ),
                 ));
+                if(self::$instance->user()->is_authenticated())
+                {
+                    self::$instance->tpl()->setGlobals(array(
+                        // for re-login dialog
+                        'PASSWORD_FIELDNAME'    => CAT_Helper_Validate::createFieldname('password_'),
+                        'USERNAME_FIELDNAME'    => CAT_Helper_Validate::createFieldname('user_'),
+                    ));
+                }
             }
             return self::$instance;
         }   // end function getInstance()
@@ -69,113 +82,55 @@ if (!class_exists('CAT_Backend', false))
         public static function dispatch()
         {
             $self   = self::getInstance();
-
-            // no route yet
-            if(!self::$route)
+            // get the route handler
+            $router = new CAT_Helper_Router();
+            $self->log()->addDebug('checking if route is protected');
+            // check for protected route
+            if(!in_array($router->getFunction(),self::$public))
             {
-                foreach(array_values(array('REQUEST_URI','REDIRECT_SCRIPT_URL','SCRIPT_URL','ORIG_PATH_INFO','PATH_INFO')) as $key)
-                {
-                    if(isset($_SERVER[$key]))
-                    {
-                        self::$route = $_SERVER[$key];
-                        break;
-                    }
-                }
-                if(!self::$route) { self::$route = '/'; }
-                // remove params
-                if(stripos(self::$route,'?'))
-                    list(self::$route,$ignore) = explode('?',self::$route,2);
-                $path_prefix = str_ireplace(
-                    CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
-                    '',
-                    CAT_Helper_Directory::sanitizePath(CAT_PATH)
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Das erfordert die Einhaltung bestimmter Regeln, z.B. dass die Funktion
+// "index" immer das Recht "<Funktionsname>" erfordert (z.B. "groups"), alle
+// weiteren das Recht "<Funktionsname>_<$funcname>" (z.B. "pages_list")
+// Der Code ist irgendwie unelegant... Später nochmal drauf schauen
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                $need_perm = strtolower($router->getFunction());
+                $router->setController('CAT_Backend_'.ucFirst($router->getFunction()));
+                $router->setFunction(
+                    ( ($funcname = $router->getParam(0,true)) !== NULL ? $funcname : 'index' )
                 );
-                $self->log()->debug(sprintf(
-                    'document root [%s], CAT_PATH [%s], current route [%s], route prefix (rel. path to doc root) [%s]',
-                    $_SERVER['DOCUMENT_ROOT'], CAT_Helper_Directory::sanitizePath(CAT_PATH), self::$route, $path_prefix
-                ));
-                self::$route = str_ireplace(
-                    CAT_Helper_Directory::sanitizePath($path_prefix.'/'.CAT_BACKEND_FOLDER),
-                    '',
-                    self::$route
-                );
-                // remove leading /
-                if(!strpos(self::$route,'/',0))
-                    self::$route = substr(self::$route,1,strlen(self::$route));
+                if($funcname)
+                    $need_perm .= '_'.strtolower($funcname);
+                $router->protect($need_perm);
             }
-            $self->log()->debug(sprintf('resulting route [%s]',self::$route));
-            // handle the route
-            // special cases: login. logout and authenticate
-            if(preg_match('~^(login|authenticate|logout|qr)~',self::$route,$m))
+            // save router
+            CAT_Registry::set('CAT.router',$router);
+            // re-route to login page if the route is protected and the user is
+            // not logged in
+            if($router->isProtected() && !$self->user()->is_authenticated())
             {
-                $func = $m[1];
-                $self->log()->debug(sprintf('calling func [%s]',$func));
-                return self::$func();
+                header('Location: '.CAT_ADMIN_URL.'/login');
             }
             else
             {
-                // any other routes require user login
-                if(!$self->user()->is_authenticated())
+                // save current route for later use
+                self::$route = $router->getRoute();
+                if(!self::asJSON())
                 {
-                    // re-route
-                    header('Location: '.CAT_ADMIN_URL.'/login');
-                }
-                else
-                {
-                    // the user is logged in, resolve the route
-                    $route      = explode('/',str_replace('\\','/',self::$route));
-                    // first part of the route is the controller name
-                    $controller = array_shift($route);
-                    // second item (if exists) is the function name; if
-                    // no function name is available, use index()
-                    $function   = (count($route) ? array_shift($route) : 'index');
-                    // the given param may be an item id
-                    $parm       = NULL;
-                    if(is_numeric($function))
-                    {
-                        $parm     = $function;
-                        $function = 'index';
-                    }
-                    // if there are any items left, save as params
-                    if(count($route)) self::$params = $route;
-                    // set user data as template var {$USER.<property>}
+                    // set some template globals
                     $self->tpl()->setGlobals('USER',$self->user()->get());
-                    $self->tpl()->setGlobals('SECTION',ucfirst($controller));
-                    // check the user permissions
-                    if(!$self->user()->hasPerm($controller))
-                    {
-                        $self->log()->error('User [{user}] tried to access controller [{controller}]',array('user'=>$self->user()->get('username'), 'controller'=>$controller));
-                        CAT_Object::printFatalError('Access denied');
-                    }
-                    // controller class name
-                    $class   = 'CAT_Backend_'.ucfirst($controller);
+                    $self->tpl()->setGlobals('SECTION',ucfirst(str_replace('CAT_Backend_','',$router->getController())));
                     // add perms for use inside the templates
                     $self->tpl()->setGlobals('PERMS',CAT_User::getInstance()->getPerms());
-                    // check if the controller exists
-                    try
+                    // pages list
+                    if($self->user()->hasPerm('pages_list'))
                     {
-                        $handler = $class::getInstance();
-                        if($function != 'index' && !$self->user()->hasPerm(implode('_',array($controller,$function))))
-                        {
-                            $self->log()->error('User [{user}] tried to access [{func}] in controller [{controller}]',array('user'=>$self->user()->get('username'),'func'=>$function,'controller'=>$controller));
-                            CAT_Object::printFatalError('Access denied');
-                        }
-                        return $handler::$function($parm);
-                        exit;
-                    }
-                    catch( Exception $e )
-                    {
-echo $e->getMessage();
-                        if(method_exists($self,$function))
-                        {
-                            return self::$function($parm);
-                            exit;
-                        }
+                        $self->tpl()->setGlobals('pages',CAT_Backend_Page::list(1));
+                        $self->tpl()->setGlobals('sections',CAT_Helper_Page::getSections());
                     }
                 }
+                $router->dispatch();
             }
-            #echo "ROUTE: ", self::$route;
-            #ROUTE: /blackcat/bcwa20/backend/start/index.php
         }   // end function dispatch()
 
         /**
@@ -294,19 +249,9 @@ echo $e->getMessage();
                 }
                 return $menu;
             }
-            $self->log()->addDebug('returned main menu items: '.print_r(self::$menu,1));
+
             return self::$menu;
         }   // end function getMainMenu()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function getRouteParams()
-        {
-            return self::$params;
-        }   // end function getRouteParams()
 
         /**
          *  Print the admin header
@@ -468,5 +413,17 @@ echo $e->getMessage();
             $self = self::getInstance();
             $self->user()->logout();
         }
+
+        /**
+         * check if TFA is enabled for current user
+         *
+         * @access public
+         * @return
+         **/
+        public static function tfa()
+        {
+            $user = new CAT_User(CAT_Helper_Validate::sanitizePost('user'));
+            echo CAT_Object::json_success($user->tfa_enabled());
+        }   // end function tfa()
     }
 }

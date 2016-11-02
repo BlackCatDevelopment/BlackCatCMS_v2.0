@@ -102,7 +102,7 @@ print_r($_REQUEST);
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('groups_users'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id   = CAT_Backend::getRouteParams()[0];
+            $id   = $self->router()->getParam();
             $user = CAT_User::getInstance($id);
             if($user->hasGroup($id))
             {
@@ -135,7 +135,7 @@ print_r($_REQUEST);
         public static function index($id=NULL)
         {
             $self = self::getInstance();
-            $params = CAT_Backend::getRouteParams();
+            $params = $self->router()->getParams();
             if(count($params))
             {
                 switch($params[0])
@@ -184,7 +184,7 @@ print_r($_REQUEST);
             if(!CAT_Object::user()->hasPerm('groups_users'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $self  = self::getInstance();
-            $id    = CAT_Backend::getRouteParams()[0];
+            $id    = $self->router()->getParam();
             $users = CAT_Groups::getInstance()->getMembers($id);
             if(self::asJSON())
             {

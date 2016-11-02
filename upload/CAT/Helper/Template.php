@@ -102,6 +102,28 @@ if (!class_exists('CAT_Helper_Template'))
             return self::$_drivers[$driver];
         }   // end function getInstance()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function get_template_block_name($template = DEFAULT_TEMPLATE, $selected = 1)
+        {
+            // include info.php for template info
+			$template_location = ( $template != '' ) ?
+				CAT_PATH.'/templates/'.$template.'/info.php' :
+				CAT_PATH.'/templates/'.DEFAULT_TEMPLATE.'/info.php';
+			if(file_exists($template_location))
+            {
+				require $template_location;
+                $driver = self::getInstance(self::$_driver);
+    			return (
+                    isset($block[$selected]) ? $block[$selected] : $driver->lang()->translate('Main')
+                );
+            }
+            return $driver->lang()->translate('Main');
+        }   // end function get_template_block_name()
+
     	/**
     	 * get all menus of an template
     	 *

@@ -59,7 +59,7 @@ if (!class_exists('CAT_Backend_Users'))
             $self = self::getInstance();
             if(!$self->user()->hasPerm('users_membership'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id   = CAT_Backend::getRouteParams()[0];
+            $id   = $self->router()->getParam();
             $data = CAT_Groups::getInstance()->getMembers($id);
             if(self::asJSON())
             {
@@ -79,7 +79,7 @@ if (!class_exists('CAT_Backend_Users'))
             $self = self::getInstance();
             if(!$self->user()->hasPerm('groups_delete'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id   = CAT_Backend::getRouteParams()[0];
+            $id   = $self->router()->getParam();
             if(CAT_Users::deleteUser($id)!==true)
             {
                 echo CAT_Object::json_error('Unable to delete the user');
@@ -130,7 +130,7 @@ if (!class_exists('CAT_Backend_Users'))
             $self = self::getInstance();
             if(!$self->user()->hasPerm('users_membership'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id    = CAT_Backend::getRouteParams()[0];
+            $id    = $self->router()->getParam();
             $users = CAT_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
             if(self::asJSON())
             {
@@ -150,7 +150,7 @@ if (!class_exists('CAT_Backend_Users'))
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('users_edit'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id   = CAT_Backend::getRouteParams()[0];
+            $id   = $self->router()->getParam();
             $user = new CAT_User($id);
             $tfa  = $user->get('tfa_enabled');
             $new  = ( $tfa == 'Y' ? 'N' : 'Y' );

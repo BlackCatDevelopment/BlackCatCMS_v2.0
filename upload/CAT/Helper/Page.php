@@ -591,23 +591,26 @@ if (!class_exists('CAT_Helper_Page'))
          * @access public
          * @return
          **/
-        public static function exists($link)
+        public static function exists($id)
         {
-            // check database
             if(!self::$instance) self::getInstance(true);
-            $get_same_page = self::$instance->db()->query(
-                "SELECT `page_id` FROM `:prefix:pages` WHERE link=:link",
-                array('link'=>$link)
-            );
-            if ($get_same_page->rowCount() > 0)
-                return true;
-            // check access file
-            if(
-                   file_exists(CAT_PATH.PAGES_DIRECTORY.$link.PAGE_EXTENSION)
-                || file_exists(CAT_PATH.PAGES_DIRECTORY.$link.'/')
-            ) {
-                return true;
+            // search by ID
+            if(is_numeric($id))
+            {
+                $page = self::getPage($id);
+                if($page && is_array($page) && count($page))
+                    return true;
             }
+            else
+            {
+                $sth = self::$instance->db()->query(
+                    "SELECT `page_id` FROM `:prefix:pages` WHERE link=:link",
+                    array('link'=>$id)
+                );
+                if ($sth->rowCount() > 0)
+                    return true;
+            }
+            return false;
         }   // end function exists()
         
         /**
@@ -1623,6 +1626,16 @@ frontend.css and template.css are added in _get_css()
             return $titles;
         }   // end function getParentTitles()
 
+/**
+ *
+ * @access public
+ * @return
+ **/
+public static function getPagePermission()
+{
+return true;
+}   // end function getPagePermission()
+
         /**
          * uses ListBuilder to create a dropdown list of pages
          *
@@ -1996,7 +2009,7 @@ frontend.css and template.css are added in _get_css()
                 case 'edit':
                     // user needs global pages_modify permission or must be owner
                     if(
-                           self::$instance->user()->hasPerm('pages_modify')
+                           self::$instance->user()->hasPerm('pages_edit')
                         || self::$instance->user()->isOwner($page_id)
                     ) {
                         $result = true;
@@ -2385,6 +2398,10 @@ frontend.css and template.css are added in _get_css()
                 case 'registered':
                     if (CAT_Object::user()->is_authenticated() == true)
                     {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: ANPASSEN FUER NEUES BERECHTIGUNGSZEUGS
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/*
                         // check language
                         if(CAT_Registry::get('PAGE_LANGUAGES')=='false'||(self::properties($page_id,'language')==''||self::properties($page_id,'language')==LANGUAGE))
                         $show_it = (
@@ -2392,6 +2409,7 @@ frontend.css and template.css are added in _get_css()
                             || CAT_Users::is_group_match(CAT_Users::get_user_id(), $page['viewing_users'])
                             || CAT_Users::is_root()
                         );
+*/
                     }
                     else
                     {
@@ -2494,6 +2512,16 @@ frontend.css and template.css are added in _get_css()
                 if(is_array($item))
                     continue;
 
+
+                // allow to load global js from CAT_PATH/CAT/Backend/js
+                if(!substr_compare($item,'/CAT/Backend/js',0,15))
+                {
+                    $ref[] = CAT_Helper_Page::$space
+                           . '<script type="text/javascript" src="'
+                           . $val->sanitize_url(CAT_URL.$item)
+                           . '"></script>';
+                    continue;
+                }
                 // if the path contains 'modules' or 'templates', we presume
                 // that it's a complete path
                 // same for entries starting with 'http(s)'
@@ -2952,7 +2980,7 @@ frontend.css and template.css are added in _get_css()
                 {
                     $file = CAT_Helper_Directory::sanitizePath($directory . '/' . $for . '.js');
                     if ( ! isset($seen[$file]) )
-                    if (file_exists(CAT_PATH . '/' . $file))
+                        if (file_exists(CAT_PATH . '/' . $file))
                             CAT_Helper_Page::$js[]
                                 = '<script type="text/javascript" src="'
                                 . $val->sanitize_url(CAT_URL . $file)
@@ -2988,6 +3016,7 @@ frontend.css and template.css are added in _get_css()
             // make sure we have a page_id
             if(!$page_id)
                 $page_id = CAT_Helper_Validate::get('_REQUEST','page_id','numeric');
+
             if ($page_id && is_numeric($page_id))
             {
                 $sections     = self::getSections($page_id);

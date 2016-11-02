@@ -54,47 +54,57 @@ if (!class_exists('CAT_Backend_Admintools'))
          **/
         public static function index()
         {
-            $self  = self::getInstance();
-            if(!$self->user()->hasPerm('tools_list'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
-            $tools = CAT_Helper_Addons::get_addons(0,'module','tool');
-            if(count($tools))
+            $d = CAT_Helper_Dashboard::getDashboardConfig('backend/admintools');
+            // no configuration yet
+            if(!isset($d['widgets']) || !is_array($d['widgets']) || !count($d['widgets']))
             {
-                foreach($tools as $tool)
+                $tools = CAT_Helper_Addons::get_addons(0,'module','tool');
+                $col          = 1; // init column
+                $d['columns'] = ( isset($d['columns']) ? $d['columns'] : 2 ); // init col number
+                if(count($tools))
                 {
-
-                    // check if the user is allowed to see this item
-                    #if(!$user->get_permission($tool['directory'],$tool['type']))
-                    #    continue;
-
-                    // check if a module description exists for the displayed backend language
-                    $module_description = false;
-                    $icon               = false;
-                    $language_file      = CAT_PATH.'/modules/'.$tool['directory'].'/languages/' . $self->lang()->getLang() . '.php';
-                    if ( true === file_exists($language_file) )
-                        require $language_file;
-                    // Check whether icon is available for the admintool
-                    if ( file_exists(CAT_PATH.'/modules/'.$tool['directory'].'/icon.png') )
+                    // order tools by name
+                    $tools = CAT_Helper_Array::ArraySort($tools,'name','asc',true);
+                    $count = count($tools);
+                    foreach($tools as $tool)
                     {
-                        list($width, $height, $type, $attr) = getimagesize(CAT_PATH.'/modules/'.$tool['directory'].'/icon.png');
-                        // Check whether file is 32*32 pixel and is an PNG-Image
-                        $icon = ($width == 32 && $height == 32 && $type == 3)
-                              ? CAT_URL.'/modules/'.$tool['directory'].'/icon.png'
-                              : false;
+/*
+[addon_id] => 1
+[type] => module
+[directory] => blackcat
+[name] => BlackCat CMS Admin Tool and Widget
+[description] => BlackCat CMS Admin Tool and Widget - allows to check for new versions (widget demo)
+[function] => tool
+[version] => 0.6
+[guid] => CF217773-24C7-4DAB-954F-98D9F7118F7D
+[platform] => 1.0
+[author] => BlackCat  Development
+[license] => GNU General Public License
+[installed] => 1458312789
+[upgraded] => 1458312789
+[removable] => Y
+[bundled] => Y
+*/
+                        // init widget
+                        $d['widgets'][] = array(
+                            'column'        => $col,
+                            'widget_title'  => '<a href="">'.$tool['name'].'</a>',
+                            'content'       => $tool['description'],
+                            'position'      => 1,
+                            'open'          => true,
+                        );
+                        $col++;
+                        if($col > $d['columns']) $col = 1;
                     }
-                    $tpl_data['tools'][] = array(
-                        'TOOL_NAME'        => $tool['name'],
-                        'TOOL_DIR'         => $tool['directory'],
-                        'ICON'             => $icon,
-                        'TOOL_DESCRIPTION' => (!$module_description?$tool['description']:$module_description),
-                    );
+                    //CAT_Helper_Dashboard::saveDashboardConfig($d,'global','admintools');
+                    //$d = CAT_Helper_Dashboard::getDashboard('backend/admintools');
                 }
             }
-            $tpl_data['tools_count'] = count($tpl_data['tools']);
-
+            $self = self::getInstance();
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_admintools', $tpl_data);
+            $self->tpl()->output('backend_dashboard',array('id'=>0,'dashboard'=>$d));
             CAT_Backend::print_footer();
+
         }   // end function Admintools()
         
 

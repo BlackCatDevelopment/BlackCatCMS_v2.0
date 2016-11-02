@@ -1,24 +1,12 @@
 <?php
 
 /**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
  *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          BlackBird Webprogrammierung
- *   @copyright       2016 BlackBird Webprogrammierung
- *   @link            http://www.webbird.de
+ *   @author          Black Cat Development
+ *   @copyright       2013 - 2016 Black Cat Development
+ *   @link            http://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Templates
+ *   @category        CAT_Core
  *   @package         backstrap
  *
  */
@@ -41,6 +29,10 @@ if (defined('CAT_PATH')) {
 
 $pg = CAT_Helper_Page::getInstance();
 
+$bootstrapcss = 'modules/lib_bootstrap/vendor/css/bootstrap.min.css';
+if(DEFAULT_THEME_VARIANT!='' && DEFAULT_THEME_VARIANT!='default')
+    $bootstrapcss = 'modules/lib_bootstrap/vendor/css/'.DEFAULT_THEME_VARIANT.'/bootstrap.min.css';
+
 $mod_headers = array(
     'backend' => array(
         'meta' => array(
@@ -51,44 +43,33 @@ $mod_headers = array(
             array( 'name' => 'keywords', 'content' => $pg->lang()->translate('Administration') ),
         ),
         'css' => array(
-            array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap.min.css',),
+            array('file'=>$bootstrapcss,),
             array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap-editable.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/fuelux.min.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
-            #array('file'=>'templates/backstrap/css/metisMenu.min.css',),
-            #array('file'=>'modules/lib_jquery/plugins/jquery.treetable/css/jquery.treetable.css',),
-            #array('file'=>'modules/lib_jquery/plugins/jquery.treetable/css/jquery.treetable.theme.default.css',),
-            array('file'=>'modules/lib_jquery/plugins/jquery.fancytree/skin-win8/ui.fancytree.min.css',),
-            array('file'=>'modules/lib_jquery/plugins/jquery.treegrid/css/jquery.treegrid.css',),
-            #array('file'=>'modules/lib_jquery/plugins/jquery.bonsai/jquery.bonsai.css',),
+            array('file'=>'modules/lib_jquery/plugins/jquery.qtip/jquery.qtip.min.css',),
+            array('file'=>'modules/lib_jquery/jquery-ui/themes/base/jquery-ui.css',),
+            array('file'=>'modules/lib_jquery/plugins/jquery.timepicker/jquery.timepicker.min.css',),
+            array('file'=>'modules/lib_jquery/plugins/jquery.datatables/css/dataTables.bootstrap.min.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(
             array(
                 'core'    => true,
                 'ui'      => true,
-                'plugins' => array ('cattranslate','cookie'),
+                'plugins' => array ('cattranslate','cookie','jquery.mark'),
             )
         ),
         'js' => array(
             array(
-                '/modules/lib_jquery/plugins/jquery.fancytree/jquery.fancytree-all.js',
-                '/modules/lib_jquery/plugins/jquery.treegrid/js/jquery.treegrid.js',
-                #'/modules/lib_jquery/plugins/jquery.treetable/jquery.treetable.js',
-                #'/modules/lib_jquery/plugins/jquery.qubit/jquery.qubit.js',
-                #'/modules/lib_jquery/plugins/jquery.bonsai/jquery.bonsai.js',
+                '/modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js',
+                '/modules/lib_jquery/plugins/jquery.datatables/js/dataTables.mark.min.js',
+                '/modules/lib_jquery/plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
+                '/CAT/Backend/js/session.js',
             )
         )
     )
 );
 
-// check for custom JS for current backend page
-if ( CAT_Registry::get('DEFAULT_THEME_VARIANT') != '' ) {
-    $variant = CAT_Registry::get('DEFAULT_THEME_VARIANT');
-    array_push($mod_headers['backend']['css'], array('file'=>'templates/backstrap/css/'.$variant.'/colors.css'));
-}
-else
-{
-    array_push($mod_headers['backend']['css'], array('file'=>'templates/backstrap/css/default/colors.css'));
-}
-
+if(file_exists(CAT_PATH.'/modules/lib_jquery/jquery-ui/ui/i18n/jquery-ui-i18n.min.js'))
+    $mod_headers['backend']['js'][] = 'modules/lib_jquery/jquery-ui/ui/i18n/jquery-ui-i18n.min.js';

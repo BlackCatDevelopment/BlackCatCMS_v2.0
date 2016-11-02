@@ -54,6 +54,7 @@ if (!class_exists('CAT_Backend_Media'))
         public static function index()
         {
             $self = self::getInstance();
+self::list();
             $tpl_data = array();
             CAT_Backend::print_header();
             $self->tpl()->output('backend_media', $tpl_data);
@@ -67,17 +68,12 @@ if (!class_exists('CAT_Backend_Media'))
          **/
         public static function list()
         {
-            $self = self::getInstance();
-            $data = CAT_Helper_Directory::scanDirectory(
-                CAT_PATH.'/media',
-                true,
-                false,
-                NULL,
-                array(),
-                array(),
-                array()
-            );
-print_r($data);
+            $self   = self::getInstance();
+            $filter = CAT_Helper_Validate::sanitizePost('filter');
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Benutzer-Homeverzeichnis berücksichtigen
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            $data  = CAT_Helper_Media::getMediaFromDir(CAT_PATH.'/media',$filter);
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');

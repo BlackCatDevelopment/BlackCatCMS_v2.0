@@ -57,24 +57,35 @@ $LANG = array(
     'A group with the same name already exists!' => 'Es existiert bereits eine Gruppe mit diesem Namen!',
     'A role with the same name already exists!' => 'Es existiert bereits eine Rolle mit diesem Namen!',
     'Access denied' => 'Zugriff verweigert',
+    'All' => 'Alle',
     "An internal error occured. We're sorry for inconvenience." => 'Es ist ein interner Fehler aufgetreten. Wir bitten um Entschuldigung.',
     'Authentication failed!' => 'Autorisierung fehlgeschlagen!',
     'Click to dismiss' => 'Zum Schließen anklicken',
     'No such user, user not active, or invalid password!' => 'Benutzer nicht vorhanden, nicht aktiv, oder Kennwort falsch!',
+    'Parse error. Maybe caused by invalid JSON data.' => 'Parsefehler. Möglicherweise verursacht durch ungültige JSON Daten.',
     'Sorry, there was an error' => 'Entschuldigung, ein Fehler ist aufgetreten',
     'Two step authentication failed!' => 'Zwei-Faktor Authentifizierung fehlgeschlagen!',
     'You are not allowed for the requested action' => 'Sie sind nicht berechtigt, die Aktion auszuführen',
 
     // --------------- Globals ---------------
     'Cancel'        => 'Abbrechen',
+    'Close'         => 'Schließen',
+    'Column'        => 'Spalte',
     'Confirm'       => 'Bestätigen',
     'Create new'    => 'Neu erstellen',
+    'Date'          => 'Datum',
     'Delete'        => 'Löschen',
     'Description'   => 'Beschreibung',
+    'Insert'        => 'Einfügen',
+    'Page'          => 'Seite',
     'Please note'   => 'Hinweis',
     'Remove'        => 'Entfernen',
+    'Row'           => 'Zeile',
     'Save changes'  => 'Speichern',
+    'Sections'      => 'Sektionen',
+    'Size'          => 'Größe',
     'Type'          => 'Typ',
+    'Welcome'       => 'Willkommen',
 
     // --------------- Backend ---------------
     'Close all'     => 'Alle schließen',
@@ -82,6 +93,14 @@ $LANG = array(
     'Logout'        => 'Abmelden',
     'Open all'      => 'Alle öffnen',
     'User Profile'  => 'Benutzerprofil',
+
+    // --------------- Backend -> Session ---------------
+    'Close Backend' => 'Backend schließen',
+    'Close the Backend and open Homepage (Frontend)' => 'Das Backend schließen und die Hompage öffnen (Frontend)',
+    'Do you wish to login again?' => 'Möchten Sie sich neu anmelden?',
+    'Login with the given credentials and stay on current page' => 'Mit den angegebenen Daten anmelden und auf der aktuellen Seite bleiben',
+    'Remaining session time' => 'Verbleibende Sessionzeit',
+    'Session timed out!' => 'Die Session ist abgelaufen!',
 
     // --------------- Backend -> Menu ---------------
     'Addons'        => 'Erweiterungen',
@@ -97,31 +116,60 @@ $LANG = array(
     'Settings'      => 'Einstellungen',
 
     // --------------- Backend -> Dashboard ---------------
-    'Do you really want to remove this widget from your dashboard?' => 'Soll dieses Widget wirklich vom Dashboard entfernt werden?',
+    'Add widget'    => 'Widget hinzufügen',
+    'Do you really want to remove this widget?' => 'Soll dieses Widget wirklich entfernt werden?',
     'Remove widget' => 'Widget entfernen',
+    'Reset Dashboard' => 'Dashboard zurücksetzen',
 
     // --------------- Backend -> Pages ---------------
     'Actions'       => 'Aktionen',
+    'Block number'  => 'Blocknr.',
     'Collapse all'  => 'Alle einklappen',
+    'Date from'     => 'Datum von',
+    'Date until'    => 'Datum bis',
+    'deleted'       => 'gelöscht',
     'Edit content'  => 'Inhalt bearbeiten',
     'Expand all'    => 'Alle aufklappen',
     'hidden'        => 'versteckt',
+    'no name'       => 'kein Name',
+    'none'          => 'keine',
     'Preview'       => 'Vorschau',
     'private'       => 'privat',
     'public'        => 'öffentlich',
+    'registered'    => 'registriert',
+    'Time from'     => 'Uhrzeit von',
+    'Time until'    => 'Uhrzeit bis',
     'Visibility'    => 'Sichtbarkeit',
+    'Change visibility' => 'Sichtbarkeit ändern',
     'Icon explanation' => 'Symbolerklärung',
+    'Set publishing period' => 'Sichtbarkeits-Zeitraum bearbeiten',
+    'The page is accessible for all visitors and shows up in the navigation by default' => 'Die Seite ist für alle Besucher sichtbar und erscheint üblicherweise auch im Menü',
+    'The page is accessible for visitors who know the exact address and can be found by the keyword search, but does not show up in the navigation by default' => 'Die Seite ist sichtbar, wenn man die Adresse kennt, und wird von der Suchfunktion gefunden, erscheint aber nicht im Menü',
+    'The page is only accessible to registered users; the page shows up in the navigation by default' => 'Die Seite ist nur für berechtigte Benutzer sichtbar; sie erscheint üblicherweise auch im Menü',
+    'The page is only accessible to registered users and is not shown in the navigation for non-registered users' => 'Die Seite ist nur für berechtigte Benutzer sichtbar und erscheint nur im Menü, wenn der Benutzer angemeldet ist',
+    'The page is not accessible in the frontend at all, but can be edited in the backend' => 'Die Seite kann von Besuchern nicht aufgerufen, aber im Backend bearbeitet werden',
+    'The page was deleted but can be recovered' => 'Die Seite ist gelöscht, kann aber wiederhergestellt werden',
+
     'This action is not available' => 'Diese Aktion ist nicht verfügbar',
 
     // --------------- Backend -> Addons ---------------
+    'Catalog'       => 'Katalog',
     'Installed'     => 'Installiert',
+    'Languages'     => 'Sprachen',
+    'Modules'       => 'Erweiterungen',
     'Upgraded'      => 'Aktualisiert',
+    'Type to filter by text...' => 'Zum Filtern tippen...',
+
 
     // --------------- Backend -> Roles ---------------
+    'Add role'      => 'Rolle hinzufügen',
+    'Delete role'   => 'Rolle löschen',
+    'Permissions'   => 'Rechte',
     'Role ID'       => 'Rollen ID',
     'Title'         => 'Name',
-    'Permissions'   => 'Rechte',
     'Users'         => 'Benutzer',
+    'Brief description' => 'Kurze Beschreibung',
+    'Do you really want to delete this role?' => 'Wollen Sie diese Rolle wirklich löschen?',
     'Manage role permissions' => 'Rechte bearbeiten',
 
     // --------------- Backend -> Users ---------------
@@ -136,7 +184,6 @@ $LANG = array(
     'Two-Step Authentication enabled' => 'Zwei-Faktor Authentifizierung aktiviert',
     'User ID'       => 'Benutzer ID',
 
-
     // --------------- Backend -> Groups ---------------
     'Add group members' => 'Gruppenmitglieder hinzufügen',
     'Click here to edit the group name' => 'Zum Ändern des Gruppennamens hier klicken',
@@ -149,6 +196,10 @@ $LANG = array(
     'No addable users found' => 'Keine passenden Benutzer gefunden',
     'Remove group member' => 'Gruppenmitglied entfernen',
     'Users of group "Administrators" and users that are already member of this group cannot be added.' => 'Benutzer der Gruppe "Administratoren" und Benutzer, die bereits Mitglied dieser Gruppe sind, können nicht hinzugefügt werden.',
+
+    // --------------- Backend -> Media ---------------
+    'All types' => 'Alle Dateitypen',
+    'Images' => 'Bilder',
 
     // --------------- Backend -> Permissions ---------------
     'Access to global dashboard' => 'Zugang zum globalen Dashboard',
@@ -188,13 +239,13 @@ $LANG = array(
 
     // --------------- Login page ---------------
     'Login'         => 'Anmelden',
+    'Your username' => 'Benutzername',
+    'Your password' => 'Kennwort',
     'If you have Two Step Authentication enabled, you will have to enter your one time password here. Leave this empty otherwise.' => 'Sofern Zwei-Faktor-Authentifizerung aktiviert ist, hier das Einmal-Kennwort eingeben. Andernfalls dieses Feld leer lassen.',
     'Please enter your code' => 'Bitte den Code eingeben',
     'Scan the following image with your app and enter the code below' => 'Bitte das Image mit einer entsprechenden App scannen und den Code unten eintragen',
     'Two-Step Authentication' => 'Zwei-Faktor-Authentifizierung',
-    'Your username' => 'Benutzername',
     'Your OTP code (PIN)' => 'OTP Code (PIN)',
-    'Your password' => 'Kennwort',
 );
 
 // include old lang files

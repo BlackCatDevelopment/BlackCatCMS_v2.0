@@ -17,7 +17,7 @@
                 <h1 class="text-center"><span class="fa fa-lock"></span> {translate('Login')}</h1>
                 <form name="login" action="{$CAT_ADMIN_URL}/authenticate" method="post">
                     <input type="hidden" name="username_fieldname" value="{$USERNAME_FIELDNAME}" />
-					<input type="hidden" name="password_fieldname" value="{$PASSWORD_FIELDNAME}" />
+                    <input type="hidden" name="password_fieldname" value="{$PASSWORD_FIELDNAME}" />
                     <input type="hidden" name="token_fieldname" value="{$TOKEN_FIELDNAME}" />
                     <div>
                         <div class="form-group">
@@ -33,7 +33,7 @@
                             </div>
                         </div>
                         {if $ENABLE_TFA}
-                        <div class="form-group">
+                        <div class="form-group" id="tfagroup" style="display:none;">
                             <div class="input-group">
                                 <div class="input-group-addon"><span class="fa fa-fw fa-lock"></span></div>
                                 <input type="text" class="form-control" name="{$TOKEN_FIELDNAME}" id="{$TOKEN_FIELDNAME}" placeholder="{translate('Your OTP code (PIN)')}" aria-describedby="{$TOKEN_FIELDNAME}helpBlock" />
@@ -58,50 +58,71 @@
 
     <script type="text/javascript">
     //<![CDATA[
+    $('input#{$USERNAME_FIELDNAME}').on('focusout', function() {
+        $.ajax({
+            type:     'POST',
+            context:  $(this),
+            url:      '{$CAT_ADMIN_URL}/tfa',
+            dataType: 'json',
+            data:     {
+                user: this.value
+            },
+            cache:    false,
+            success:  function(data,textStatus,jqXHR)
+            {
+                console.log(data);
+                if(data.message === true) {
+                    $('div#tfagroup').show('slow');
+                } else {
+                    $('div#tfagroup').hide('slow');
+                }
+            }
+        });
+    });
     $('.btn-primary').click( function(e) {
-		e.preventDefault();
+        e.preventDefault();
 
         // reset error message
         $('div#login-error p').html('');
         $('div#login-error').hide();
 
-        var username_fieldname	= $('form').find('input[name=username_fieldname]').val(),
-			password_fieldname	= $('form').find('input[name=password_fieldname]').val(),
+        var username_fieldname    = $('form').find('input[name=username_fieldname]').val(),
+            password_fieldname    = $('form').find('input[name=password_fieldname]').val(),
             token_fieldname     = $('form').find('input[name=token_fieldname]').val(),
-			dates				= {
-				'username_fieldname': username_fieldname,
-				'password_fieldname': password_fieldname,
+            dates                = {
+                'username_fieldname': username_fieldname,
+                'password_fieldname': password_fieldname,
                 'token_fieldname'   : token_fieldname,
-			};
-		dates[username_fieldname]	= $('input#' + username_fieldname).val();
-		dates[password_fieldname]	= $('input#' + password_fieldname).val();
-        dates[token_fieldname]	    = $('input#' + token_fieldname).val();
+            };
+        dates[username_fieldname]    = $('input#' + username_fieldname).val();
+        dates[password_fieldname]    = $('input#' + password_fieldname).val();
+        dates[token_fieldname]        = $('input#' + token_fieldname).val();
 
         $.ajax({
-			type:		'POST',
-			context:	$(this),
-			url:		'{$CAT_ADMIN_URL}/authenticate/',
-			dataType:	'json',
-			data:		dates,
-			cache:		false,
-			success:	function( data, textStatus, jqXHR  )
-			{
-				if ( data.success === true )
-				{
-					window.location		= data.url
-				}
-				else {
+            type:        'POST',
+            context:    $(this),
+            url:        '{$CAT_ADMIN_URL}/authenticate/',
+            dataType:    'json',
+            data:        dates,
+            cache:        false,
+            success:    function( data, textStatus, jqXHR  )
+            {
+                if ( data.success === true )
+                {
+                    window.location        = data.url
+                }
+                else {
                     
                     $('div#login-error p').html(data.message);
                     $('div#login-error').show();
-					$('input[name=' + password_fieldname + ']').val('').focus();
-				}
-			},
-			error:		function( jqXHR, textStatus, errorThrown )
-			{
-				alert(textStatus + ': ' + jqXHR.responseText );
-			}
-		});
+                    $('input[name=' + password_fieldname + ']').val('').focus();
+                }
+            },
+            error:        function( jqXHR, textStatus, errorThrown )
+            {
+                alert(textStatus + ': ' + jqXHR.responseText );
+            }
+        });
     });
     //]]>
     </script>

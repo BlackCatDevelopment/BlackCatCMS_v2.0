@@ -68,6 +68,79 @@ if (!class_exists('CAT_Backend_Addons'))
             $self->tpl()->output('backend_addons', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function Addons()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function catalog()
+        {
+            if(!file_exists(CAT_PATH."/temp/catalog.json"))
+            {
+                self::update_catalog();
+            }
+            $catalog = self::get_catalog();
+            // get installed
+            $modules = CAT_Helper_Addons::get_addons();
+            // map installed
+            $installed = array();
+            foreach($modules as $i => $m)
+                $installed[$m['directory']] = $i;
+            // find installed in catalog
+            foreach( $catalog['modules'] as $i => $m)
+            {
+                if(isset($installed[$m['directory']]))
+                {
+                    $catalog['modules'][$i]['is_installed']   = true;
+                }
+                if(!isset($catalog['modules'][$i]['type']))
+                {
+                    $catalog['modules'][$i]['type'] = 'module';
+                }
+            }
+            if(self::asJSON())
+            {
+                print json_encode(array('success'=>true,'modules'=>$catalog['modules']));
+                exit();
+            }
+        }   // end function catalog()
+        
+        /**
+         * get the catalog contents from catalog.json
+         *
+         * @access private
+         * @return array
+         **/
+        private static function get_catalog()
+        {
+            $string    = file_get_contents(CAT_PATH."/temp/catalog.json");
+            $catalog   = json_decode($string,true);
+            if(is_array($catalog))
+                return $catalog;
+            else
+                return array();
+        }
+
+        /**
+         * update the catalog.json from GitHub
+         *
+         * @access private
+         * @return void
+         **/
+        private static function update_catalog()
+        {
+            $ch   = CAT_Helper_GitHub::init_curl(GITHUB_CATALOG_LOCATION);
+            $data = curl_exec($ch);
+            if(curl_error($ch))
+            {
+                print json_encode(array('success'=>false,'message'=>trim(curl_error($ch))));
+                exit();
+            }
+            $fh = fopen( CAT_PATH.'/temp/catalog.json', 'w' );
+            fwrite($fh,$data);
+            fclose($fh);
+        }
         
 
     } // class CAT_Helper_Addons

@@ -1,21 +1,67 @@
 $(function() {
-    $(window).bind("load resize", function() {
-        topOffset = 50;
-        width = (this.window.innerWidth > 0) ? this.window.innerWidth : this.screen.width;
-        if (width < 768) {
-            $('div.navbar-collapse').addClass('collapse');
-            topOffset = 100; // 2-row-menu
-        } else {
-            $('div.navbar-collapse').removeClass('collapse');
-        }
 
-        height = ((this.window.innerHeight > 0) ? this.window.innerHeight : this.screen.height) - 1;
-        height = height - topOffset;
-        if (height < 1) height = 1;
-        if (height > topOffset) {
-            $("#page-wrapper").css("min-height", (height) + "px");
-        }
+    jQuery.ajaxSetup({
+        error: function( x, e )
+        {
+            //console.log('x: ',x);
+            //console.log('e: ',e);
+            if( x.status == 0 )           { bsErrorMsg('You are offline!\nPlease Check Your Network.');     }
+            else if( x.status == 404 )    { bsErrorMsg('404 - Requested URL not found.');                   }
+            else if( x.status == 500 )    { bsErrorMsg('500 - Internal Server Error.');                     }
+            // dismiss parse errors
+            else if( e == 'parsererror' ) { console.log('Parse error. Maybe caused by invalid JSON data.'); }
+            else if( e == 'timeout' )     { bsErrorMsg('Request timed out.');                               }
+            else                          { bsErrorMsg('Unknown Error.\n'+x.responseText);                  }
+         }
     });
+
+    /* show javascript errors as modal */
+    function bsErrorMsg(message)
+    {
+        $('#bsDialog .modal-title').html('<div class="text-danger"><i class="fa fa-fw fa-warning"></i> '+cattranslate('Sorry, there was an error')+'</div>');
+        $('#bsDialog .modal-body').html('<div class="text-danger">'+cattranslate(message)+'</div>');
+        $('#bsDialog').modal('show');
+    }
+
+    /* handle session timeout and re-login */
+    function CATSessionTimedOut()
+    {
+        $('#bsSessionTimedOutDialog').modal('show');
+        $('#bsSessionToFE').unbind('click').on('click',function(e) {
+            e.preventDefault();
+            window.location.replace(CAT_URL); // also removes history
+        });
+        $('button#bsSessionLogin').unbind('click').on('click',function(e) {
+            $('div#login-error').text('').hide(); // make sure there is no old error
+            var ufield = $('input.form-control.u').prop('id');
+            var pfield = $('input.form-control.p').prop('id');
+            var dates  = {
+                'username_fieldname': $('input.form-control.u').prop('id'),
+                'password_fieldname': $('input.form-control.p').prop('id'),
+            };
+            dates[ufield] = $('input.form-control.u').val();
+            dates[pfield] = $('input.form-control.p').val();
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL+'/authenticate',
+                dataType: 'json',
+                data    : dates,
+                success : function(data, status) {
+                    if(data.success === false)
+                    {
+                        $('div#login-error').text(data.message).show();
+                    }
+                    else
+                    {
+                        $('#bsSessionTimedOutDialog').modal('hide');
+                        // reset session timer
+                        CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');
+                    }
+                }
+            });
+            e.preventDefault();
+        });
+    }
 
     // really disable disabled links
     $('a.disabled').on('click',function(e) {
@@ -27,49 +73,49 @@ $(function() {
     // add X-Editable to elements with 'editable' class
     $('.editable').editable();
 
-    // handle AJAX links
-    $('.ajax').on('click', function(event) {
-        if($(this).is('form')) {
-            var $form = $(this)
-                $url  = $form.attr('action'),
-                $type = $form.attr('method'),
-                $data = $form.serialize()
-                ;
-        } else {
-            var $url  = $(this).data('url'),
-                $type = 'POST',
-                $data =  $(this).data()
-                ;
-        }
-        $.ajax({
-            type   : $type,
-            url    : $url,
-            data   : $data,
-            dataType: 'json',
-            success: function(data, status) {
-                // activate for debugging:
-                //console.log(data);
-                if(data.success) {
-                    location.reload();
-                } else {
-                    $('div.infopanel span#message').html(data.message);
-                    $('div.infopanel').addClass('alert alert-danger').show();
-                }
-            }
-        });
-        event.preventDefault();
+    // add tooltip
+    $('[data-title!=""]').qtip({
+        content: { attr: 'data-title' },
+        style: { classes: 'qtip-bootstrap' }
     });
 
-    // page tree panel
-	$('#slide-panel-toggle').on('click', function() {
-		$('#slide-panel').toggleClass('open');
-        $('#slide-panel-toggle').toggleClass('open');
-        $('#slide-panel-toggle span').toggleClass('fa-angle-left');
-        $('#slide-panel-toggle span').toggleClass('fa-angle-right');
-		return false;
-	});
+    // page tree off-canvas toggle
+    $('[data-toggle=offcanvas]').click(function() {
+        $('.row-offcanvas').toggleClass('active');
+        $(this).find('i').toggleClass('fa-caret-right').toggleClass('fa-caret-left');
+    });
 
-    // add tooltip
-    $('[data-toggle="tooltip"]').tooltip();
+    // page tree caret toggle
+    $('div#sidebar li span').on('click',function(e) {
+        $(this).toggleClass('fa-caret-down').toggleClass('fa-caret-right');
+    });
+
+    // page tree hover tooltips
+    $('.hasTooltip').each(function() { // Notice the .each() loop, discussed below
+        $(this).qtip({
+            content: {
+                text: $(this).next('div').html() // Use the "div" element next to this for the content
+            },
+            style: { classes: 'qtip-bootstrap' }
+        });
+    });
+
+    // detach = move to region header
+    $('.detach').each( function() {
+        $(this).contents()
+               .appendTo('li#contextual ul')
+               .wrap('<li id="'+$(this).prop('id')+'"><a href="#">');
+        $(this).detach();
+        $('li#contextual').removeClass('hidden');
+    });
+
+    // format buttons
+    $('input[type="submit"]').addClass('btn btn-primary');
+    $('input[type="reset"]').addClass('btn btn-default');
+    $('input[type="button"]').addClass('btn btn-default');
+
+    // add session timer
+    var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());
+    CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');
 
 });

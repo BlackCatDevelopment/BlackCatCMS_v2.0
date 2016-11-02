@@ -62,8 +62,36 @@ if (!class_exists('CAT_Backend_Roles'))
             $desc  = $val->sanitizePost('role_description');
             if(CAT_Roles::getInstance()->exists($name))
                 CAT_Object::json_error('A role with the same name already exists!');
-            CAT_Roles::getInstance()->addRole($name,$desc);
+            $result = CAT_Roles::getInstance()->addRole($name,$desc);
+            echo CAT_Object::json_result(
+                $result,
+                '',
+                true
+            );
         }   // end function create()
+
+        /**
+         * delete a role; requires the role id as route param
+         *    example: /roles/delete/99
+         * prints JSON result (success or error) to STDOUT
+         *
+         * @access public
+         * @return void
+         **/
+        public static function delete()
+        {
+            $self  = self::getInstance();
+            if(!$self->user()->hasPerm('roles_delete'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $id    = $self->router()->getParam();
+            if(!CAT_Roles::getInstance()->exists($id))
+                CAT_Object::json_error('No such role!');
+            $role  = CAT_Roles::getInstance()->getRole($id);
+            if($role['builtin']=='Y')
+                CAT_Object::json_error('Built-in elements cannot be removed!');
+            $res   = CAT_Roles::getInstance()->removeRole($id);
+            CAT_Object::json_result($res,($res?'':'Failed!'),($res?true:false));
+        }   // end function delete()
 
         /**
          * edit role
@@ -96,10 +124,12 @@ if (!class_exists('CAT_Backend_Roles'))
             // counter
             foreach($roles as $i => $r)
             {
-                $users = $self->roles()->getUsers($r['role_id']);
-                $perms = $self->perms()->getPerms($r['role_id']);
-                $roles[$i]['user_count'] = count($users);
-                $roles[$i]['perm_count'] = count($perms);
+                $users  = $self->roles()->getUsers($r['role_id']);
+                $groups = $self->roles()->getGroups($r['role_id']);
+                $perms  = $self->perms()->getPerms($r['role_id']);
+                $roles[$i]['user_count']  = ( is_array($users)  ? count($users)  : 0 );
+                $roles[$i]['group_count'] = ( is_array($groups) ? count($groups) : 0 );
+                $roles[$i]['perm_count']  = ( is_array($perms)  ? count($perms)  : 0 );
             }
 
             $tpl_data = array(
@@ -121,7 +151,7 @@ if (!class_exists('CAT_Backend_Roles'))
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('roles_perms'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $role_id  = CAT_Backend::getRouteParams()[0];
+            $role_id  = $self->router()->getParam();
             $selected = CAT_Helper_Validate::sanitizePost('perms');
             // get old data
             $perms    = $self->perms()->getPerms($role_id);

@@ -338,6 +338,7 @@ if(!class_exists('CAT_Helper_I18n',false))
 	     **/
 	    public function translate($msg, $attr=array())
 	    {
+            if(!is_string($msg)) return $msg;
 	        $this->log()->debug('translate: '.$msg);
 	        if(empty($msg) || is_bool($msg))
 	        {

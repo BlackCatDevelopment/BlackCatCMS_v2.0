@@ -41,5 +41,10 @@ if (defined('CAT_PATH')) {
 
 $LANG = array(
     'Built in' => 'Eingebaut',
+    'Context menu' => 'Kontextmenü',
+    'Filter by type' => 'Nach Typ filtern',
+    'Show catalog' => 'Zeige Katalog',
     'Toggle navigation' => 'Navigation umschalten',
+    'Use widget setting' => 'Einstellung des Widgets verwenden',
+    '<span id="modalicon" class="fa fa-fw fa-warning"></span> Are you sure?' => '<span id="modalicon" class="fa fa-fw fa-warning"></span> Sind Sie sicher?'
 );

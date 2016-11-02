@@ -52,23 +52,25 @@ if (!class_exists('CAT_Roles'))
         public function addRole($name,$description)
         {
             $sth = CAT_Helper_DB::getInstance()->query(
-                  'INSERT INTO `:prefix:rbac_roles` ( `title`, `description` ) '
-                . 'VALUES ( :name, :desc )',
+                   'INSERT INTO `:prefix:rbac_roles` ( `title`, `description` ) '
+                 . 'VALUES ( :name, :desc )',
                 array('name'=>$name,'desc'=>$description)
             );
-        }   // end function addGroup()
+            return (is_object($sth)) ? true : false;
+        }   // end function addRole()
 
         /**
          *
          * @access public
          * @return
          **/
-        public function exists($role_name)
+        public function exists($item)
         {
             if(!$this->roles) $this->initRoles();
             foreach($this->roles as $role)
             {
-                if(strcasecmp($role['title'],$role_name)) return true;
+                if(is_numeric($item)  && $role['role_id'] == $item) return true;
+                if(!is_numeric($item) && strcasecmp($role['title'],$item)===0) return true;
             }
             return false;
         }   // end function exists()
@@ -82,6 +84,21 @@ if (!class_exists('CAT_Roles'))
         {
             return $this->getRoles(array('group'=>$id));
         }   // end function getGroups()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getRole($id)
+        {
+            if(!$this->roles) $this->initRoles();
+            foreach($this->roles as $role)
+            {
+                if($role['role_id'] == $id) return $role;
+            }
+            return false;
+        }   // end function getRole()
 
         /**
          * get roles (optionally filtered by given conditions)
@@ -136,6 +153,7 @@ if (!class_exists('CAT_Roles'))
                     sprintf($query,$table),
                     $query_options
                 );
+
                 return $sth->fetchAll(\PDO::FETCH_ASSOC);
             }
 
@@ -152,6 +170,22 @@ if (!class_exists('CAT_Roles'))
         {
             return $this->getRoles(array('for'=>'user','role_id'=>$id));
         }   // end function getUsers()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function removeRole($id)
+        {
+            $dbh  = CAT_Helper_DB::getInstance();
+            $sth  = $dbh->query(
+                'DELETE FROM `:prefix:rbac_roles` WHERE `role_id`=:id',
+                array('id'=>$id)
+            );
+            if(!$dbh->isError()) return true;
+            else                 return false;
+        }   // end function removeRole()
 
         /**
          *

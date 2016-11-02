@@ -106,6 +106,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                 $sql,
                 $params
             );
+
             return self::getInstance()->db()->is_error()
                 ? false
                 : true;
@@ -116,25 +117,24 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
          * @access public
          * @return
          **/
-        public static function deleteSection($section_id,$page_id)
+        public static function deleteSection($section_id)
         {
-            $self = self::getInstance();
-        	$q    = $self->db()->query(
-                'DELETE FROM `:prefix:sections` WHERE `section_id`=:id',
-                array('id'=>$section_id)
-            );
-
-        	if ( $self->db()->isError() )
-        	{
-        		return false;
-        	}
-        	else
-        	{
-        		require CAT_PATH.'/framework/class.order.php';
-        		$order = new order(CAT_TABLE_PREFIX.'sections', 'position', 'section_id', 'page_id');
-        		$order->clean($page_id);
-                return true;
-        	}
+            $self    = self::getInstance();
+            // get page_id
+            $section = self::getSection($section_id);
+            // delete section
+            if($section !== false)
+            {
+            	$q   = $self->db()->query(
+                    'DELETE FROM `:prefix:sections` WHERE `section_id`=:id',
+                    array('id'=>$section_id)
+                );
+            	return $self->db()->isError();
+                // note: we do not clean the position (order) here as it's no
+                // problem to have a gap
+            } else {
+                return false;
+            }
         }   // end function deleteSection()
 
 	    /**

@@ -18,7 +18,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
 {
     class CAT_Helper_DB extends PDO
     {
-        public  static $exc_trace = false;
+        public  static $exc_trace = true;
 
         private static $instance  = NULL;
         private static $conn      = NULL;
@@ -98,11 +98,15 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
          **/
         public static function qb()
         {
+/*
+            // old code does not allow to use more than one query in parallel
             if(!is_object(self::$qb))
                 self::$qb = self::$conn->createQueryBuilder();
             // reset
             self::$qb->resetQueryParts();
             return self::$qb;
+*/
+            return self::$conn->createQueryBuilder();
         }   // end function qb()
 
         /**
@@ -271,6 +275,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                             $err_msg .= "\n[PARAMS] "
                                      .  var_export($bind,1);
                         $this->setError($err_msg);
+
                         if(isset($_REQUEST['_cat_ajax']))
                             return $this->getError();
                         else
@@ -391,7 +396,6 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                 $opt['TABLE_PREFIX'] = TABLE_PREFIX;
             return $opt;
         }   // end function getConfig()
-        
 
         /**
          * check for DB error
@@ -403,6 +407,67 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         {
             return ( $this->lasterror ) ? true : false;
         }   // end function isError()
+        
+        /**
+         * replacement for old class.order.php; re-orders items
+         *
+         * @access public
+         * @return
+         **/
+        public function reorder($table,$id,$newpos,$order_field='position',$id_field='id')
+        {
+            // get original position
+            $qb = self::qb()
+                ->select($order_field)
+                ->from($table,'t1')
+                ->where($id_field.'=:id')
+                ->setParameter('id',$id);
+            $sth = $qb->execute();
+            $data = $sth->fetch();
+
+            if(is_array($data) && count($data))
+            {
+                $pos = $data[$order_field];
+                if($pos!=$newpos) {
+                    if($newpos>$pos) {
+                        self::query(
+                            sprintf(
+                                "UPDATE `%s` SET `%s`=`%s`-1 WHERE `%s`<=? AND `%s`<>?",
+                                array($order_field,$order_field,$order_field,$order_field,$id_field)
+                            ),
+                            array($newpos,$id)
+                        );
+                        self::query(
+                            sprintf(
+                                "UPDATE `%s` SET `%s`=`%s`+1 WHERE `%s`>? AND `%s`<>?",
+                                array($order_field,$order_field,$order_field,$order_field,$id_field)
+                            ),
+                            array($newpos,$id)
+                        );
+                    } else {
+                        self::query(
+                            sprintf(
+                                "UPDATE `%s` SET `%s`=`%s`-1 WHERE `%s`<? AND `%s`<>?",
+                                array($order_field,$order_field,$order_field,$order_field,$id_field)
+                            ),
+                            array($newpos,$id)
+                        );
+                        self::query(
+                            sprintf(
+                                "UPDATE `%s` SET `%s`=`%s`+1 WHERE `%s`>=? AND `%s`<>?",
+                                array($order_field,$order_field,$order_field,$order_field,$id_field)
+                            ),
+                            array($newpos,$id)
+                        );
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+        }   // end function reorder()
         
 
         /**
@@ -484,8 +549,6 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         public function is_error()  { return $this->isError();      }
         public function get_error() { return $this->getError();     }
         public function insert_id() { return $this->lastInsertId(); }
-        public function prompt_on_error($switch=true) { /* no longer supported */ }
-
     }
 }
 

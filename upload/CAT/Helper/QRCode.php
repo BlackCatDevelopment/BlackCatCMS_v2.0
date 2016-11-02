@@ -30,7 +30,7 @@ if(!class_exists('CAT_Helper_QRCode',false))
             $qrcode = new \chillerlan\QRCode\QRCode($data, new \chillerlan\QRCode\Output\QRImage($outputOptions));
             return $qrcode->output();
         }   // end function getImage()
-        
+
     }
 }
 

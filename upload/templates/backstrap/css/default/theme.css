@@ -1,50 +1,19 @@
-@import url(../../../../CAT/templates/error.css);
+body{padding-top:50px;}
+.navbar-brand{font-size:1.2em;}
+.nav-sidebar{margin-left:-15px;margin-right:-15px;margin-top:20px;}
+.nav-sidebar > li > a{padding-left:15px;padding-right:20px;z-index:1;}
+.main{padding:20px;}
+ul.nav.nav-sidebar li span{position:relative;display:inline-block;padding-top:15px;z-index:3;} /* caret icon */
+div#sidebar ul.nav.nav-sidebar li li {padding-left:22px;}
 
-/*!
- * Start Bootstrap - SB Admin 2 Bootstrap Admin Theme (http://startbootstrap.com)
- * Code licensed under the Apache License v2.0.
- * For details, see http://www.apache.org/licenses/LICENSE-2.0.
- *
- * Adapted for use with BlackCat CMS BackStrap theme; please see the link
- * above for the original theme
- *
- */
-
-#wrapper{width:100%;margin-right:40px;}
-#page-wrapper{padding:0 15px;min-height:568px;}
-
-.navbar-brand{font-size:14px;}
-
-/* top navigation */
-.navbar-top-links{margin-right:0}
-.navbar-top-links li{display:inline-block}
-.navbar-top-links li:last-child{margin-right:15px}
-.navbar-top-links li a{padding:15px;min-height:50px}
-.navbar-top-links .dropdown-menu li{display:block}
-.navbar-top-links .dropdown-menu li:last-child{margin-right:0}
-.navbar-top-links .dropdown-menu li a{padding:3px 20px;min-height:0}
-.navbar-top-links .dropdown-menu li a div{white-space:normal}
-.navbar-top-links .dropdown-messages,.navbar-top-links .dropdown-tasks,.navbar-top-links .dropdown-alerts{width:310px;min-width:0}
-.navbar-top-links .dropdown-messages{margin-left:5px}
-.navbar-top-links .dropdown-tasks{margin-left:-59px}
-.navbar-top-links .dropdown-alerts{margin-left:-123px}
-.navbar-top-links .dropdown-user{right:0;left:auto}
-
-/* sidebar navigation */
-.sidebar .sidebar-nav.navbar-collapse{padding-right:0;padding-left:0;}
-.sidebar .arrow{float:right;}
-.sidebar .fa.arrow:before{content:"\f104";}
-.sidebar .active>a>.fa.arrow:before{content:"\f107";}
-.sidebar .nav-level-1 li, .sidebar .nav-level-2 li{border-bottom:0!important;}
-.sidebar .nav-level-1 li a, .sidebar .nav-level-2 li a{padding:2px 5px 2px 37px;}
-.sidebar .nav-level-2 li a{padding-left:52px;}
-
-/* Fuel UX */
-.repeater-title{font-weight:900;}
-
-/* Dashboard */
-html body.fuelux div#wrapper div#page-wrapper div.row.flex div.col-lg-4.col-md-8 div.panel.panel-primary div.panel-heading div.row div.col-xs-2.text-right button.btn.btn-primary{padding:0;border:0;}
-button.btn.btn-primary.collapsed span:before{content:"\f070";}
+/* dashboard lanes */
+div.dashboard{width:100%;}
+div.dashboard ul{float:left;list-style:none outside none;padding:.3%;min-height:30px;}
+div.dashboard .bs_placeholder{border:1px dashed #ccc;margin:0 1em 1em 0;height:50px;}
+div.dashboard .bs_highlight{background-color:#ccc;}
+/* fix dashboard panels */
+div.dashboard div.panel{margin-bottom:0;}
+div.dashboard li.ui-sortable-handle{margin-bottom:20px;}
 
 /* Font Awesome Aliases */
 .fa-media:before{content:"\f1c8";}
@@ -60,26 +29,88 @@ button.btn.btn-primary.collapsed span:before{content:"\f070";}
 .fa-public:before{content:"\f06e";}
 .fa-hidden:before{content:"\f070";}
 .fa-private:before{content:"\f084";}
+.fa-deleted:before{content:"\f014";}
 .fa-datetime:before{content:"\f017";}
 .fa-mail:before{content:"\f0e0";}
 .fa-headers:before{content:"\f0ac";}
 .fa-administration:before{content:"\f085";}
+.fa-language:before{content:"\f086";}
 
-/* fancytree plugin */
-table.fancytree-ext-table tbody tr td {border:0;}
+/* dark backdrop for session timed out modal */
+.dark.fade.in ~ .modal-backdrop.fade.in {opacity:.9 !important;}
 
-/******************************************************************************/
-/****** off canvas page tree **************************************************/
-/******************************************************************************/
-nav#tree{background:#f8f8f8;display:block;height:100%;overflow:auto;position:fixed;right:-100em;font-size:15px;top:51px;width:auto;min-width:15em;z-index:2000;border-left:1px solid #ccc;padding:5px;-moz-box-shadow:-5px 0 5px #ccc;-webkit-box-shadow:-5px 0 5px #ccc;box-shadow:-5px 0 5px #ccc;transition:right 0.3s ease-in-out 0s;-webkit-transition:right 0.3s ease-in-out 0s;-moz-transition:right 0.3s ease-in-out 0s;-o-transition:right 0.3s ease-in-out 0s;}
-.nav-expanded nav#tree{right:0;}
-body.nav-expanded{margin-left:0em;transition:right 0.4s ease-in-out 0s;-webkit-transition:right 0.4s ease-in-out 0s;-moz-transition:right 0.4s ease-in-out 0s;-o-transition:right 0.4s ease-in-out 0s;}
-#nav-close{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:300;font-size:24px;padding-right:10px;}
+/* fixes Fuel UX Repeater for Bootswatch Themes */
+.fuelux .repeater-header, .fuelux .repeater-footer{background-color:transparent;}
+.fuelux .repeater-thumbnail{overflow:hidden;}
 
+/* draggable panels with left icon bar for page modification */
+ul.draggable-panel{list-style:none outside none;padding-left:0;}
+div.pos-r{position:relative;}
+div.panel-icon-wrapper{position:absolute;bottom:0;left:0;margin-left:0;z-index:1000;height:100%;overflow-y:auto;border-right:1px solid #ccc;border-bottom-left-radius:4px;}
+div.panel-content{margin-left:35px;}
 
-@media(min-width:768px) {
-    #page-wrapper{position:inherit;margin:0 0 0 250px;padding:15px 0 0 30px;}
-    .navbar-brand{font-size:18px;}
-    .sidebar{z-index:1;position:absolute;width:250px;margin-top:51px;}
-    .navbar-top-links .dropdown-messages, .navbar-top-links .dropdown-tasks, .navbar-top-links .dropdown-alerts{margin-left:auto;}
+/* fixes panels for Bootswatch Themes */
+ul.draggable-panel li.panel.panel-primary div.panel-body.pos-r{background-color:white;}
+.panel table{background-color:transparent;}
+
+/* edit page icons */
+li.panel div.panel-body.pos-r div.panel-icon-wrapper ul.nav.nav-left li span.fa{display:block;padding:10px 15px;color:#337ab7;}
+
+/* make sure the datepicker is in foreground on modals */
+html body.fuelux.modal-open div#ui-datepicker-div.ui-datepicker.ui-widget.ui-widget-content.ui-helper-clearfix.ui-corner-all{z-index:99999 !important;}
+
+/* mark.js */
+mark{background:orange;color:black;}
+
+/* margin for tablist */
+ul[role="tablist"]{margin-bottom:15px;}
+
+/* media preview */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/* Einstellung draus machen */
+img.thumb{width:80px;}
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
+/* color change for session timeout counter */
+div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite alternate;}
+@-webkit-keyframes colorchange {
+    0% {color:#f00;}
+    50% {color:white}
+}
+
+/*
+ * Off Canvas
+ * --------------------------------------------------
+ */
+@media screen and (max-width: 768px) {
+  .row-offcanvas {
+    position: relative;
+    -webkit-transition: all 0.25s ease-out;
+    -moz-transition: all 0.25s ease-out;
+    transition: all 0.25s ease-out;
+  }
+
+  .row-offcanvas-left
+  .sidebar-offcanvas {
+    left: -33%;
+  }
+
+  .row-offcanvas-left.active {
+    left: 33%;
+  }
+
+  .sidebar-offcanvas {
+    position: absolute;
+    top: 0;
+    width: 33%;
+    margin-left: 10px;
+  }
+}
+
+@media (min-width: 768px) {
+  .main {
+  }
+}
+.main .page-header {
+  margin-top: 0;
 }

@@ -96,7 +96,7 @@ if (!class_exists('CAT_Backend_Permissions'))
             if(!$self->user()->hasPerm('roles_perms'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             
-            $id    = CAT_Backend::getRouteParams()[0];
+            $id    = $self->router()->getParam();
             $perms = CAT_Permissions::getInstance()->getPerms($id);
             $perms = CAT_Helper_Array::ArraySort($perms,'area','asc',true,true);
             if(self::asJSON())
@@ -118,7 +118,7 @@ if (!class_exists('CAT_Backend_Permissions'))
             # get the permissions
             $perms = CAT_Permissions::getInstance()->getPerms();
             # recursive
-            $rec   = CAT_Backend::getRouteParams()[0];
+            $rec   = $self->router()->getParam();
             if($rec) {
                 $lb = CAT_Helper_ListBuilder::getInstance()->config(array(
                     '__id_key'     => 'perm_id',

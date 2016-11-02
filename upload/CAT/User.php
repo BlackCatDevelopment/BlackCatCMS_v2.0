@@ -18,13 +18,17 @@ if (!class_exists('CAT_User'))
 
     class CAT_User extends CAT_Object
     {
-        protected        $_config   = array();
+        protected static $instances = array();
         // array to hold the user data
         protected        $user      = array();
+        // user ID
+        protected        $id        = NULL;
         // array to hold the user roles
         protected        $roles     = array();
         // array to hold the permissions
         protected        $perms     = array();
+        // array to hold the module permissions
+        protected        $modules   = array();
         // array to hold the user groups
         protected        $groups    = array();
         // array to hold the list of pages a user owns
@@ -46,18 +50,17 @@ if (!class_exists('CAT_User'))
         {
             parent::__construct();
             $this->reset(); // make sure there is no old data
-            if(!$id) {      // get ID from session
-                $id = CAT_Helper_Validate::getInstance()->fromSession('USER_ID','numeric');
-            }
-            $this->log()->debug(sprintf('id: [%d]',$id));
-            if($id) {
-                $this->initUser($id); // load user
-            }
+            $this->initUser($id); // load user
         }   // end function __construct()
 
         public static function getInstance($id=NULL)
         {
-            return new self($id);
+            if(!$id) 
+                $id = CAT_Helper_Validate::fromSession('USER_ID','numeric');
+            if(!$id) $id = 2; // guest user
+            if(!isset(self::$instances[$id]))
+                self::$instances[$id] = new self($id);
+            return self::$instances[$id];
         }   // end function getInstance()
 
 
@@ -78,6 +81,7 @@ if (!class_exists('CAT_User'))
                     {
                         return $this->user[$attr];
                     }
+                    return NULL;
                 }
                 return (array)$this->user;
             }
@@ -102,11 +106,28 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return
          **/
-        public function getGroups()
+        public function getGroups($ids_only=false)
         {
+            if($ids_only && is_array($this->groups) && count($this->groups))
+            {
+                $ids = array();
+                foreach(array_values($this->groups) as $item)
+                    $ids[] = $item['group_id'];
+                return $ids;
+            }
             return $this->groups;
         }   // end function getGroups()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getID()
+        {
+            return ( $this->id ? $this->id : -1 );
+        }   // end function getID()
+        
         /**
          *
          * @access public
@@ -259,14 +280,40 @@ if (!class_exists('CAT_User'))
         public function hasGroup($group)
         {
             foreach(array_values($this->groups) as $gr)
-            {
                 if($gr['group_id'] == $group)
-                {
                     return true;
-                }
-            }
             return false;
         }   // end function hasGroup()
+
+        /**
+         * checks if the user has access to the given module
+         * $module may be an addon_id or directory name
+         *
+         * @access public
+         * @param  mixed   $module (addon_id or directory)
+         * @return boolean
+         **/
+        public function hasModulePerm($module)
+        {
+            if($this->is_root()) return true;
+            if(!is_numeric($module))
+            {
+                $module_data = CAT_Helper_Addons::getAddonDetails($module);
+                $module      = $module_data['addon_id'];
+            }
+            return isset($this->modules[$module]);
+        }   // end function hasModulePerm()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function hasPagePerm($page_id)
+        {
+            if($this->is_root()) return true;
+            return ( $this->hasPerm('pages_edit') && $this->isOwner($page_id) );
+        }   // end function hasPagePerm()
 
         /**
          * checks if the current user has the given permission
@@ -348,22 +395,43 @@ if (!class_exists('CAT_User'))
 
         /**
          *
+         * @access public
+         * @return
+         **/
+        public function tfa_enabled()
+        {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: check global setting and group settings
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if($this->getID() == -1 || $this->get('tfa_enabled') == 'Y')
+            {
+                return true;
+            }
+            return false;
+        }   // end function tfa_enabled()
+        
+
+        /**
+         *
          * @access protected
          * @return
          **/
         protected function initUser($id)
         {
             $this->log()->debug(sprintf('init user with id: [%d]',$id));
+            $fieldname = ( is_numeric($id) ? 'user_id' : 'username' );
             // read user from DB
             $get_user = CAT_Helper_DB::getInstance()->query(
                 'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_enabled`, `tfa_secret` '.
-                'FROM `:prefix:rbac_users` WHERE user_id=:id',
+                'FROM `:prefix:rbac_users` WHERE `'.$fieldname.'`=:id',
                 array('id'=>$id)
             );
+
             // load data into object
     		if($get_user->rowCount() != 0)
             {
     			$this->user = $get_user->fetch(\PDO::FETCH_ASSOC);
+                $this->id   = $id = $this->user['user_id'];
                 $this->log()->debug('user data:'.print_r($this->user,1));
                 $this->initRoles();
                 $this->log()->debug('user roles:'.print_r($this->roles,1));
@@ -398,41 +466,82 @@ if (!class_exists('CAT_User'))
          **/
         protected function initPerms()
         {
-            if($this->is_root())
-            {
-                $sth = CAT_Helper_DB::getInstance()->query(
-                    'SELECT * FROM `:prefix:rbac_permissions`'
-                );
-                $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
-                foreach(array_values($perms) as $perm)
-                {
-                    $this->perms[$perm['title']] = true;
-                }
-            }
-            else
+            if(!$this->is_root())
             {
                 if(is_array($this->roles))
                 {
+                    // use the QueryBuilder
+                    $query  = $this->db()->qb();
+                    $query2 = $this->db()->qb();
+                    $params = $params2 = array();
+
+                    // query for role permissions
+                    $query->select('*')
+                          ->from($this->db()->prefix().'rbac_rolepermissions','t1')
+                          ->join('t1',$this->db()->prefix().'rbac_permissions','t2','t1.perm_id=t2.perm_id')
+                          ;
+
+                    // query for module permissions
+                    $query2->select('*')
+                           ->from($this->db()->prefix().'rbac_role_has_modules','t1')
+                           ->join('t1',$this->db()->prefix().'addons','t2','t1.addon_id=t2.addon_id')
+                           ;
+
+                    // add the roles
                     foreach($this->roles as $role)
                     {
-                        $q = 'SELECT * FROM `:prefix:rbac_rolepermissions` AS t1
-                        JOIN `:prefix:rbac_permissions` AS t2
-                        ON `t1`.`perm_id`=`t2`.`perm_id`
-                        WHERE `t1`.`role_id`=:id';
-                        $opt = array('id'=>$role['role_id']);
+                        $query->orWhere('t1.role_id=?');
+                        $params[] = $role['role_id'];
+                        $query2->orWhere('t1.role_id=?');
+                        $params2[] = $role['role_id'];
                     }
-                    if($q)
-                    {
-                        $sth = CAT_Helper_DB::getInstance()->query($q, $opt);
-                        $perms = $sth->fetchAll(\PDO::FETCH_ASSOC);
-                        foreach(array_values($this->roles) as $role)
-                        {
-                            foreach(array_values($perms) as $perm)
-                            {
-                                $this->perms[$perm['title']] = $role['role_id'];
-                            }
-                        }
-                    }
+
+                    $query->setParameters($params);
+                    $query2->setParameters($params2);
+
+                    $sth   = $query->execute();
+                    $perms = $sth->fetchAll();
+                    $sth2  = $query2->execute();
+                    $mods  = $sth2->fetchAll();
+
+/*
+$query
+(
+            [role_id] => 1
+            [perm_id] => 2
+            [AssignmentDate] =>
+            [area] => pages
+            [title] => pages_add_l0
+            [description] => Create root pages (level 0)
+            [position] => 1
+            [requires] => 7
+        )
+$query2
+(
+            [role_id] => 1
+            [addon_id] => 27
+            [type] => module
+            [directory] => ckeditor4
+            [name] => CKEditor 4
+            [description] => CKEditor 4
+            [function] => wysiwyg
+            [version] =>
+            [guid] =>
+            [platform] =>
+            [author] =>
+            [license] =>
+            [installed] =>
+            [upgraded] =>
+            [removable] => Y
+            [bundled] => N
+        )
+
+*/
+                    foreach(array_values($perms) as $perm)
+                        $this->perms[$perm['title']] = $perm['role_id'];
+                    foreach(array_values($mods) as $mod)
+                        $this->modules[$mod['addon_id']] = true;
+
                 }
             }
         }   // end function initPerms()
@@ -447,10 +556,14 @@ if (!class_exists('CAT_User'))
         {
             if(!$this->is_root())
             {
-                $q = 'SELECT * FROM `:prefix:rbac_pageowner` AS t1
-                WHERE `t1`.`owner_id`=?';
-                $sth = CAT_Helper_DB::getInstance()->query($q,array($this->user['user_id']));
+                $q     = 'SELECT * FROM `:prefix:rbac_pageowner` AS t1 '
+                       . 'WHERE `t1`.`owner_id`=?';
+                $sth   = $this->db()->query($q,array($this->user['user_id']));
                 $pages = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                $this->log()->addDebug(
+                    sprintf('found [%d] pages for owner [%d]',
+                    count($pages),$this->user['user_id'])
+                );
                 foreach(array_values($pages) as $pg)
                 {
                     $this->pages[] = $pg['page_id'];
@@ -458,8 +571,6 @@ if (!class_exists('CAT_User'))
             }
         }   // end function initPages()
         
-        
-
         /**
          *
          * @access protected

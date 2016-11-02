@@ -5,7 +5,7 @@
         {if $repeater_search}
         <div class="repeater-search">
           <div class="search input-group">
-            <input type="search" class="form-control" placeholder="Search"/>
+            <input type="search" class="form-control" placeholder="Search" />
             <span class="input-group-btn">
               <button class="btn btn-default" type="button">
                 <span class="fa fa-fw fa-search"></span>
@@ -27,7 +27,7 @@
           </button>
           <ul class="dropdown-menu" role="menu">
             {foreach $repeater_filter_menu item}
-            <li data-value="{$item}"><a href="#">{$item}</a></li>
+            <li data-value="{$item}"><a href="#">{translate($item)}</a></li>
             {/foreach}
           </ul>
           <input class="hidden hidden-field" name="filterSelection" readonly="readonly" aria-hidden="true" type="text"/>

@@ -32,11 +32,12 @@ if (!class_exists('CAT_Helper_Mime'))
 
     class CAT_Helper_Mime extends CAT_Object
     {
-        private static $instance;
-        private static $mimetypes = array();
-        private static $allowed   = array();
-        private static $suffixes  = array();
-        protected $_config        = array( 'loglevel' => 8 );
+        public    static $loglevel   = \Monolog\Logger::EMERGENCY;
+        private   static $instance;
+        private   static $mimetypes = array();
+        private   static $allowed   = array();
+        private   static $suffixes  = array();
+
 
         public static function getInstance()
         {
@@ -84,6 +85,9 @@ if (!class_exists('CAT_Helper_Mime'))
         /**
          * retrieve allowed Mime types; we use the 'upload_allowed' entry in
          * the settings table combined with the list of known Mime types here
+         *
+         * Note: The registered mime types must have set the 'mime_suffixes'
+         * and 'mime_label' database columns! They will be ignored otherwise!
          *
          * @access public
          * @param  string  $filter - optional filter, for example, 'image/*'
@@ -143,9 +147,10 @@ if (!class_exists('CAT_Helper_Mime'))
             $self = self::getInstance();
             if(!count(self::$suffixes))
                 self::getAllowedMimeTypes();
+
             if($filter)
             {
-                $self->log()->LogDebug(sprintf('using filter (preg_match) [~^%s~]',$filter),self::$suffixes);
+                $self->log()->addDebug(sprintf('using filter (preg_match) [~^%s~]',$filter),self::$suffixes);
                 $temp = array();
                 foreach(self::$suffixes as $suffix => $type)
                     if( preg_match( '~^'.$filter.'~', $type ) )
