@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_Template'))
 {
@@ -17,6 +21,7 @@ if (!class_exists('CAT_Helper_Template'))
     {
         @include dirname(__FILE__) . '/../Object.php';
     }
+
     class CAT_Helper_Template extends CAT_Object
     {
 
@@ -36,7 +41,7 @@ if (!class_exists('CAT_Helper_Template'))
                 ? realpath( dirname( $callstack[0]['file'] ) )
                 : realpath( dirname(__FILE__) );
 
-            if(file_exists($this->workdir.'/templates' ))
+            if(file_exists($this->workdir.'/templates'))
             {
                 $this->setPath($this->workdir.'/templates');
             }
@@ -64,7 +69,7 @@ if (!class_exists('CAT_Helper_Template'))
                 require_once dirname(__FILE__).'/Template/'.$driver.'.php';
                 $driver = 'CAT_Helper_Template_'.$driver;
                 self::$_drivers[$driver] = new CAT_Helper_Template_DriverDecorator(new $driver());
-                foreach(array_values(array('CAT_URL','CAT_ADMIN_URL','CAT_PATH','CAT_THEME_URL','URL_HELP')) as $item)
+                foreach(array_values(array('CAT_URL','CAT_ADMIN_URL','CAT_ENGINE_PATH')) as $item)
                 {
                     if(defined($item))
                     {
@@ -107,12 +112,79 @@ if (!class_exists('CAT_Helper_Template'))
          * @access public
          * @return
          **/
-        public static function get_template_block_name($template = DEFAULT_TEMPLATE, $selected = 1)
+        public static function getTemplates($for='frontend')
         {
+//******************************************************************************
+// TODO: Rechte beruecksichtigen!
+//******************************************************************************
+            $templates = array();
+            $addons = CAT_Helper_Addons::get_addons(
+                NULL,
+                'template',
+                ( ($for=='backend') ? 'theme' : 'template')
+            );
+            if(is_array($addons) && count($addons))
+            {
+                foreach($addons as $addon)
+                {
+                    $templates[] = $addon['name'];
+                }
+            }
+            return $templates;
+        }   // end function getTemplates()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getVariants($for=NULL)
+        {
+            $variants = array();
+            $info     = array();
+            $paths    = array();
+
+            if(!$for)
+                $for = CAT_Backend::isBackend()
+                     ? CAT_Registry::get('DEFAULT_THEME')
+                     : CAT_Registry::get('DEFAULT_TEMPLATE');
+
+            if(is_numeric($for)) // assume page_id
+                $tpl_path = CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($for).'/templates/';
+            else
+                $tpl_path = CAT_ENGINE_PATH.'/templates/'.$for.'/templates/';
+
+            $info  = CAT_Helper_Addons::checkInfo($tpl_path);
+            $paths = CAT_Helper_Directory::getInstance()
+                   ->setRecursion(false)
+                   ->getDirectories(
+                       $tpl_path,$tpl_path
+                   );
+
+            if(isset($info['module_variants']) && is_array($info['module_variants']) && count($info['module_variants'])) {
+                $variants = $info['module_variants'];
+                array_unshift($variants,'');
+            }
+
+            if(count($paths))
+                $variants = array_merge($variants,$paths);
+
+            return $variants;
+        }   // end function getVariants()
+        
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function get_template_block_name($template = NULL, $selected = 1)
+        {
+            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
             // include info.php for template info
 			$template_location = ( $template != '' ) ?
-				CAT_PATH.'/templates/'.$template.'/info.php' :
-				CAT_PATH.'/templates/'.DEFAULT_TEMPLATE.'/info.php';
+				CAT_ENGINE_PATH.'/templates/'.$template.'/info.php' :
+				CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php';
 			if(file_exists($template_location))
             {
 				require $template_location;
@@ -132,14 +204,15 @@ if (!class_exists('CAT_Helper_Template'))
     	 * @param  int   $selected (default: 1)
     	 * @return void
     	 */
-    	public static function get_template_menus($template=DEFAULT_TEMPLATE, $selected=1)
+    	public static function get_template_menus($template=NULL, $selected=1)
     	{
+            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
     		if(CAT_Registry::get('MULTIPLE_MENUS') !== false)
     		{
     			$template_location
                     = ($template != '')
-                    ? CAT_PATH.'/templates/'.$template.'/info.php'
-                    : CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php'
+                    ? CAT_ENGINE_PATH.'/templates/'.$template.'/info.php'
+                    : CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php'
                     ;
 
     			if(file_exists($template_location))
@@ -165,5 +238,6 @@ if (!class_exists('CAT_Helper_Template'))
                 return false;
             }
     	}   // end function get_template_menus()
-    }
+
+    }   // end class CAT_Helper_Template
 }

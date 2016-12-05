@@ -1,13 +1,20 @@
 <?php
 
-/**
- *    @author          Black Cat Development
- *    @copyright       2016, Black Cat Development
- *    @link            http://blackcat-cms.org
- *    @license         http://www.gnu.org/licenses/gpl.html
- *    @category        CAT_Core
- *    @package         CAT_Core
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
+
 
 if (!class_exists('CAT_Groups'))
 {
@@ -18,6 +25,7 @@ if (!class_exists('CAT_Groups'))
 
     class CAT_Groups extends CAT_Object
     {
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected        $groups   = array();
         protected        $roles    = array();
         protected static $instance = NULL;

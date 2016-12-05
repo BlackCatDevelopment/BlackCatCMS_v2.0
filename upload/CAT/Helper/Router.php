@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if(!class_exists('CAT_Helper_Router',false))
 {
@@ -18,8 +22,12 @@ if(!class_exists('CAT_Helper_Router',false))
         // log level
         public    static $loglevel   = \Monolog\Logger::EMERGENCY;
         //public    static $loglevel   = \Monolog\Logger::DEBUG;
+        // instance
+        private   static $instance   = NULL;
         // full route
         private          $route      = NULL;
+        // query string
+        private          $query      = NULL;
         // controller name
         private          $controller = NULL;
         // function name
@@ -33,13 +41,20 @@ if(!class_exists('CAT_Helper_Router',false))
         // needed route permission
         private          $perm       = NULL;
 
+        public static function getInstance()
+        {
+            if (!self::$instance)
+                self::$instance = new self();
+            return self::$instance;
+        }
+
         /**
          * create a new route handler
          **/
         public function __construct()
         {
             // get route
-            $this->initRoute();
+            list($this->route,$this->query) = self::initRoute();
             // split route
             $params      = explode('/',str_replace('\\','/',$this->route));
             // first part of the route is the controller name
@@ -60,6 +75,9 @@ if(!class_exists('CAT_Helper_Router',false))
             $this->controller = 'CAT_' . ucfirst($controller);
             // function name
             $this->func       = $function;
+//files=/modules/lib_bootstrap/vendor/css/bootstrap.min.css,/modules/lib_bootstrap/vendor/css/font-awesome.min.css,/templates/backstrap/css/default/login.css
+            // additional query string (for assets, for example)
+            #if(isset($_SERVER['REDIRECT_QUERY_STRING']))
         }   // end function __construct()
 
         /**
@@ -204,49 +222,73 @@ if(!class_exists('CAT_Helper_Router',false))
         }   // end function getRoute()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getQuery()
+        {
+            if($this->query) return $this->query;
+            return false;
+        }   // end function getQuery()
+        
+
+        /**
          * retrieve the route
          *
          * @access public
          * @return
          **/
-        public function initRoute($remove_prefix=NULL)
+        public static function initRoute($remove_prefix=NULL)
         {
-            if(!$this->route)
+            $route = NULL;
+            $query = NULL;
+
+            foreach(array_values(array('REQUEST_URI','REDIRECT_SCRIPT_URL','SCRIPT_URL','ORIG_PATH_INFO','PATH_INFO')) as $key)
             {
-                foreach(array_values(array('REQUEST_URI','REDIRECT_SCRIPT_URL','SCRIPT_URL','ORIG_PATH_INFO','PATH_INFO')) as $key)
+                if(isset($_SERVER[$key]))
                 {
-                    if(isset($_SERVER[$key]))
-                    {
-                        $this->route = $_SERVER[$key];
-                        break;
-                    }
-                }
-                if(!$this->route) { $this->route = '/'; }
-                $this->addDebug(sprintf('retrieved route: [%s]',$this->route));
-                // remove params
-                if(stripos($this->route,'?'))
-                    list($this->route,$ignore) = explode('?',$this->route,2);
-                $path_prefix = str_ireplace(
-                    CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
-                    '',
-                    CAT_Helper_Directory::sanitizePath(CAT_PATH)
-                );
-                $this->log()->addDebug(sprintf(
-                    'document root [%s], CAT_PATH [%s], current route [%s], route prefix (rel. path to doc root) [%s]',
-                    $_SERVER['DOCUMENT_ROOT'], CAT_Helper_Directory::sanitizePath(CAT_PATH), $this->route, $path_prefix
-                ));
-                // remove leading /
-                if(!strpos($this->route,'/',0))
-                    $this->route = substr($this->route,1,strlen($this->route));
-                // if there's a prefix to remove (needed for backend paths)
-                if($remove_prefix)
-                {
-                    $this->route = str_replace($remove_prefix,'',$this->route);
-                    $this->route = substr($this->route,1,strlen($this->route));
+                    $route = parse_url($_SERVER[$key],PHP_URL_PATH);
+                    $query = parse_url($_SERVER[$key],PHP_URL_QUERY);
+                    break;
                 }
             }
-            return $this->route;
+            if(!$route) { $route = '/'; }
+
+            // remove params
+            if(stripos($route,'?'))
+                list($route,$ignore) = explode('?',$route,2);
+
+            $path_prefix = str_ireplace(
+                CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
+                '',
+                CAT_Helper_Directory::sanitizePath(CAT_PATH)
+            );
+
+            // remove leading /
+            if(!strpos($route,'/',0))
+                $route = substr($route,1,strlen($route));
+
+            // if there's a prefix to remove (needed for backend paths)
+            if($remove_prefix)
+            {
+                $route = str_replace($remove_prefix,'',$route);
+                $route = substr($route,1,strlen($route));
+            }
+
+            return array($route,$query);
         }   // end function initRoute()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function match($pattern)
+        {
+            if(preg_match($pattern,$this->getRoute()))
+                return true;
+        }   // end function match()
 
         /**
          * checks if the route is protected or not

@@ -70,6 +70,12 @@ $(function() {
         return false;
     });
 
+    // handle nested tabs
+    $("ul.nav-tabs.inner a").click(function (e) {
+      e.preventDefault();
+        $(this).tab('show');
+    });
+
     // add X-Editable to elements with 'editable' class
     $('.editable').editable();
 
@@ -102,17 +108,19 @@ $(function() {
 
     // detach = move to region header
     $('.detach').each( function() {
-        $(this).contents()
-               .appendTo('li#contextual ul')
-               .wrap('<li id="'+$(this).prop('id')+'"><a href="#">');
-        $(this).detach();
-        $('li#contextual').removeClass('hidden');
+        $(this).detach()
+               .appendTo('section#subheader div#contextual');
     });
 
     // format buttons
     $('input[type="submit"]').addClass('btn btn-primary');
     $('input[type="reset"]').addClass('btn btn-default');
     $('input[type="button"]').addClass('btn btn-default');
+
+    // avoid modal contents to be sent more than once
+    $('body').on('hidden.bs.modal', '.modal', function() {
+        $(this).removeData('bs.modal');
+    });
 
     // add session timer
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());

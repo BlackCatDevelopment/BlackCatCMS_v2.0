@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Backend_Media'))
 {
@@ -54,8 +46,15 @@ if (!class_exists('CAT_Backend_Media'))
         public static function index()
         {
             $self = self::getInstance();
-self::list();
-            $tpl_data = array();
+            $home = $self->user()->getHomeFolder();
+            $dirs = CAT_Helper_Directory::getInstance()
+                  ->setRecursion(true)
+                  ->getDirectories($home,$home,true);
+
+            $tpl_data = array(
+                'dirs'  => $dirs,
+                'files' => self::list($home)
+            );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_media', $tpl_data);
             CAT_Backend::print_footer();
@@ -66,19 +65,35 @@ self::list();
          * @access public
          * @return
          **/
-        public static function list()
+        public static function list($path)
         {
             $self   = self::getInstance();
             $filter = CAT_Helper_Validate::sanitizePost('filter');
+            $paths  = array();
+            $files  = array();
+
+            if(is_dir(CAT_PATH.'/media'))
+                array_push($paths,CAT_PATH.'/media');
+            if(is_dir(CAT_ENGINE_PATH.'/media'))
+                array_push($paths,CAT_ENGINE_PATH.'/media');
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Benutzer-Homeverzeichnis berücksichtigen
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            $data  = CAT_Helper_Media::getMediaFromDir(CAT_PATH.'/media',$filter);
+            foreach($paths as $path)
+            {
+                $data = CAT_Helper_Media::getMediaFromDir($path,$filter);
+                $files = array_merge($files,$data);
+            }
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
-                echo json_encode($data,true);
+                echo json_encode($files,true);
                 return;
+            }
+            else
+            {
+                return $files;
             }
         }   // end function list()
         

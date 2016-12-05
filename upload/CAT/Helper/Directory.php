@@ -1,16 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 if(!class_exists('CAT_Object', false)) {
     @include dirname(__FILE__).'/../Object.php';
 }
@@ -19,7 +22,12 @@ if(!class_exists('CAT_Helper_Directory', false))
 {
 	class CAT_Helper_Directory extends CAT_Object
 	{
-	
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Aktivieren des Debug-Modus führt derzeit zu einer Endlosschleife!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        protected static $loglevel            = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel            = \Monolog\Logger::DEBUG;
+
 	    protected static $recurse             = true;
         protected static $max_recursion_depth = 15;
 	    protected static $prefix              = NULL;
@@ -29,7 +37,6 @@ if(!class_exists('CAT_Helper_Directory', false))
         protected static $show_hidden         = false;
         protected static $current_depth       = 0;
         protected static $is_win              = NULL;
-        protected static $loglevel            = \Monolog\Logger::EMERGENCY;
 
         private   static $instance            = NULL;
 
@@ -44,10 +51,14 @@ if(!class_exists('CAT_Helper_Directory', false))
         public static function getInstance($reset=false)
         {
             if (!self::$instance)
+            {
                 self::$instance = new self();
+            }
             else
+            {
                 if($reset)
-                self::reset();
+                    self::reset();
+            }
             return self::$instance;
         }   // end function getInstance()
 
@@ -278,10 +289,42 @@ if(!class_exists('CAT_Helper_Directory', false))
 		/**
 	     * shortcut method for scanDirectory($dir, $remove_prefix, false, false)
 	     **/
-		public static function getDirectories($dir, $remove_prefix = NULL)
+		public static function getDirectories($dir, $remove_prefix=NULL, $recursive=false)
 		{
-		    return self::scanDirectory($dir, false, false, $remove_prefix);
-		}   // end function getFiles()
+		    $dirs = self::scanDirectory($dir, false, false, $remove_prefix);
+            if($recursive)
+            {
+                $temp = array();
+                foreach($dirs as $i => $dir)
+                {
+                    $adir        = self::sanitizePath($dir,true);
+                    $parent_name = isset($adir[count($adir)-2]) ? $adir[count($adir)-2] : NULL;
+                    $parent      = 0;
+
+                    if($parent_name)
+                    {
+                        $path   = CAT_Helper_Array::ArraySearchRecursive($parent_name,$temp,'title');
+                        if(isset($path) && is_array($path) && count($path))
+                            $parent = $temp[$path[0]]['id'];
+                    }
+
+                    $name   = self::getName($adir[count($adir)-1]);
+                    $temp[] = array(
+                        'id'      => $i+1,
+                        'title'   => $name,
+                        'parent'  => $parent,
+                        'level'   => count($dir)
+                    );
+                }
+
+                $l = \wblib\wbList::getInstance();
+                $l->set(array('__id_key' => 'id'));
+                $rec = $l->buildRecursion($temp);
+
+                $dirs = $rec;
+            }
+            return $dirs;
+		}   // end function getDirectories()
 		
 	    /**
          * get oldest file from given directory
@@ -380,7 +423,7 @@ if(!class_exists('CAT_Helper_Directory', false))
         {
             $self       = self::getInstance();
             $self->log()->addDebug('> sanitizeFilename [{file}]',array('file'=>$string));
-            require_once(CAT_PATH . '/framework/functions-utf8.php');
+            require_once(CAT_ENGINE_PATH . '/framework/functions-utf8.php');
             $string = entities_to_7bit($string);
             // remove all bad characters
             $bad    = array('\'', '"', '`', '!', '@', '#', '$', '%', '^', '&', '*', '=', '+', '|', '/', '\\', ';', ':', ',', '?','(',')');
@@ -406,7 +449,7 @@ if(!class_exists('CAT_Helper_Directory', false))
 		 * @param  string  $path - path to fix
 		 * @return string
 		 **/
-		public static function sanitizePath($path)
+		public static function sanitizePath($path,$as_array=false)
 		{
             $self       = self::getInstance();
             $self->log()->addDebug('> sanitizePath [{path}]',array('path'=>$path));
@@ -420,8 +463,8 @@ if(!class_exists('CAT_Helper_Directory', false))
             // relative path
             if(strlen($path)>2 && !substr_compare($path,'..',0,2))
             {
-                if(defined('CAT_PATH'))
-                    $path = substr_replace($path, CAT_PATH, 1, 2);
+                if(defined('CAT_ENGINE_PATH'))
+                    $path = substr_replace($path, CAT_ENGINE_PATH, 1, 2);
             }
 
 	        // resolve /../
@@ -442,6 +485,8 @@ if(!class_exists('CAT_Helper_Directory', false))
 	                $parts[] = $part;
 	            }
 	        }
+
+            if($as_array) return $parts;
 
 	        $new_path = implode("/", $parts);
 	        // windows
@@ -1106,8 +1151,8 @@ if(!class_exists('CAT_Helper_Directory', false))
 		private static function _class_secure_code()
 		{
 			return "
-if (defined('CAT_PATH')) {
-	include(CAT_PATH.'/framework/class.secure.php');
+if (defined('CAT_ENGINE_PATH')) {
+	include(CAT_ENGINE_PATH.'/framework/class.secure.php');
 } else {
     \$root = \"../\";
 	\$level = 1;

@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2015, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if(!class_exists('CAT_Object',false))
 {
@@ -32,8 +24,9 @@ if(!class_exists('CAT_Helper_I18n',false))
 {
 	class CAT_Helper_I18n extends CAT_Object
 	{
-	    protected        $_config
-            = array( 'defaultlang' => 'EN', 'langPath' => '/languages', 'workdir' => NULL );
+        private static   $defaultlang         = 'EN';
+        private static   $langPath            = '/languages';
+        private static   $workdir             = NULL;
 	    // array to store language strings
 	    private static   $_lang               = array();
 	    // default language
@@ -61,10 +54,7 @@ if(!class_exists('CAT_Helper_I18n',false))
 	        parent::__construct($options);
 	        if(!isset($options['lang']))
 	        {
-	            if(defined('LANGUAGE'))
-				{
-	            	$options['lang'] = LANGUAGE;
-				}
+	            $options['lang'] = self::getLang();
 	        }
 	        if(isset($options['lang']))
 	        {
@@ -76,9 +66,10 @@ if(!class_exists('CAT_Helper_I18n',false))
         /**
          * singleton pattern
          **/
-        public static function getInstance( $lang = NULL )
+        public static function getInstance($lang=NULL)
         {
-            if (!isset(self::$instances[$lang]) || !is_object(self::$instances[$lang]))
+            if(!$lang) $lang = self::getLang();
+            if(!isset(self::$instances[$lang]) || !is_object(self::$instances[$lang]))
             {
                 self::$instances[$lang] = new self(array('lang'=>$lang));
             }
@@ -92,10 +83,10 @@ if(!class_exists('CAT_Helper_I18n',false))
 	     * @param  string  $var - name of the $LANG var (optional)
 	     * @return void
 	     **/
-	    public function init( $var = NULL )
+	    public function init($var=NULL )
 	    {
             if($var)
-	            $this->log()->debug('lang var: '.$var);
+	            $this->log()->addDebug('lang var: '.$var);
 
 	        $stack  = debug_backtrace(); // for automatic file search
             $caller = array_shift($stack);
@@ -109,40 +100,40 @@ if(!class_exists('CAT_Helper_I18n',false))
             }
 
 	        if ( self::$_current_lang == '' )
-	            $lang_files = $this->getBrowserLangs();
+	            $lang_files = self::getBrowserLangs();
 	        else
 	            $lang_files = array(self::$_current_lang);
 
-            $this->log()->debug('lang files:', $lang_files);
+            $this->log()->addDebug('lang files:', $lang_files);
 
-            if ($caller )
-    	        if(file_exists(CAT_Helper_Directory::sanitizePath(dirname($caller['file']).$this->_config['langPath'])))
-    	            $this->_config['workdir'] = CAT_Helper_Directory::sanitizePath(dirname($caller['file']).$this->_config['langPath']);
-    	        elseif(file_exists(CAT_Helper_Directory::sanitizePath(dirname($caller['file']).'/../'.$this->_config['langPath'])))
-    	            $this->_config['workdir'] = CAT_Helper_Directory::sanitizePath(dirname($caller['file']).'/../'.$this->_config['langPath']);
+            if($caller)
+    	        if(file_exists(CAT_Helper_Directory::sanitizePath(dirname($caller['file']).self::$langPath)))
+    	            self::$workdir = CAT_Helper_Directory::sanitizePath(dirname($caller['file']).self::$langPath);
+    	        elseif(file_exists(CAT_Helper_Directory::sanitizePath(dirname($caller['file']).'/../'.self::$langPath)))
+    	            self::$workdir = CAT_Helper_Directory::sanitizePath(dirname($caller['file']).'/../'.self::$langPath);
                 else
-                    $this->_config['workdir'] = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/languages');
-            $this->log()->debug('workdir path: ['.$this->_config['workdir'].']');
+                    self::$workdir = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/languages');
+            $this->log()->addDebug('workdir path: ['.self::$workdir.']');
 
-            self::$search_paths[] = $this->_config['workdir'];
+            self::$search_paths[] = self::$workdir;
             self::$search_paths   = array_unique(self::$search_paths);
 
             // add backend template
             if(
                    CAT_Backend::isBackend()
                 && file_exists(CAT_Helper_Directory::sanitizePath(
-                       CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']
+                       CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').self::$langPath
                    ))
             ) {
                 self::$search_paths[] = CAT_Helper_Directory::sanitizePath(
-                    CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').$this->_config['langPath']
+                    CAT_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').self::$langPath
                 );
             }
 
 	        // add default lang
 	        $lang_files[] = 'EN';
 	        $lang_files   = array_unique($lang_files);
-	        $this->log()->debug( 'language files to search for: '.print_r($lang_files,1));
+	        $this->log()->addDebug('language files to search for: '.print_r($lang_files,1));
 
 	        foreach($lang_files as $l)
 	        {
@@ -163,9 +154,9 @@ if(!class_exists('CAT_Helper_I18n',false))
 	     * @param  string  $var
 	     * @return boolean
 	     **/
-	    public function addFile($file, $path=NULL, $var=NULL)
+	    public function addFile($file,$path=NULL,$var=NULL)
 	    {
-	        $this->log()->debug('FILE ['.$file.'] PATH ['.$path.'] VAR ['.$var.']');
+	        $this->log()->addDebug('FILE ['.$file.'] PATH ['.$path.'] VAR ['.$var.']');
 	        $check_var = 'LANG';
 
 	        if(isset($var))
@@ -184,7 +175,7 @@ if(!class_exists('CAT_Helper_I18n',false))
             foreach(self::$search_paths as $path)
             {
 	            $filename = CAT_Helper_Directory::sanitizePath($path.'/'.$file);
-    	        if ( file_exists($filename) && ! $this->isLoaded($filename) )
+    	        if(file_exists($filename) && ! $this->isLoaded($filename))
     	        {
     	            $this->log()->debug('found language file: '.$filename);
     	            $this->checkFile($filename,$check_var);
@@ -198,7 +189,7 @@ if(!class_exists('CAT_Helper_I18n',false))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(!$this->isLoaded($file))
             {
-    	        $this->log()->debug('language file does not exist: '.$file);
+    	        $this->log()->addDebug('language file does not exist: '.$file);
                 return false;
             }
 
@@ -216,7 +207,7 @@ if(!class_exists('CAT_Helper_I18n',false))
 		public function checkFile($file, $check_var, $check_only=false)
 		{
 
-            $this->log()->debug(sprintf(
+            $this->log()->addDebug(sprintf(
                 'checking file [%s] for var [%s], check_only [%s]',
                 $file, $check_var, $check_only
             ));
@@ -228,11 +219,11 @@ if(!class_exists('CAT_Helper_I18n',false))
 				// check if the var is defined now
 			    if ( isset( ${$check_var} ) )
 			    {
-                    $this->log()->debug('found $check_var');
+                    $this->log()->addDebug('found $check_var');
                     $isIndexed = array_values( ${$check_var} ) === ${$check_var};
                     if($isIndexed)
                     {
-                        $this->log()->debug('indexed, returning false');
+                        $this->log()->addDebug('indexed, returning false');
                         return false;
                     }
 			        if($check_only)
@@ -247,7 +238,7 @@ if(!class_exists('CAT_Helper_I18n',false))
 		                    self::$_current_lang = $matches[1];
 		                }
 		                $this->_loaded[$file] = 1;
-		                $this->log()->debug('loaded language file: ['.$file.']');
+		                $this->log()->addDebug('loaded language file: ['.$file.']');
 		                return true;
 					}
 	            }
@@ -288,8 +279,8 @@ if(!class_exists('CAT_Helper_I18n',false))
 	    {
 	        if ( file_exists( $path ) )
 	        {
-	            $this->log()->debug('setting language path to: '.$path);
-	            $this->_config['langPath'] = $path;
+	            $this->log()->addDebug('setting language path to: '.$path);
+	            self::$langPath = $path;
 	            $this->init($var);
 	        }
 	        else
@@ -298,23 +289,6 @@ if(!class_exists('CAT_Helper_I18n',false))
 	        }
 
 	    } // end function setPath ()
-
-	    /**
-	     * get current language shortcut
-	     *
-	     * @access public
-	     * @return string
-	     *
-	     **/
-	    public function getLang()
-	    {
-            if(!isset(self::$_current_lang) || self::$_current_lang === NULL)
-            {
-                $langs = $this->getBrowserLangs();
-                return $langs[1];
-            }
-	        return self::$_current_lang;
-	    } // end function getLang()
 
         /**
          * shortcut to translate() (for the lazy ones...)
@@ -339,8 +313,8 @@ if(!class_exists('CAT_Helper_I18n',false))
 	    public function translate($msg, $attr=array())
 	    {
             if(!is_string($msg)) return $msg;
-	        $this->log()->debug('translate: '.$msg);
-	        if(empty($msg) || is_bool($msg))
+	        $this->log()->addDebug('translate: '.$msg);
+	        if(empty($msg) || is_bool($msg)) // should never happen, just in case
 	        {
 	            return $msg;
 	        }
@@ -482,34 +456,9 @@ if(!class_exists('CAT_Helper_I18n',false))
 			return false;
 		}   // end function isLoaded()
 
-        /**
-         * get known charsets; this was moved from ./backend/interface/charsets.php
-         * the list may be filled from DB later
-         *
-         * @access public
-         * @return array
-         **/
-        public function getCharsets()
-        {
-            return array(
-                'utf-8'       => 'Unicode (utf-8)',
-                'iso-8859-1'  => 'Latin-1 Western European (iso-8859-1)',
-                'iso-8859-2'  => 'Latin-2 Central European (iso-8859-2)',
-                'iso-8859-3'  => 'Latin-3 Southern European (iso-8859-3)',
-                'iso-8859-4'  => 'Latin-4 Baltic (iso-8859-4)',
-                'iso-8859-5'  => 'Cyrillic (iso-8859-5)',
-                'iso-8859-6'  => 'Arabic (iso-8859-6)',
-                'iso-8859-7'  => 'Greek (iso-8859-7)',
-                'iso-8859-8'  => 'Hebrew (iso-8859-8)',
-                'iso-8859-9'  => 'Latin-5 Turkish (iso-8859-9)',
-                'iso-8859-10' => 'Latin-6 Nordic (iso-8859-10)',
-                'iso-8859-11' => 'Thai (iso-8859-11)',
-                'gb2312'      => 'Chinese Simplified (gb2312)',
-                'big5'        => 'Chinese Traditional (big5)',
-                'iso-2022-jp' => 'Japanese (iso-2022-jp)',
-                'iso-2022-kr' => 'Korean (iso-2022-kr)'
-            );
-        }   // end function getCharsets()
+// *****************************************************************************
+// Static functions
+// *****************************************************************************
 
 	    /**
 	     * This method is based on code you may find here:
@@ -517,21 +466,16 @@ if(!class_exists('CAT_Helper_I18n',false))
 	     *
 	     *
 	     **/
-	    public function getBrowserLangs($strict_mode=true)
+	    public static function getBrowserLangs($strict_mode=true)
 	    {
-
             if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-            {
-                return $this->_config['defaultlang'];
-            }
+                return self::$defaultlang;
 
 	        $browser_langs = array();
 	        $lang_variable = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 
 	        if(empty($lang_variable))
-	        {
-	            return $this->_config['defaultlang'];
-	        }
+	            return self::$defaultlang;
 
 	        $accepted_languages = preg_split('/,\s*/', $lang_variable);
 	        $current_q          = 0;
@@ -579,8 +523,73 @@ if(!class_exists('CAT_Helper_I18n',false))
 	            $ret[] = $lang[ 'lang' ];
 
 	        return $ret;
-
 	    } // end getBrowserLangs()
+
+        /**
+         * get known charsets; this was moved from ./backend/interface/charsets.php
+         * the list may be filled from DB later
+         *
+         * @access public
+         * @return array
+         **/
+        public static function getCharsets()
+        {
+            return array(
+                'utf-8'       => 'Unicode (utf-8)',
+                'iso-8859-1'  => 'Latin-1 Western European (iso-8859-1)',
+                'iso-8859-2'  => 'Latin-2 Central European (iso-8859-2)',
+                'iso-8859-3'  => 'Latin-3 Southern European (iso-8859-3)',
+                'iso-8859-4'  => 'Latin-4 Baltic (iso-8859-4)',
+                'iso-8859-5'  => 'Cyrillic (iso-8859-5)',
+                'iso-8859-6'  => 'Arabic (iso-8859-6)',
+                'iso-8859-7'  => 'Greek (iso-8859-7)',
+                'iso-8859-8'  => 'Hebrew (iso-8859-8)',
+                'iso-8859-9'  => 'Latin-5 Turkish (iso-8859-9)',
+                'iso-8859-10' => 'Latin-6 Nordic (iso-8859-10)',
+                'iso-8859-11' => 'Thai (iso-8859-11)',
+                'gb2312'      => 'Chinese Simplified (gb2312)',
+                'big5'        => 'Chinese Traditional (big5)',
+                'iso-2022-jp' => 'Japanese (iso-2022-jp)',
+                'iso-2022-kr' => 'Korean (iso-2022-kr)'
+            );
+        }   // end function getCharsets()
+
+	    /**
+	     * get current language shortcut
+	     *
+	     * @access public
+	     * @return string
+	     *
+	     **/
+	    public static function getLang()
+	    {
+            if(!isset(self::$_current_lang) || self::$_current_lang === NULL)
+            {
+                $langs = self::getBrowserLangs();
+                return $langs[0];
+            }
+	        return self::$_current_lang;
+	    } // end function getLang()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getLanguages($langs_only=true)
+        {
+            $addons = CAT_Helper_Addons::get_addons('language','language');
+            if($langs_only)
+            {
+                $result = array();
+                foreach($addons as $item)
+                {
+                    $result[] = $item['directory'];
+                }
+                return $result;
+            }
+            return $addons;
+        }   // end function getLanguages()
 
         /**
          * looks for used languages by analyzing the pages

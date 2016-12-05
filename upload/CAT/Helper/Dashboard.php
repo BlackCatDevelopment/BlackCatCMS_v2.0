@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_Dashboard'))
 {
@@ -175,6 +179,8 @@ if (!class_exists('CAT_Helper_Dashboard'))
             $sql  = 'SELECT * FROM `:prefix:dashboard_has_widgets` AS `t1` '
                   . 'JOIN `:prefix:dashboard_widgets` AS `t2` '
                   . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
+                  . 'LEFT OUTER JOIN `:prefix:dashboard_widget_data` AS `t3` '
+                  . 'ON `t2`.`widget_id`=`t3`.`widget_id` '
                   . 'WHERE `t1`.`dashboard_id`=?';
             $sth  = self::getInstance()->db()->query(
                  $sql, array($dash)
@@ -209,24 +215,37 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function renderDashboard($id)
         {
+            global $widget_data, $widget_id, $dashboard_id;
+            // for use inside the widget
+            $dashboard_id = $id;
             // get widgets
             $widgets = self::getWidgets($id);
+
             if(is_array($widgets) && count($widgets))
             {
                 foreach($widgets as $i => $w)
                 {
+                    $widget_id       = $w['widget_id'];
                     $widget_settings = NULL;
+                    $widget_data     = ( isset($w['data']) && strlen($w['data']) )
+                                     ? unserialize($w['data'])
+                                     : NULL;
                     // script based widgets
-                    if(file_exists(CAT_PATH.$w['widget_controller']))
+                    if(file_exists(CAT_ENGINE_PATH.$w['widget_controller']))
                     {
-                        include CAT_PATH.$w['widget_controller'];
+                        include CAT_ENGINE_PATH.$w['widget_controller'];
                         $name     = pathinfo($w['widget_controller'],PATHINFO_FILENAME);
-                        $funcname = 'render_widget_blackcat_'.$name;
-                        $widgets[$i]['content'] = $funcname();
-                        if(is_array($widget_settings) && isset($widget_settings['widget_title']))
+                        $funcname = 'render_widget_';
+                        if(isset($w['widget_module']) && strlen($w['widget_module']))
                         {
-                            $widgets[$i]['widget_title'] = $widget_settings['widget_title'];
+                            $funcname .= $w['widget_module'].'_';
+                            CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$w['widget_module'].'/languages/');
                         }
+                        $funcname .= $name;
+                        if(function_exists($funcname))
+                            $widgets[$i]['content'] = $funcname();
+                        if(is_array($widget_settings) && isset($widget_settings['widget_title']))
+                            $widgets[$i]['widget_title'] = $widget_settings['widget_title'];
                     }
                 }
             }

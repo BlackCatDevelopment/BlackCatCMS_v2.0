@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Object', false))
 {
@@ -20,16 +24,17 @@ if (!class_exists('CAT_Page', false))
 {
     class CAT_Page extends CAT_Object
     {
-        // current page
-        private          $_page_id   = NULL;
-        // active blocks
-        private          $sections   = array();
+        // ID of last instantiated page
+        private   static $curr_page  = NULL;
         // helper handle
         private   static $helper     = NULL;
         // singleton, but one instance per page_id!
         private   static $instances  = array();
         // loglevel
         protected static $loglevel   = \Monolog\Logger::EMERGENCY;
+
+        //
+        protected        $page_id    = NULL;
 
         /**
          * get instance for page with ID $page_id
@@ -38,241 +43,35 @@ if (!class_exists('CAT_Page', false))
          * @param  integer $page_id
          * @return object
          **/
-        public static function getInstance($page_id)
+        public static function getInstance($page_id=NULL)
         {
-            if (!is_numeric($page_id))
-                self::printFatalError('Invalid page ID!');
             if (!self::$helper)
                 self::$helper = CAT_Helper_Page::getInstance();
-            if ($page_id==-1 || !isset(self::$instances[$page_id]))
+            if($page_id)
             {
-                if ($page_id == -1)
+                if(!isset(self::$instances[$page_id]))
                 {
-                    $page_id = self::$helper->selectPage();
+                    self::$instances[$page_id] = new self($page_id);
+                    self::$instances[$page_id]->page_id = $page_id;
+                    self::init($page_id);
                 }
-                self::$instances[$page_id] = new self($page_id);
-                self::init($page_id);
-            }
-            return self::$instances[$page_id];
-        }   // end function getInstance()
-
-        /**
-         * initialize current page
-         **/
-        final private static function init($page_id)
-        {
-            global $parser;
-            $parser->setGlobals('PAGE_ID',$page_id);
-            self::$instances[$page_id]->_page_id = $page_id;
-            $prop = self::$instances[$page_id]->getProperties();
-            foreach ( $prop as $key => $value )
-            {
-                if(!$value) continue;
-                if(CAT_Registry::exists(strtoupper($key))) continue;
-                if(is_array($value)) continue;
-                CAT_Registry::register(strtoupper($key),$value,true);
-                $parser->setGlobals(strtoupper($key),$value);
-            }
-            // Work-out if any possible in-line search boxes should be shown
-            if(SEARCH == 'public') {
-                CAT_Registry::register('SHOW_SEARCH', true,true);
-            } elseif(SEARCH == 'private' AND VISIBILITY == 'private') {
-                CAT_Registry::register('SHOW_SEARCH', true,true);
-            } elseif(SEARCH == 'private' AND CAT_User::getInstance()->is_authenticated() == true) {
-                CAT_Registry::register('SHOW_SEARCH', true,true);
-            } elseif(SEARCH == 'registered' AND CAT_User::getInstance()->is_authenticated() == true) {
-                CAT_Registry::register('SHOW_SEARCH', true,true);
-            } else {
-                CAT_Registry::register('SHOW_SEARCH', false,true);
-            }
-            $parser->setGlobals('SHOW_SEARCH',SHOW_SEARCH);
-            // Work-out if menu should be shown
-            if(!defined('SHOW_MENU')) {
-                CAT_Registry::register('SHOW_MENU', true,true);
-            }
-            // Work-out if login menu constants should be set
-            if(FRONTEND_LOGIN) {
-                $constants = array(
-                    'LOGIN_URL'       => CAT_URL.'/account/login.php',
-                    'LOGOUT_URL'      => CAT_URL.'/account/logout.php',
-                    'FORGOT_URL'      => CAT_URL.'/account/forgot.php',
-                    'PREFERENCES_URL' => CAT_URL.'/account/preferences.php',
-                    'SIGNUP_URL'      => CAT_URL.'/account/signup.php',
-                );
-                // Set login menu constants
-                CAT_Registry::register($constants,NULL,true);
-                $parser->setGlobals( array(
-                    'username_fieldname' => CAT_Helper_Validate::getInstance()->createFieldname('username_'),
-                    'password_fieldname' => CAT_Helper_Validate::getInstance()->createFieldname('password_'),
-                    'redirect_url'       => (
-                        (isset($_SESSION['HTTP_REFERER']) && $_SESSION['HTTP_REFERER'] != '') ? $_SESSION['HTTP_REFERER'] : CAT_URL
-                    ),
-                ));
-                $parser->setGlobals($constants);
-            }
-        }   // end function init()
-
-        /**
-         * shows the current page
-         *
-         * @access public
-         * @return void
-         **/
-        public function show()
-        {
-            // ----- keep old modules happy -----
-            global $wb, $admin, $database, $page_id, $section_id;
-            global $TEXT;
-            $admin =& $wb;
-            if ( $page_id == '' )
-                $page_id = $this->_page_id;
-            // ----- keep old modules happy -----
-
-            $this->log()->debug(sprintf('showing page with ID [%s]',$page_id));
-
-            // send appropriate header
-            if(CAT_Helper_Page::isMaintenance() || CAT_Registry::get('MAINTENANCE_PAGE') == $page_id)
-            {
-                $this->log()->debug('Maintenance mode is enabled');
-                header('HTTP/1.1 503 Service Temporarily Unavailable');
-                header('Status: 503 Service Temporarily Unavailable');
-                header('Retry-After: 7200'); // in seconds
-            }
-
-            // check for 301 redirect (needs the SEO Tool)
-            if(CAT_Helper_Page::isRedirected($page_id))
-            {
-                $this->log()->debug('Redirecting');
-                header('HTTP/1.1 301 Moved Permanently', TRUE, 301);
-            }
-
-            // template engine
-            global $parser;
-
-            // page of type menu_link
-            if(CAT_Sections::isMenuLink($this->_page_id))
-            {
-                $this->log()->debug('handle manu link');
-                $this->showMenuLink();
+                return self::$instances[$page_id];
             }
             else
             {
-                $do_filter = false;
-                // use output filter (if any)
-                if(file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/blackcatFilter/filter.php')))
-                {
-                    include_once CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/blackcatFilter/filter.php');
-                    if(function_exists('executeFilters'))
-                    {
-                        $this->log()->debug('enabling output filters');
-                        $do_filter = true;
-                    }
-                }
-
-                $this->setTemplate();
-
-                // including the template; it may calls different functions
-                // like page_content() etc.
-                $this->log()->debug('including template');
-
-                ob_start();
-                    require CAT_TEMPLATE_DIR.'/index.php';
-                    $output = ob_get_contents();
-                ob_clean();
-
-                // droplets
-                $this->log()->debug('executing droplets');
-                CAT_Helper_Droplet::process($output);
-
-                // output filtering
-                if ( $do_filter )
-                {
-                    $this->log()->debug('executing output filters');
-                    executeFilters($output);
-                }
-
-                // use HTMLPurifier to clean up the output
-                if( defined('ENABLE_HTMLPURIFIER') && true === ENABLE_HTMLPURIFIER )
-                {
-                    $this->log()->debug('executing HTML Purifier');
-                    $output = CAT_Helper_Protect::purify($output);
-                }
-
-                $this->log()->debug('print output');
-
-                if(!headers_sent())
-                {
-                    $this->log()->debug('sending content-type header');
-                    $properties  = self::properties($page_id);
-                    echo header(
-                        'content-type:text/html; charset='
-                        .(isset($properties['default_charset']) ? $properties['default_charset'] : 'utf-8')
-                    );
-                }
-                $this->log()->debug('echo the output');
-                echo $output;
+                return new self(0);
             }
-        }   // end function show()
+        }   // end function getInstance()
 
         /**
-         * returns page description
+         *
+         * @access public
+         * @return
          **/
-        public function getDescription()
+        public static function getID()
         {
-            $desc = self::$helper->properties($this->_page_id,'description');
-            if ( !$desc ) $desc = CAT_Registry::get('WEBSITE_DESCRIPTION');
-            return $desc;
-        }   // end function getDescription()
-
-        /**
-         * returns page keywords
-         **/
-        public function getKeywords()
-        {
-            $kw = self::$helper->properties($this->_page_id,'keywords');
-            if ( !$kw ) $kw = CAT_Registry::get('WEBSITE_KEYWORDS');
-            return $kw;
-        }   // end function getKeywords()
-
-        /**
-         * creates a menu of linked pages in other languages
-         **/
-        public function getLanguageMenu()
-        {
-            global $parser, $page_id;
-            if (defined('PAGE_LANGUAGES') && PAGE_LANGUAGES)
-            {
-                $items = CAT_Helper_Page::getLinkedByLanguage($page_id);
-                // if there are no items linked to the page, return a link to the
-                // default page, so the user can still _change_ his language
-                if(!is_array($items) || !count($items))
-                {
-                    // get used languages
-                    $used_langs = CAT_Helper_I18n::getUsedLangs(true,true);
-                    // remove current lang
-                    if(isset($used_langs[LANGUAGE]))
-                    {
-                        unset($used_langs[LANGUAGE]);
-                    }
-                    // now, get default page for remaining langs
-                    foreach(array_keys($used_langs) as $lang)
-                    {
-                        $page = CAT_Helper_Page::getDefaultPageForLanguage($lang);
-                        $items[] = CAT_Helper_Page::properties($page);
-                    }
-                }
-            }
-            if( isset($items) && count($items) )
-            {
-                // initialize template search path
-                $parser->setPath(CAT_PATH.'/templates/'.TEMPLATE.'/templates');
-                $parser->setFallbackPath(CAT_THEME_PATH.'/templates');
-                if($parser->hasTemplate('languages'))
-                {
-                    $parser->output('languages', array('items'=>$items));
-                }
-            }
-        }   // end function getLanguageMenu()
+            return self::$curr_page;
+        }   // end function getID()
 
         /**
          * get page sections for given block
@@ -281,130 +80,102 @@ if (!class_exists('CAT_Page', false))
          * @param  integer $block
          * @return void (direct print to STDOUT)
          **/
-        public function getPageContent($block = 1)
+        public static function getPageContent($block = 1)
         {
-            // keep old modules happy
-            global $wb, $admin, $database, $page_id, $section_id, $parser;
-            // old style language files
-            global $TEXT, $HEADING, $MESSAGE;
+            $page_id = self::getID();
 
-            $admin =& $wb;
-            if ( $page_id == '' )
-                $page_id = $this->_page_id;
+            // check if the page exists, is not marked as deleted, and has
+            // some content at all
+            if(
+                   !$page_id                           // no page id
+                || !self::$helper->exists($page_id)    // page does not exist
+                || !self::$helper->isActive($page_id)  // page not active
+            ) {
+                return self::print404();
+            }
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Maintenance page
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             // check if user is allowed to see this page
-            if(
-                   !self::$helper->isVisible($this->_page_id)
-                && !CAT_Users::is_root()
-                && (!self::$helper->isMaintenance() || CAT_Registry::get('MAINTENANCE_PAGE') != $this->_page_id)
-            ) {
-                if(self::$helper->isDeleted($this->_page_id))
+            if(!self::$helper->user()->is_root())
+            {
+                // global perm
+                if(self::$helper->user()->hasPagePerm($page_id,'pages_view'))
                 {
-                    return self::print404();
+                    self::$helper->printFatalError('You are not allowed to view this page!');
+                }
+            }
+
+            // get active sections
+            $sections = CAT_Sections::getActiveSections($page_id,$block);
+            if(!count($sections)) // no content for this block
+                return false;
+
+            $output = array();
+            foreach ($sections as $section)
+            {
+                // spare some typing
+                $section_id = $section['section_id'];
+                $module     = $section['module'];
+                $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/view.php');
+
+                if (file_exists($handler))
+                {
+                    CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+
+                    // set template path
+                    if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates')))
+                        self::$helper->tpl()->setPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates'));
+                    if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default')))
+                        self::$helper->tpl()->setPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
+                    if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE'))))
+                    {
+                        self::$helper->tpl()->setFallbackPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
+                        self::$helper->tpl()->setPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE')));
+                    }
+
+                    // fetch original content
+                    ob_start();
+                        require $handler;
+                        $output[] = ob_get_clean();
                 }
                 else
                 {
-                    // if Frontend-Login redirect user to login form and after login back to current page
-                    if ( FRONTEND_LOGIN )
-                    {
-                        header("HTTP/1.1 401 Unauthorized");
-                        header("Location: " . LOGIN_URL .  '?redirect=' . $_SERVER['PHP_SELF'] );
-                        exit();
-                    } else {
-                        self::$helper->printFatalError('You are not allowed to view this page!');
-                    }
+                    self::log()->addError(sprintf('non existing module [%s] (or no view.php), called on page [%d], block [%d]',$module,$page_id,$block));
                 }
             }
-            // check if page has active sections
-            if(!self::$helper->isActive($this->_page_id))
-                return self::$helper->lang()->translate('The page does not have any content!');
-
-            // get the page content; if constant PAGE_CONTENT is set, it contains
-            // the name of a file to be included
-            if (!defined('PAGE_CONTENT') or $block != 1)
-            {
-
-                // get active sections
-                $sections = CAT_Sections::getActiveSections($this->_page_id, $block);
-                if(is_array($sections) && count($sections))
-                {
-                    global $parser, $section_id;
-                    foreach ($sections as $section)
-                    {
-                        self::$helper->log()->addDebug('sections for this block', $sections);
-                        $section_id = $section['section_id'];
-                        $module     = $section['module'];
-                        // make a anchor for every section.
-                        if (defined('SEC_ANCHOR') && SEC_ANCHOR != '')
-                        {
-                            echo '<a class="section_anchor" id="' . SEC_ANCHOR . $section_id . '"'
-                               . ( (isset($section['name']) && $section['name'] != 'no name') ? 'title="'.$section['name'].'"' : '' )
-                               . '></a>';
-                        }
-                        // check if module exists - feature: write in errorlog
-                        if (file_exists(CAT_PATH . '/modules/' . $module . '/view.php'))
-                        {
-                            // load language file (if any)
-                            $langfile = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/'.$module.'/languages/'.LANGUAGE.'.php');
-                            if ( file_exists($langfile) )
-                            {
-                                // modern language file
-                                if ( $this->lang()->checkFile($langfile, 'LANG', true ))
-                                    $this->lang()->addFile(LANGUAGE . '.php', CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/languages'));
-                            }
-                            // set template path
-                            if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates')))
-                                $parser->setPath(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates'));
-                            if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates/default')))
-                                $parser->setPath(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates/default'));
-                            if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates/' . DEFAULT_TEMPLATE)))
-                            {
-                                $parser->setFallbackPath(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates/default'));
-                                $parser->setPath(CAT_Helper_Directory::sanitizePath(CAT_PATH . '/modules/' . $module . '/templates/' . DEFAULT_TEMPLATE));
-                            }
-                            // fetch original content
-                            ob_start();
-                                require CAT_PATH . '/modules/' . $module . '/view.php';
-                                $content = ob_get_clean();
-                            echo $content;
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                require PAGE_CONTENT;
-            }
-            if (!CAT_Registry::exists('CAT_PAGE_CONTENT_DONE'))
-            CAT_Registry::register('CAT_PAGE_CONTENT_DONE',true,true);
-        }
+            echo implode("\n", $output);
+        }   // end function getPageContent()
 
         /**
-         * returns the properties of the current page (contents of private
-         * $_page hash)
-         *
-         * @access public
-         * @return array
+         * initialize current page
          **/
-        public function getProperties()
+        final private static function init($page_id)
         {
-            return self::$helper->properties($this->_page_id);
-        }   // end function getProperties()
+            self::$curr_page = $page_id;
+        }   // end function init()
 
         /**
          *
          * @access public
          * @return
          **/
-        public function getSections() {
-            if(!count($this->sections))
-                $this->sections = CAT_Sections::getSections($this->_page_id);
-            return $this->sections;
-        }   // end function getSections()
+        public static function print404()
+        {
+            if(CAT_Registry::exists('ERR_PAGE_404'))
+            {
+                $err_page_id = CAT_Registry::get('ERR_PAGE_404');
+                header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
+                header('Location: '.CAT_Helper_Page::getLink($err_page_id));
+            }
+            else
+            {
+                header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
+            }
+            exit;
+        }   // end function print404()
 
         /**
          * Figure out which template to use
@@ -414,6 +185,7 @@ if (!class_exists('CAT_Page', false))
          **/
         public function setTemplate()
         {
+/*
             if(!defined('TEMPLATE'))
             {
                 $prop = $this->getProperties();
@@ -422,11 +194,11 @@ if (!class_exists('CAT_Page', false))
                     if(file_exists(CAT_PATH.'/templates/'.$prop['template'].'/index.php')) {
                         CAT_Registry::register('TEMPLATE', $prop['template'], true);
                     } else {
-                        CAT_Registry::register('TEMPLATE', DEFAULT_TEMPLATE, true);
+                        CAT_Registry::register('TEMPLATE', CAT_Registry::get('DEFAULT_TEMPLATE'), true);
                     }
                 // use global default
                 } else {
-                    CAT_Registry::register('TEMPLATE', DEFAULT_TEMPLATE, true);
+                    CAT_Registry::register('TEMPLATE', CAT_Registry::get('DEFAULT_TEMPLATE'), true);
                 }
             }
             $dir = '/templates/'.TEMPLATE;
@@ -435,78 +207,40 @@ if (!class_exists('CAT_Page', false))
             CAT_Registry::register('TEMPLATE_DIR', CAT_URL.$dir, true);
             // This is the REAL dir
             CAT_Registry::register('CAT_TEMPLATE_DIR', CAT_PATH.$dir, true);
+*/
         }   // end function setTemplate()
 
-
         /**
+         * shows the current page
          *
          * @access public
-         * @return
+         * @return void
          **/
-        public static function print404()
+        public function show()
         {
-            if ( CAT_Registry::defined('ERR_PAGE') && CAT_Registry::get('ERR_PAGE') != '' )
+            // send appropriate header
+            if(CAT_Frontend::isMaintenance() || CAT_Registry::get('maintenance_page') == $this->page_id)
             {
-                header('Location: '.self::$helper->getLink(CAT_Registry::get('ERR_PAGE')));
+                $this->log()->addDebug('Maintenance mode is enabled');
+                header('HTTP/1.1 503 Service Temporarily Unavailable');
+                header('Status: 503 Service Temporarily Unavailable');
+                header('Retry-After: 7200'); // in seconds
             }
-            else
-            {
-                header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
-            }
-        }   // end function print404()
-        
 
-// *****************************************************************************
-//
-// *****************************************************************************
+            $this->setTemplate();
 
-        private function showMenuLink()
-        {
-               // get target_page_id
-            $tpid = self::$helper->db()->query(sprintf(
-                  'SELECT * FROM `%smod_menu_link` '
-                . 'WHERE `page_id` = %d',
-                CAT_TABLE_PREFIX,
-                $this->_page_id
-            ));
-            if($tpid->rowCount() == 1)
-            {
-                $res = $tpid->fetchRow();
-                $target_page_id = $res['target_page_id'];
-                $redirect_type = $res['redirect_type'];
-                $anchor = ($res['anchor'] != '0' ? '#'.(string)$res['anchor'] : '');
-                $extern = $res['extern'];
-                // set redirect-type
-                if($redirect_type == 301) {
-                    @header('HTTP/1.1 301 Moved Permanently', TRUE, 301);
-                }
-                if($target_page_id == -1)
-                {
-                    if($extern != '')
-                    {
-                        $target_url = $extern.$anchor;
-                        header('Location: '.$target_url);
-                        exit;
-                    }
-                }
-                else
-                {
-                    // get link of target-page
-                    $target_page = $target_page_link = self::$helper->properties($target_page_id);
-                    $target_page_link = ( isset($target_page['link']) )
-                                      ? $target_page['link']
-                                      : NULL;
-                    if($target_page_link != NULL)
-                    {
-                        $target_url = CAT_URL.PAGES_DIRECTORY.$target_page_link.PAGE_EXTENSION.$anchor;
-                        header('Location: '.$target_url);
-                        exit;
-                    }
-                }
-            }
-        }   // end function showMenuLink()
+            // including the template; it may calls different functions
+            // like page_content() etc.
+            $this->log()->addDebug('including template');
 
+            ob_start();
+                require CAT_TEMPLATE_DIR.'/index.php';
+                $output = ob_get_contents();
+            ob_clean();
 
-    } // end class
+            echo $output;
+        }
+
+    } // end class CAT_Page
 
 }

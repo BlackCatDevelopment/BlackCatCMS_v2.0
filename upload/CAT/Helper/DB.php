@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013, 2014, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 use Doctrine\Common\ClassLoader;
 require dirname(__FILE__).'/../../modules/lib_doctrine/Doctrine/Common/ClassLoader.php';
@@ -365,10 +369,10 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
             // find file
             // note: .bc.php as suffix filter does not work!
             $configfiles = CAT_Helper_Directory::scanDirectory(dirname(__FILE__).'/DB',true,true,NULL,array('php'));
+
             if(!is_array($configfiles) || !count($configfiles))
-            {
                 CAT_Object::printFatalError('Missing database configuration');
-            }
+
             // the first file with suffix .bc.php will be used
             foreach($configfiles as $file)
             {
@@ -380,20 +384,16 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
             }
             // read the file
             $configuration = parse_ini_file($file);
+
             if(!is_array($configuration) || !count($configuration))
-            {
                 CAT_Object::printFatalError('Database configuration error');
-            }
+
             foreach($configuration as $key => $value)
-            {
                 if(!isset($opt['DB_'.$key]))
-                {
                     $opt['DB_'.$key] = $value;
-                }
-            }
-            // add table prefix
-            if(defined('TABLE_PREFIX'))
-                $opt['TABLE_PREFIX'] = TABLE_PREFIX;
+
+            self::$prefix = ( isset($opt['DB_PREFIX']) ? $opt['DB_PREFIX'] : '' );
+
             return $opt;
         }   // end function getConfig()
 
@@ -541,7 +541,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         /***********************************************************************
          * old function names wrap new ones
          **/
-        public function get_one($sql,$type=PDO::FETCH_ASSOC)
+        public function get_one($sql,$type=\PDO::FETCH_ASSOC)
         {
             return $this->query($sql)->fetchColumn();
         }
@@ -572,10 +572,10 @@ class CAT_PDOStatementDecorator
     {
         return $this->pdo_stmt->rowCount();
     }
-    public function fetchRow($type=PDO::FETCH_ASSOC)
+    public function fetchRow($type=\PDO::FETCH_ASSOC)
     {
         // this is for backward compatibility
-        if($type=='MYSQL_ASSOC') $type = PDO::FETCH_ASSOC;
+        if(defined('MYSQL_ASSOC') && $type===MYSQL_ASSOC) $type = \PDO::FETCH_ASSOC;
         return $this->pdo_stmt->fetch($type);
     }
 }

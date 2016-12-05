@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Backend_Settings'))
 {
@@ -32,9 +24,13 @@ if (!class_exists('CAT_Backend_Settings'))
 
     class CAT_Backend_Settings extends CAT_Object
     {
-        protected static $instance    = NULL;
-        protected static $perm_prefix = 'settings_';
-        private   static $regions     = NULL;
+        // log level
+        protected static $loglevel       = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel  = \Monolog\Logger::DEBUG;
+        protected static $instance       = NULL;
+        protected static $perm_prefix    = 'settings_';
+        private   static $regions        = NULL;
+        private   static $avail_settings = NULL;
 
         public static function __callstatic($name,$arguments)
         {
@@ -51,46 +47,137 @@ if (!class_exists('CAT_Backend_Settings'))
             if(!is_object(self::$instance))
             {
                 self::$instance = new self();
+                self::addLangFile(__dir__.'/languages');
             }
             return self::$instance;
         }   // end function getInstance()
 
         /**
-         * get data from settings table
+         * get available settings
          **/
-        public static function getSettingsTable() {
-            $settings = CAT_Registry::getSettings();
-            $data     = array();
-            foreach($settings as $key => $value)
+        public static function getSettings()
+        {
+            if(!self::$avail_settings)
             {
-                $data[strtolower($key)] = $value;
+                $self = self::getInstance();
+                $data = $self->db()->query(
+                    'SELECT * FROM `:prefix:settings` AS `t1` '
+                    . 'JOIN `:prefix:forms_fieldtypes` AS `t2` '
+                    . 'ON `t1`.`fieldtype`=`t2`.`id` '
+                    . 'WHERE `is_editable`=?',
+                    array('Y')
+                );
+                if($data)
+                {
+                    self::$avail_settings = $data->fetchAll();
+                }
             }
-            return $data;
-        }   // end function getSettingsTable()
-        
+            return self::$avail_settings;
+        }   // end function getSettings()
+
         /**
          *
          * @access public
          * @return
          **/
-        public static function index($region='?')
+        public static function index()
         {
-            $self = CAT_Backend_Settings::getInstance();
+            $settings = self::getSettings();
+            $self     = self::getInstance();
+            $region   = $self->router()->getParam();
+
+            $form = CAT_Backend::initForm();
+
+            $form->createForm('settings');
+            $form->setAttr('class','');
+
             if(!self::$regions)
             {
-                self::$regions  = array();
+                self::$regions  = array('index');
                 $regions = CAT_Backend::getMainMenu(4);
                 foreach(array_values($regions) as $r)
                     array_push(self::$regions,$r['name']);
             }
 
-            if($region=='?' || !in_array($region,self::$regions)) // invalid call!
-            {
+            if(!in_array($region,self::$regions)) // invalid call!
                 $region = 'index';
+
+            // filter settings by region
+            $settings = CAT_Helper_Array::ArrayFilterByKey($settings, 'region', $region);
+
+            if(is_array($settings) && count($settings))
+            {
+                $lastlegend = '';
+                foreach($settings as $item)
+                {
+                    if($item['fieldset'] != $lastlegend)
+                    {
+                        $form->addElement(array(
+                            'type'  => 'legend',
+                            'label' => $self->lang()->translate(self::humanize($item['fieldset'])),
+                            'class' => '',
+                        ));
+                        $lastlegend = $item['fieldset'];
+                    }
+                    $element = array(
+                        'type'  => (
+                              strlen($item['fieldtype'])
+                            ? $item['fieldtype']
+                            : 'text'
+                        ),
+                        'name'  => $item['name'],
+                        'label' => (
+                              strlen($item['fieldlabel'])
+                            ? $item['fieldlabel']
+                            : $self->lang()->translate(self::humanize($item['name']))
+                        ),
+                        'default' => (
+                              strlen($item['default_value'])
+                            ? $item['default_value']
+                            : ''
+                        ),
+                    );
+                    $elem = $form->addElement($element);
+                    if(strlen($item['fieldhandler']))
+                    {
+                        $handler = $item['fieldhandler'];
+//******************************************************************************
+// Funktioniert derzeit nur mit einem Parameter und loest keine Variablen auf!
+//******************************************************************************
+                        if(strlen($item['params']))
+                            $data = call_user_func_array($handler,array($item['params']));
+//******************************************************************************
+                        else
+                            $data = $handler();
+
+                        if($elem instanceof wblib\wbFormsElementSelect)
+                        {
+                            $elem->setAttr('options',$data);
+                        }
+                        else
+                        {
+                            $elem->setAttr('value',$data);
+                        }
+                    }
+
+                }
             }
-            
+            else
+            {
+                $form->setError('no settings or invalid region!');
+            }
+
+            // set current data
+            $form->setData(CAT_Object::loadSettings());
+
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_settings',array('region'=>$self->lang()->t(ucfirst($region))));
+            $self->tpl()->output(
+                'backend_settings',
+                array(
+                    'region' => $self->lang()->t(ucfirst($region)),
+                    'form'   => $form->getForm(),
+                )
+            );
             CAT_Backend::print_footer();
         }   // end function mail()
         

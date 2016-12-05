@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_Widget'))
 {
@@ -110,11 +114,31 @@ if (!class_exists('CAT_Helper_Widget'))
         {
             $self  = self::getInstance();
             $sth   = $self->db()->query(
-                'SELECT * FROM `:prefix:dashboard_widgets` WHERE `widget_id`=?',
+                  'SELECT * FROM `:prefix:dashboard_widgets` AS `t1` '
+                . 'RIGHT JOIN `:prefix:dashboard_widget_data` AS `t2` '
+                . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
+                . 'WHERE `widget_id`=?',
                 array($id)
             );
+echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r( $self->db()->getLastStatement(array($id)) );
+echo "</textarea>";
             return $sth->fetch();
         }   // end function getWidget()
+        
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function saveWidgetData($widget_id,$dash_id,$data)
+        {
+            $self  = self::getInstance();
+            $sth   = $self->db()->query(
+                'REPLACE INTO `:prefix:dashboard_widget_data` VALUES (?,?,?)',
+                array($widget_id,$dash_id,serialize($data))
+            );
+        }   // end function saveWidgetData()
         
 
     }

@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2015, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_GitHub'))
 {
@@ -32,9 +24,7 @@ if (!class_exists('CAT_Helper_GitHub'))
 
     class CAT_Helper_GitHub extends CAT_Object
     {
-        // array to store config options
-        protected $_config         = array( 'loglevel' => 8 );
-
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
         private static $ch         = NULL;
         private static $curl_error = NULL;
 
@@ -74,10 +64,10 @@ if (!class_exists('CAT_Helper_GitHub'))
             curl_setopt(self::$ch, CURLOPT_SSL_VERIFYPEER, false   );
             curl_setopt(self::$ch, CURLOPT_MAXREDIRS     , 2       );
             curl_setopt(self::$ch, CURLOPT_HTTPHEADER    , $headers);
-            if(defined('GITHUB_PROXY'))
-                curl_setopt(self::$ch, CURLOPT_PROXY, GITHUB_PROXY);
-            if(defined('GITHUB_PROXY_PORT'))
-                curl_setopt(self::$ch, CURLOPT_PROXYPORT, GITHUB_PROXY_PORT);
+            if(CAT_Registry::exists('PROXY'))
+                curl_setopt(self::$ch, CURLOPT_PROXY, CAT_Registry::get('PROXY'));
+            if(CAT_Registry::exists('PROXY_PORT'))
+                curl_setopt(self::$ch, CURLOPT_PROXYPORT, CAT_Registry::get('PROXY_PORT'));
             return self::$ch;
         }   // end function reset_curl()
 
@@ -186,9 +176,17 @@ if (!class_exists('CAT_Helper_GitHub'))
                 //echo "retrieve url: $url<br />";
                 curl_setopt($ch,CURLOPT_URL,$url);
                 $result = json_decode(curl_exec($ch), true);
-                if(isset($result['documentation_url']))
-                    self::printError( "GitHub Error: ", $result['message'], "<br />URL: $url<br />" );
-                return $result;
+                if($result)
+                {
+                    if(isset($result['documentation_url']))
+                        self::printError( "GitHub Error: ", $result['message'], "<br />URL: $url<br />" );
+                    return $result;
+                }
+                else
+                {
+                    self::setError(curl_error($ch));
+                    return false;
+                }
             } catch ( Exception $e ) {
                 self::printError( "CUrl error: ", $e->getMessage(), "<br />" );
             }

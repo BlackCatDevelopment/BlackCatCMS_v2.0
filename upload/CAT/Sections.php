@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if ( ! class_exists( 'CAT_Object', false ) ) {
     @include dirname(__FILE__).'/Object.php';
@@ -32,8 +24,6 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	class CAT_Sections extends CAT_Object
 	{
 	
-        protected      $_config  = array();
-
         private static $active   = array();
         private static $instance = NULL;
 
@@ -71,14 +61,11 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         public static function addSection($page_id,$module,$add_to_block)
         {
             $self = self::getInstance();
-        	require(CAT_PATH.'/framework/class.order.php');
-        	$order    = new order(CAT_TABLE_PREFIX.'sections', 'position', 'section_id', 'page_id');
-        	$position = $order->get_new($page_id);
+            //`position`=:pos,
         	$self->db()->query(
-                'INSERT INTO `:prefix:sections` SET `page_id`=:id, `module`=:module, `position`=:pos, `block`=:block',
-                array('id'=>$page_id, 'module'=>$module, 'pos'=>$position, 'block'=>$add_to_block)
+                'INSERT INTO `:prefix:sections` SET `page_id`=:id, `module`=:module, `block`=:block',
+                array('id'=>$page_id, 'module'=>$module, 'block'=>$add_to_block)
             );
-
         	if ( !$self->db()->isError() )
         		return $self->db()->lastInsertId(); // Get the section id
             else

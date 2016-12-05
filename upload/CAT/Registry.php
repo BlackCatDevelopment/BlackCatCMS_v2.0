@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Object', false))
 {
@@ -99,27 +103,43 @@ if (!class_exists('CAT_Registry', false))
          *
          * @access public
          * @param  string  $key
-         * @param  string  $require - function to check value with
+         * @param  string  $validate - function to check value with
          *                            i.e. 'array' => is_array()
          * @param  mixed   $default - default value to return if the key is not found
          **/
-        public static function get($key, $require=NULL, $default=NULL)
+        public static function get($key, $validate=NULL, $default=NULL)
         {
             $return_value = NULL;
             if(isset(CAT_Registry::$REGISTRY[$key]))
-            {
-                if($require)
-                {
-                    $return_value = CAT_Helper_Validate::check(CAT_Registry::$REGISTRY[$key],$require);
-                }
+                if($validate)
+                    $return_value = CAT_Helper_Validate::check(CAT_Registry::$REGISTRY[$key],$validate);
                 else
-                {
                     $return_value = CAT_Registry::$REGISTRY[$key];
-                }
-            }
+
+            // try to get the value from the settings table
             if(!$return_value)
             {
-                if($require && $require == 'array')
+                $self   = self::getInstance();
+                $result = $self->db()->query(
+                    'SELECT `value` FROM `:prefix:settings_global` WHERE `name`=?',
+                    array(strtolower($key))
+                );
+                $row = $result->fetch();
+                if($row['value'] && strlen($row['value']))
+                {
+                    if($validate)
+                        $return_value = CAT_Helper_Validate::check($row['value'],$validate);
+                    else
+                        $return_value = $row['value'];
+                    if($return_value)
+                        CAT_Registry::$REGISTRY[$key] = $return_value;
+                }
+            }
+
+            // return default value (if any)
+            if(!$return_value)
+            {
+                if($validate && $validate == 'array')
                 {
                     if($default && is_array($default))
                         return $default;
@@ -128,6 +148,7 @@ if (!class_exists('CAT_Registry', false))
                 }
                 return ( $default ? $default : NULL );
             }
+
             return $return_value;
         }   // end function get()
 
@@ -184,5 +205,6 @@ if (!class_exists('CAT_Registry', false))
         {
             return CAT_Registry::$GLOBALS;
         }   // end function getSettings()
-    }
+
+    }   // end class CAT_Registry
 }

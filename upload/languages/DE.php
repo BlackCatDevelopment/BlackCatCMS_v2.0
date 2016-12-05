@@ -1,43 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
-if (defined('CAT_PATH')) {
-	include(CAT_PATH.'/framework/class.secure.php');
-} else {
-	$root = "../";
-	$level = 1;
-	while (($level < 10) && (!file_exists($root.'/framework/class.secure.php'))) {
-		$root .= "../";
-		$level += 1;
-	}
-	if (file_exists($root.'/framework/class.secure.php')) {
-		include($root.'/framework/class.secure.php');
-	} else {
-		trigger_error(sprintf("[ <b>%s</b> ] Can't include class.secure.php!", $_SERVER['SCRIPT_NAME']), E_USER_ERROR);
-	}
-}
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 // Set the language information
 $language_code        = 'DE';
@@ -64,6 +40,7 @@ $LANG = array(
     'No such user, user not active, or invalid password!' => 'Benutzer nicht vorhanden, nicht aktiv, oder Kennwort falsch!',
     'Parse error. Maybe caused by invalid JSON data.' => 'Parsefehler. Möglicherweise verursacht durch ungültige JSON Daten.',
     'Sorry, there was an error' => 'Entschuldigung, ein Fehler ist aufgetreten',
+    'This action is not available' => 'Diese Aktion ist nicht verfügbar',
     'Two step authentication failed!' => 'Zwei-Faktor Authentifizierung fehlgeschlagen!',
     'You are not allowed for the requested action' => 'Sie sind nicht berechtigt, die Aktion auszuführen',
 
@@ -71,20 +48,31 @@ $LANG = array(
     'Cancel'        => 'Abbrechen',
     'Close'         => 'Schließen',
     'Column'        => 'Spalte',
+    'Common'        => 'Allgemein',
+    'Configure'     => 'Konfigurieren',
     'Confirm'       => 'Bestätigen',
+    'Content'       => 'Inhalt',
     'Create new'    => 'Neu erstellen',
     'Date'          => 'Datum',
     'Delete'        => 'Löschen',
     'Description'   => 'Beschreibung',
+    'Edit'          => 'Bearbeiten',
+    'General'       => 'Allgemein',
     'Insert'        => 'Einfügen',
+    'Language'      => 'Sprache',
+    'List'          => 'Liste',
     'Page'          => 'Seite',
+    'Parent'        => 'Übergeordnet',
     'Please note'   => 'Hinweis',
     'Remove'        => 'Entfernen',
     'Row'           => 'Zeile',
     'Save changes'  => 'Speichern',
     'Sections'      => 'Sektionen',
     'Size'          => 'Größe',
+    'Submit'        => 'Absenden',
+    'Title'         => 'Titel',
     'Type'          => 'Typ',
+    'View'          => 'Ansicht',
     'Welcome'       => 'Willkommen',
 
     // --------------- Backend ---------------
@@ -118,10 +106,15 @@ $LANG = array(
     // --------------- Backend -> Dashboard ---------------
     'Add widget'    => 'Widget hinzufügen',
     'Do you really want to remove this widget?' => 'Soll dieses Widget wirklich entfernt werden?',
+    'No addable widgets found.' => 'Es wurden keine hinzufügbaren Widgets gefunden.',
     'Remove widget' => 'Widget entfernen',
     'Reset Dashboard' => 'Dashboard zurücksetzen',
+    'There are no widgets on your dashboard.' => 'Es befinden sich keine Widgets auf diesem Dashboard.',
+    'Use widget setting' => 'Widget-Voreinstellung verwenden',
+    'You can add widgets to your dashboard by clicking on the [Add widget] button' => 'Um diesem Dashboard Widgets hinzuzufügen, bitte die [Widget hinzufügen] Schaltfläche verwenden.',
 
     // --------------- Backend -> Pages ---------------
+    'Add section'   => 'Sektion hinzufügen',
     'Actions'       => 'Aktionen',
     'Block number'  => 'Blocknr.',
     'Collapse all'  => 'Alle einklappen',
@@ -130,9 +123,13 @@ $LANG = array(
     'deleted'       => 'gelöscht',
     'Edit content'  => 'Inhalt bearbeiten',
     'Expand all'    => 'Alle aufklappen',
+    'Header files'  => 'Kopfdateien',
     'hidden'        => 'versteckt',
+    'Menu title'    => 'Menütitel',
     'no name'       => 'kein Name',
     'none'          => 'keine',
+    'Page title'    => 'Seitentitel',
+    'Parent page'   => 'Übergeordnete Seite',
     'Preview'       => 'Vorschau',
     'private'       => 'privat',
     'public'        => 'öffentlich',
@@ -142,15 +139,21 @@ $LANG = array(
     'Visibility'    => 'Sichtbarkeit',
     'Change visibility' => 'Sichtbarkeit ändern',
     'Icon explanation' => 'Symbolerklärung',
+    'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
     'Set publishing period' => 'Sichtbarkeits-Zeitraum bearbeiten',
+    'System default' => 'Standardeinstellung',
+    'The description should be a nice &quot;human readable&quot; text having 70 up to 156 characters.' => 'Die Beschreibung sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 70 und bis zu 156 Zeichen sein.',
+    'The (main) language of the page contents.' => 'Die (hauptsächliche) Sprache der Seiteninhalte.',
+    'The menu title is used for the navigation menu. Hint: Use short but descriptive titles.' => 'Der Menütitel wird für das Navigationsmenü verwendet. Tipp: Kurze aber aussagekräftige Titel verwenden.',
     'The page is accessible for all visitors and shows up in the navigation by default' => 'Die Seite ist für alle Besucher sichtbar und erscheint üblicherweise auch im Menü',
     'The page is accessible for visitors who know the exact address and can be found by the keyword search, but does not show up in the navigation by default' => 'Die Seite ist sichtbar, wenn man die Adresse kennt, und wird von der Suchfunktion gefunden, erscheint aber nicht im Menü',
-    'The page is only accessible to registered users; the page shows up in the navigation by default' => 'Die Seite ist nur für berechtigte Benutzer sichtbar; sie erscheint üblicherweise auch im Menü',
-    'The page is only accessible to registered users and is not shown in the navigation for non-registered users' => 'Die Seite ist nur für berechtigte Benutzer sichtbar und erscheint nur im Menü, wenn der Benutzer angemeldet ist',
     'The page is not accessible in the frontend at all, but can be edited in the backend' => 'Die Seite kann von Besuchern nicht aufgerufen, aber im Backend bearbeitet werden',
+    'The page is only accessible to registered users and is not shown in the navigation for non-registered users' => 'Die Seite ist nur für berechtigte Benutzer sichtbar und erscheint nur im Menü, wenn der Benutzer angemeldet ist',
+    'The page is only accessible to registered users; the page shows up in the navigation by default' => 'Die Seite ist nur für berechtigte Benutzer sichtbar; sie erscheint üblicherweise auch im Menü',
     'The page was deleted but can be recovered' => 'Die Seite ist gelöscht, kann aber wiederhergestellt werden',
-
-    'This action is not available' => 'Diese Aktion ist nicht verfügbar',
+    'The position of the page in the page tree.' => 'Die Position der Seite im Seitenbaum.',
+    'The title should be a nice &quot;human readable&quot; text having 30 up to 55 characters.' => 'Der Seitentitel sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 30 und höchstens 55 Zeichen sein.',
+    'You may override the system settings for the template here.' => 'Systemweite Einstellung für diese Seite ändern.',
 
     // --------------- Backend -> Addons ---------------
     'Catalog'       => 'Katalog',

@@ -22,7 +22,7 @@ function CATSessionSetTimer(sesstime,callback,elementid,warnclass)
     timerId = setInterval(function() {
         var secs = CATTimeStringToSecs(timer.text())-1;
         if(secs <= warntime) { timer.parent().addClass(warnclass); }
-        if(secs == 30)       { timer.css('color','#c00'); }
+        if(secs == 30)       { timer.addClass(warnclass); }
         if(secs == 0)        { timer.parent().removeClass(warnclass); clearInterval(timerId); callback(); }
         timer.text(CATSecondsToTimeString(secs));
     }, 1000);

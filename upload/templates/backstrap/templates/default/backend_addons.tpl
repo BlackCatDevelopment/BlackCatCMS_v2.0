@@ -17,7 +17,7 @@
   <!-- Tab panes -->
   <div class="tab-content">
     <div role="tabpanel" class="tab-pane active" id="installed">
-      <table class="table" id="bsInstalledAddons">
+      <table class="table datatable compact" id="bsInstalledAddons">
         <thead>
           <tr>
             <th>{translate('Type')}</th>
@@ -92,58 +92,31 @@
         </table>
     </div>
 
-{literal}
-    <script type="text/javascript">
-
-        var lang = {/literal}'{$LANGUAGE}'{literal}.toLowerCase();
-	    var dtable = $('table#bsInstalledAddons').DataTable({
-            mark: true,
-            language: {
-                url: CAT_URL+'/modules/lib_jquery/plugins/jquery.datatables/i18n/'+lang+'.json'
+{$file = cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
+<script type="text/javascript">
+//<![CDATA[
+    var lang   = '{$LANGUAGE}'.toLowerCase();
+    var dtable = $('table.datatable').DataTable({
+        mark: true,
+        stateSave: true,
+        orderClasses: false{if cat_file_exists($file)},
+        language: {
+            url: CAT_URL + "/js?files={cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}"
+        }
+        {/if}
+    });
+    /* Custom filtering function which will search data in column four between two values */
+    $.fn.dataTable.ext.search.push(
+        function(settings,data,dataIndex) {
+            var find = $('select#filter option:selected').val();
+            if(find == '' || data[0] == find) {
+                return true;
             }
-        });
-
-        /* Custom filtering function which will search data in column four between two values */
-        $.fn.dataTable.ext.search.push(
-            function(settings,data,dataIndex) {
-                var find = $('select#filter option:selected').val();
-                if(find == '' || data[0] == find) {
-                    return true;
-                }
-                return false;
-            }
-        );
-        $('select#filter').on('change', function () {
-            dtable.draw();
-        });
-
-        $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
-            if($(e.target).attr('href') == '#catalog') {
-                // load / refresh the catalog
-                $.ajax({
-                    type    : 'POST',
-                    url     : '{/literal}{$CAT_ADMIN_URL}{literal}/addons/catalog',
-                    dataType: 'json',
-                    success : function(data, status) {
-                        data = data.modules;
-                        var template = $('div#bsAddonTemplate > table > tbody').clone().detach();
-                        for(var $i=0; $i<data.length; $i++) {
-                            if(!data[$i].is_installed) {
-                                var temp = $(template).clone().detach();
-                                Object.keys(data[$i]).forEach(function(key) {
-                                    if(typeof data[$i][key] != 'object') {
-                                        $(temp).html($(temp).html().replace( '%%'+key+'%%', data[$i][key] ));
-                                    }
-                                });
-                                $(temp).html($(temp).html().replace( '%%description%%', data[$i]['description']['en']['title'] ));
-                                $(temp).appendTo($('div#catalog table > tbody'));
-                                $('div#catalog table').DataTable();
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-    </script>
-{/literal}
+            return false;
+        }
+    );
+    $('select#filter').on('change', function () {
+        dtable.draw();
+    });
+//]]>
+</script>

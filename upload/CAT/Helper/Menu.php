@@ -1,35 +1,25 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if ( ! class_exists( 'CAT_Object', false ) ) {
     @include dirname(__FILE__).'/../Object.php';
 }
 
-require_once CAT_PATH.'/modules/lib_wblib/wblib/wbList.php';
-
-if ( ! class_exists( 'CAT_Helper_Menu', false ) )
+if ( !class_exists('CAT_Helper_Menu', false) )
 {
 	class CAT_Helper_Menu extends CAT_Object
 	{
@@ -121,12 +111,12 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
          **/
         public static function breadcrumbMenu(array &$options = array())
         {
-            self::log()->debug('breadcrumbMenu');
+            self::log()->addDebug('breadcrumbMenu');
             self::checkPageId($pid);
             self::checkOptions($options);
             $self = self::getInstance();
             self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
-            $menu       = array();
+            $menu     = array();
             // get the level of the current page
             $level    = CAT_Helper_Page::properties($pid,'level');
             // get the path
@@ -272,15 +262,6 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
                     $lbopt[str_replace('-','_',$key)] = $value;
                     continue;
                 }
-/**
- *??????????????????????????????????????????????????????????????????????????????
-                list($key,$value) = explode( ':', $opt );
-                if(array_key_exists($key,self::$sm2_classes))
-                    $key = self::$sm2_classes[$key];
-                if(array_key_exists($key,self::$alias_map))
-                    $key = self::$alias_map[$key];
-                $lbopt[str_replace('-','_',$key)] = $value;
-**/
             }
             self::init_list()->set($lbopt);
             $options = $lbopt;
@@ -296,8 +277,7 @@ if ( ! class_exists( 'CAT_Helper_Menu', false ) )
          **/
         protected static function checkPageId(&$pid=NULL)
         {
-            global $page_id;
-            if($pid===NULL) $pid = $page_id;
+            if($pid===NULL) $pid = CAT_Page::getID();
             if($pid===0)    $pid = CAT_Helper_Page::getRootParent($page_id);
         }   // end function checkPageId()
     }

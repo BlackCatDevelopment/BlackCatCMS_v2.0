@@ -1,13 +1,20 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{$meta.LANGUAGE}" lang="{$meta.LANGUAGE}">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{$LANGUAGE}" lang="{$LANGUAGE}">
 <head>
-    <meta charset="{$meta.CHARSET}">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<?php
+    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
+    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
+    CAT_Helper_Page::addCSS('templates/backstrap/css/default/login.css');
+    CAT_Helper_Page::addJS('modules/lib_jquery/jquery-core/jquery-core.min.js','footer');
+    CAT_Helper_Page::addJS('modules/lib_bootstrap/vendor/js/bootstrap.min.js','footer');
+    CAT_Helper_Page::addJS('templates/backstrap/js/login.js','footer');
+    CAT_Helper_Page::addMeta(array('charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8")));
+    CAT_Helper_Page::addMeta(array('http-equiv' => 'X-UA-Compatible', 'content' => 'IE=edge'));
+    CAT_Helper_Page::addMeta(array('name' => 'viewport', 'content' => 'width=device-width, initial-scale=1'));
+    //CAT_Helper_Page::addMeta(array('name' => 'description', 'content' => 'BlackCat CMS - '.$pg->lang()->translate('Administration')));
+?>
+    {get_page_headers(false,true)}
     <title>{translate('Login')}</title>
-    <link href="{$CAT_URL}/modules/lib_bootstrap/vendor/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{$CAT_URL}/modules/lib_bootstrap/vendor/css/font-awesome.min.css" rel="stylesheet">
-    <link href="{$CAT_URL}/templates/backstrap/css/default/login.css" rel="stylesheet">
 </head>
 
 <body class="login-screen-bg">
@@ -23,7 +30,7 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <div class="input-group-addon"><span class="fa fa-user fa-fw"></span></div>
-                                <input type="text" class="form-control" required="required" name="{$USERNAME_FIELDNAME}" id="{$USERNAME_FIELDNAME}" placeholder="{translate('Your username')}" autofocus="autofocus" />
+                                <input type="text" class="form-control field1" required="required" name="{$USERNAME_FIELDNAME}" id="{$USERNAME_FIELDNAME}" placeholder="{translate('Your username')}" autofocus="autofocus" />
                             </div>
                         </div>
                         <div class="form-group">
@@ -32,7 +39,7 @@
                                 <input type="password" class="form-control" required="required" name="{$PASSWORD_FIELDNAME}" id="{$PASSWORD_FIELDNAME}" placeholder="{translate('Your password')}" />
                             </div>
                         </div>
-                        {if $ENABLE_TFA}
+                        {if cat_get('enable_tfa'}}
                         <div class="form-group" id="tfagroup" style="display:none;">
                             <div class="input-group">
                                 <div class="input-group-addon"><span class="fa fa-fw fa-lock"></span></div>
@@ -53,78 +60,7 @@
             </div>
         </div>
     </div>
-    <script src="{$CAT_URL}/modules/lib_jquery/jquery-core/jquery-core.min.js"></script>
-    <script src="{$CAT_URL}/modules/lib_bootstrap/vendor/js/bootstrap.min.js"></script>
+{get_page_footers("backend",true,true)}
 
-    <script type="text/javascript">
-    //<![CDATA[
-    $('input#{$USERNAME_FIELDNAME}').on('focusout', function() {
-        $.ajax({
-            type:     'POST',
-            context:  $(this),
-            url:      '{$CAT_ADMIN_URL}/tfa',
-            dataType: 'json',
-            data:     {
-                user: this.value
-            },
-            cache:    false,
-            success:  function(data,textStatus,jqXHR)
-            {
-                console.log(data);
-                if(data.message === true) {
-                    $('div#tfagroup').show('slow');
-                } else {
-                    $('div#tfagroup').hide('slow');
-                }
-            }
-        });
-    });
-    $('.btn-primary').click( function(e) {
-        e.preventDefault();
-
-        // reset error message
-        $('div#login-error p').html('');
-        $('div#login-error').hide();
-
-        var username_fieldname    = $('form').find('input[name=username_fieldname]').val(),
-            password_fieldname    = $('form').find('input[name=password_fieldname]').val(),
-            token_fieldname     = $('form').find('input[name=token_fieldname]').val(),
-            dates                = {
-                'username_fieldname': username_fieldname,
-                'password_fieldname': password_fieldname,
-                'token_fieldname'   : token_fieldname,
-            };
-        dates[username_fieldname]    = $('input#' + username_fieldname).val();
-        dates[password_fieldname]    = $('input#' + password_fieldname).val();
-        dates[token_fieldname]        = $('input#' + token_fieldname).val();
-
-        $.ajax({
-            type:        'POST',
-            context:    $(this),
-            url:        '{$CAT_ADMIN_URL}/authenticate/',
-            dataType:    'json',
-            data:        dates,
-            cache:        false,
-            success:    function( data, textStatus, jqXHR  )
-            {
-                if ( data.success === true )
-                {
-                    window.location        = data.url
-                }
-                else {
-                    
-                    $('div#login-error p').html(data.message);
-                    $('div#login-error').show();
-                    $('input[name=' + password_fieldname + ']').val('').focus();
-                }
-            },
-            error:        function( jqXHR, textStatus, errorThrown )
-            {
-                alert(textStatus + ': ' + jqXHR.responseText );
-            }
-        });
-    });
-    //]]>
-    </script>
 </body>
 </html>

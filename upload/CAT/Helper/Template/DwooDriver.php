@@ -1,19 +1,23 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if(!class_exists('Dwoo',false))
 {
-    include_once CAT_PATH.'/modules/lib_dwoo/dwoo/dwooAutoload.php';
+    include_once CAT_ENGINE_PATH.'/modules/lib_dwoo/dwoo/dwooAutoload.php';
 }
 
 if(!class_exists('CAT_Helper_Template_DwooDriver',false))
@@ -23,7 +27,6 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
 
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         public    static $_globals = array();
-        public    $_config         = array('show_paths_on_error' => true);
         public    $workdir         = NULL;
         public    $path            = NULL;
         public    $fallback_path   = NULL;
@@ -31,11 +34,11 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
 
         public function __construct()
         {
-            $cache_path = CAT_PATH.'/temp/cache';
+            $cache_path = CAT_ENGINE_PATH.'/temp/cache';
             if (!file_exists($cache_path)) mkdir($cache_path, 0755, true);
-            $compiled_path = CAT_PATH.'/temp/compiled';
+            $compiled_path = CAT_ENGINE_PATH.'/temp/compiled';
             if (!file_exists($compiled_path)) mkdir($compiled_path, 0755, true);
-            parent::__construct( $compiled_path, $cache_path );
+            parent::__construct($compiled_path, $cache_path);
             // we need our own logger instance here as the driver does not
             // inherit from CAT_Object
             $this->logger = CAT_Object::log();
@@ -67,8 +70,7 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
             {
                 if(!file_exists($_tpl) || is_dir($_tpl))
                 {
-                    global $parser;
-                    $file = $parser->findTemplate($_tpl);
+                    $file = CAT_Object::tpl()->findTemplate($_tpl);
                     $this->logger->addDebug(sprintf('Template file [%s]',$file));
                     if($file)
                         return parent::get( realpath($file), $data, $_compiler, $_output);

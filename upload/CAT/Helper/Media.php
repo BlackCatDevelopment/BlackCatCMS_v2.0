@@ -1,14 +1,19 @@
 <?php
 
-/**
- *   @author          Black Cat Development
- *   @copyright       2016, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_Media'))
 {
@@ -77,15 +82,18 @@ if (!class_exists('CAT_Helper_Media'))
                     return false;
             }
 
-            $files = CAT_Helper_Directory::scanDirectory(
-                $dir,
-                true,              // with files
-                true,              // files only
-                NULL,              // prefix to remove
-                $suffixes,         // allowed suffixes
-                array(),           // no dirs to skip
-                array('index.php') // skip files
-            );
+            $files = CAT_Helper_Directory::getInstance()
+                   ->setRecursion(false)
+                   ->scanDirectory(
+                        $dir,
+                        true,              // with files
+                        true,              // files only
+                        NULL,              // prefix to remove
+                        $suffixes,         // allowed suffixes
+                        array(),           // no dirs to skip
+                        array('index.php') // skip files
+                    );
+            CAT_Helper_Directory::reset();
 
             foreach($files as $index => $filename)
             {

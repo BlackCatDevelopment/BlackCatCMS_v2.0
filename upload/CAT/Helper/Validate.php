@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- **/
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Helper_Validate'))
 {
@@ -55,13 +59,12 @@ if (!class_exists('CAT_Helper_Validate'))
         public static function check($value,$as)
         {
             $func = 'is_'.$as;
-            if ( ! function_exists($func) )
-            {
-                CAT_Object::getInstance()->printFatalError('No such validation method: '.$as);
-            }
-            if ( ! $func($value) ) return false;
+            if (!function_exists($func))
+                CAT_Object::printFatalError('No such validation method: '.$as);
+            if (!$func($value))
+                return false;
             return $value;
-        }
+        }   // end function check()
 
         /**
          * global method to get data from globals
@@ -110,9 +113,7 @@ if (!class_exists('CAT_Helper_Validate'))
         public static function add_slashes($input)
         {
             if (get_magic_quotes_gpc() || (!is_string($input)))
-            {
                 return $input;
-            }
             $output = addslashes($input);
             return $output;
         }   // end function add_slashes()
@@ -127,9 +128,7 @@ if (!class_exists('CAT_Helper_Validate'))
         public static function strip_slashes($input)
         {
             if (!get_magic_quotes_gpc() || (!is_string($input)))
-            {
                 return $input;
-            }
             $output = stripslashes($input);
             return $output;
         }   // end function strip_slashes()
@@ -143,7 +142,8 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function createFieldname($prefix,$offset=NULL,$length=12)
         {
-            if ( substr($prefix,-1,1) != '_' ) $prefix .= '_';
+            if (substr($prefix,-1,1) != '_')
+                $prefix .= '_';
             $salt      = strtolower(md5(uniqid(rand(),true)));
             $offset    = ( $offset === NULL ) ? rand(1,12) : $offset;
             $fieldname = $prefix.substr($salt,$offset,$length);
@@ -177,7 +177,11 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function uri2path($url)
         {
-            return str_ireplace(self::sanitize_url(self::getURI(CAT_URL)),CAT_Helper_Directory::sanitizePath(CAT_PATH),self::sanitize_url($url));
+            return str_ireplace(
+                self::sanitize_url(self::getURI(CAT_URL)),
+                CAT_Helper_Directory::sanitizePath(CAT_PATH),
+                self::sanitize_url($url)
+            );
         }   // end function uri2path(()
 
         /**
@@ -189,7 +193,11 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function path2uri($path)
         {
-            return str_ireplace(CAT_Helper_Directory::sanitizePath(CAT_PATH),self::sanitize_url(self::getURI(CAT_URL)),CAT_Helper_Directory::sanitizePath($path));
+            return str_ireplace(
+                CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH),
+                self::sanitize_url(self::getURI(CAT_URL)),
+                CAT_Helper_Directory::sanitizePath($path)
+            );
         }   // end function path2uri(()
 
 

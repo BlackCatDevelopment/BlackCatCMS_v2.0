@@ -11,27 +11,12 @@
  *
  */
 
-if (defined('CAT_PATH')) {
-    include CAT_PATH.'/framework/class.secure.php';
-} else {
-    $root = "../";
-    $level = 1;
-    while (($level < 10) && (!file_exists($root.'/framework/class.secure.php'))) {
-        $root .= "../";
-        $level += 1;
-    }
-    if (file_exists($root.'/framework/class.secure.php')) {
-        include $root.'/framework/class.secure.php';
-    } else {
-        trigger_error(sprintf("[ <b>%s</b> ] Can't include class.secure.php!", $_SERVER['SCRIPT_NAME']), E_USER_ERROR);
-    }
-}
-
 $pg = CAT_Helper_Page::getInstance();
 
-$bootstrapcss = 'modules/lib_bootstrap/vendor/css/bootstrap.min.css';
-if(DEFAULT_THEME_VARIANT!='' && DEFAULT_THEME_VARIANT!='default')
-    $bootstrapcss = 'modules/lib_bootstrap/vendor/css/'.DEFAULT_THEME_VARIANT.'/bootstrap.min.css';
+$bootstrapcss = 'modules/lib_bootstrap/vendor/css/default/bootstrap.min.css';
+$variant      = CAT_Registry::get('DEFAULT_THEME_VARIANT');
+if($variant!='' && $variant!='default')
+    $bootstrapcss = 'modules/lib_bootstrap/vendor/css/'.$variant.'/bootstrap.min.css';
 
 $mod_headers = array(
     'backend' => array(
@@ -39,12 +24,11 @@ $mod_headers = array(
             array( 'charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8") ),
             array( 'http-equiv' => 'X-UA-Compatible', 'content' => 'IE=edge' ),
             array( 'name' => 'viewport', 'content' => 'width=device-width, initial-scale=1' ),
-            array( 'name' => 'description', 'content' => $pg->lang()->translate('Administration') ),
-            array( 'name' => 'keywords', 'content' => $pg->lang()->translate('Administration') ),
+            array( 'name' => 'description', 'content' => 'BlackCat CMS - '.$pg->lang()->translate('Administration') ),
         ),
         'css' => array(
             array('file'=>$bootstrapcss,),
-            array('file'=>'modules/lib_bootstrap/vendor/css/bootstrap-editable.css',),
+            array('file'=>'modules/lib_bootstrap/vendor/css/default/bootstrap-editable.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/fuelux.min.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
             array('file'=>'modules/lib_jquery/plugins/jquery.qtip/jquery.qtip.min.css',),
@@ -54,19 +38,23 @@ $mod_headers = array(
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(
-            array(
-                'core'    => true,
-                'ui'      => true,
-                'plugins' => array ('cattranslate','cookie','jquery.mark'),
-            )
+            'core'    => true,
+            'ui'      => true,
+            'plugins' => array ('cattranslate','cookie','jquery.mark'),
         ),
         'js' => array(
+            'modules/lib_jquery/plugins/jquery.columns/jquery.columns.js',
+            'modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js',
+            'modules/lib_jquery/plugins/jquery.datatables/js/dataTables.mark.min.js',
+            'modules/lib_jquery/plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
+            'CAT/Backend/js/session.js',
             array(
-                '/modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js',
-                '/modules/lib_jquery/plugins/jquery.datatables/js/dataTables.mark.min.js',
-                '/modules/lib_jquery/plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
-                '/CAT/Backend/js/session.js',
-            )
+                'conditional' => 'lt IE 9',
+                'files' => array(
+                    'https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js',
+                    'https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js',
+                ),
+            ),
         )
     )
 );

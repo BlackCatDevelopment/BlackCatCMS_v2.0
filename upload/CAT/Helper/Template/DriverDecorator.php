@@ -28,7 +28,6 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
     class CAT_Helper_Template_DriverDecorator extends CAT_Helper_Template
     {
         public    $template_block;
-        protected $_config      = array();
         protected $last         = NULL;
         private   $te           = NULL;
         private   $dirh         = NULL;
@@ -177,16 +176,39 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
          * @param  string           $value (optional)
          *
          **/
-        public function setGlobals( $var, $value = NULL )
+        public function setGlobals($var,$value=NULL)
         {
             $class = get_class($this->te);
-            if ( ! is_array( $var ) && isset( $value ) ) {
-               $class::$_globals[ $var ] = $value;
+            if(!is_array($var) && isset($value))
+            {
+               $class::$_globals[$var] = $value;
                return;
             }
-            if ( is_array( $var ) ) {
-                foreach ( $var as $k => $v ) {
-                    $class::$_globals[ $k ] = $v;
+            if(is_array($var))
+            {
+                foreach($var as $k => $v)
+                {
+                    if(!isset($class::$_globals[$k]))
+                    {
+                        $class::$_globals[$k] = $v;
+                    }
+                    else // allows to add items to already existing globals
+                    {
+                        if(is_array($class::$_globals[$k]))
+                        {
+                            if(is_array($v))
+                            {
+                                $class::$_globals[$k] = array_merge(
+                                    $class::$_globals[$k],
+                                    $v
+                                );
+                            }
+                            else
+                            {
+                                $class::$_globals[$k][] = $v;
+                            }
+                        }
+                    }
                 }
             }
 

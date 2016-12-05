@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Backend_Dashboard'))
 {
@@ -79,10 +83,12 @@ if (!class_exists('CAT_Backend_Dashboard'))
         public static function index($path=NULL)
         {
             $self = self::getInstance();
+
             // validate path
             if(!$path)
                 $path = $self->router()->getRoute();
             $dash = CAT_Helper_Dashboard::getDashboardID($path);
+
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
             {
@@ -101,6 +107,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
                     $self->printFatalError('Access denied');
                 }
             }
+
             // get the template contents
             $tpl_data = array(
                 'dashboard' => array_merge(
@@ -111,6 +118,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 ),
                 'MAIN_MENU' => CAT_Backend::getMainMenu(),
             );
+
             CAT_Backend::print_header();
             $self->tpl()->output('backend_dashboard', $tpl_data);
             CAT_Backend::print_footer();

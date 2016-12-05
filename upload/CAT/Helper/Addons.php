@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013, 2014, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if ( !class_exists( 'CAT_Helper_Addons' ) )
 {
@@ -256,7 +248,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             {
                 foreach($data as $i => $addon)
                 {
-                    $icon = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
+                    $icon = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
                     $data[$i]['icon'] = '';
                     if(file_exists($icon)){
                         list($width, $height, $type_of, $attr) = getimagesize($icon);
@@ -471,7 +463,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
 
             // path to the temporary Add-on folder
             if ( $temp_path == '' )
-                $temp_path = CAT_PATH . '/temp/unzip';
+                $temp_path = CAT_ENGINE_PATH . '/temp/unzip';
 
             // check if file precheck.php exists for the Add-On uploaded via WB installation routine
             if ( !file_exists( $temp_path . '/precheck.php' ) )
@@ -641,8 +633,8 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             $self = self::getInstance();
             $info = self::checkInfo($temp_path);
 
-            $parser->setPath( CAT_PATH . '/templates/' . DEFAULT_TEMPLATE . '/' );
-            $parser->setFallbackPath( dirname( __FILE__ ) . '/templates/Addons' );
+            $parser->setPath(CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/');
+            $parser->setFallbackPath(dirname(__FILE__).'/templates/Addons');
             $output = $parser->get( 'summary', array(
                 'addon' => $info['module_name'],
                 'heading' => ( $failed_checks ? $self->lang()->translate( 'Pre installation check failed' ) : $self->lang()->translate( 'Pre installation check successful' ) ),
@@ -786,7 +778,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             $self->log()->LogDebug( sprintf( 'handle upload, file [%s], name [%s]', $tmpfile, $name ) );
 
             // Set temp vars
-            $temp_dir   = CAT_PATH . '/temp/';
+            $temp_dir   = CAT_ENGINE_PATH . '/temp/';
             $temp_unzip = $temp_dir . '/unzip_' . pathinfo( $tmpfile, PATHINFO_FILENAME ) . '/';
             $temp_file  = $temp_dir . $name;
 
@@ -828,7 +820,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             $sourcedir = pathinfo( $zipfile, PATHINFO_DIRNAME );
 
             // Set temp vars
-            $temp_dir   = CAT_PATH . '/temp/';
+            $temp_dir   = CAT_ENGINE_PATH . '/temp/';
             $temp_unzip = $temp_dir . '/unzip_' . pathinfo( $zipfile, PATHINFO_FILENAME ) . '/';
 
             $self->log()->LogDebug( sprintf( 'file extension [%s], source dir [%s], remove zip [%s]', $extension, $sourcedir, $remove_zip_on_error ) );
@@ -938,7 +930,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 : $addon_info['module_directory'];
 
             // Set module directory
-            $addon_dir = CAT_PATH . '/' . $addon_info['addon_function'] . 's/' . $addon_directory;
+            $addon_dir = CAT_ENGINE_PATH . '/' . $addon_info['addon_function'] . 's/' . $addon_directory;
             $action    = 'install';
 
             if ( file_exists( $addon_dir ) && $addon_info['addon_function'] != 'language' )
@@ -1086,24 +1078,30 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                         return self::getInstance()->lang()->translate( 'Cannot uninstall module <span class="highlight_text">{{name}}</span> because it is in use on {{pages_string}}:<br /><br />{{pages}}', $values );
                     }
                     //  some modules cannot be removed (used by system)
-                    if ( !self::isRemovable( $addon_name ) )
-                        return self::getInstance()->lang()->translate( 'Cannot uninstall module <span class="highlight_text">{{name}}</span> because it is marked as mandatory!', array(
-                             'name' => $addon_name
-                        ) );
-                    if ( ( defined( 'WYSIWYG_EDITOR' ) ) && ( $addon_name == WYSIWYG_EDITOR ) )
+                    if(!self::isRemovable($addon_name))
+                        return self::getInstance()->lang()->translate(
+                            'Cannot uninstall module <span class="highlight_text">{{name}}</span> because it is marked as mandatory!',
+                            array( 'name' => $addon_name )
+                        );
+                    if((CAT_Registry::exists('WYSIWYG_EDITOR')) && ($addon_name == CAT_Registry::get('WYSIWYG_EDITOR')))
                     {
-                        return self::getInstance()->lang()->translate( 'Cannot uninstall module <span class="highlight_text">{{name}}</span> because it is the standard WYSWIWYG editor!', array(
-                             'name' => $addon_name
-                        ) );
+                        return self::getInstance()->lang()->translate(
+                            'Cannot uninstall module <span class="highlight_text">{{name}}</span> because it is the standard WYSWIWYG editor!',
+                            array( 'name' => $addon_name )
+                        );
                     }
                     break;
 
                 case 'templates':
-                    if ( $addon_name == DEFAULT_THEME || $addon_name == DEFAULT_TEMPLATE )
+                    if($addon_name == CAT_Registry::get('DEFAULT_THEME') || $addon_name == CAT_Registry::get('DEFAULT_TEMPLATE'))
                     {
                         $temp = array(
                             'name' => $addon_name,
-                            'type' => $addon_name == DEFAULT_TEMPLATE ? self::getInstance()->lang()->translate( 'default template' ) : self::getInstance()->lang()->translate( 'default backend theme' )
+                            'type' => (
+                                  $addon_name == CAT_Registry::get('DEFAULT_TEMPLATE')
+                                ? self::getInstance()->lang()->translate('default template')
+                                : self::getInstance()->lang()->translate('default backend theme')
+                            )
                         );
                         return self::getInstance()->lang()->translate( 'Cannot uninstall template <span class="highlight_text">{{name}}</span> because it is the {{type}}!', $temp );
                     }
@@ -1143,8 +1141,8 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             } // end switch
 
             // all checks succeeded, try to uninstall
-            if ( file_exists( CAT_PATH . '/' . $type . '/' . $addon_name . '/uninstall.php' ) )
-                require CAT_PATH . '/' . $type . '/' . $addon_name . '/uninstall.php';
+            if ( file_exists( CAT_ENGINE_PATH . '/' . $type . '/' . $addon_name . '/uninstall.php' ) )
+                require CAT_ENGINE_PATH . '/' . $type . '/' . $addon_name . '/uninstall.php';
 
             // Remove entry from DB
             if ( $type != 'languages' )
@@ -1186,7 +1184,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     }
                 }
                 // Try to delete the module dir
-                $mod_dir = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$type.'/'.$addon_name);
+                $mod_dir = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'/'.$addon_name);
                 if (
                        !CAT_Helper_Directory::removeDirectory($mod_dir)
                     && is_dir($mod_dir)
@@ -1202,7 +1200,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 );
                 if ( self::getInstance()->db()->isError() )
                     return self::getInstance()->db()->getError();
-                unlink( CAT_PATH . '/languages/' . $addon_name . '.php' );
+                unlink( CAT_ENGINE_PATH . '/languages/' . $addon_name . '.php' );
             }
 
             return true;
@@ -1423,7 +1421,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             }
             else
             {
-                $info_file = CAT_PATH . '/modules/' . $modulename . '/info.php';
+                $info_file = CAT_ENGINE_PATH . '/modules/' . $modulename . '/info.php';
                 if ( file_exists( $info_file ) )
                 {
                     $module_version = null;
@@ -1569,13 +1567,13 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             }
             // this will remove ../.. from $filepath
             $filepath = CAT_Helper_Directory::sanitizePath( $filepath );
-            if ( !is_dir( CAT_PATH . '/modules/' . $module ) )
+            if ( !is_dir( CAT_ENGINE_PATH . '/modules/' . $module ) )
             {
                 self::getInstance()->log()->logCrit( "sec_register_file() called for non existing module [$module] (path: [$filepath])" );
                 self::$error = "sec_register_file() called for non existing module [$module] (path: [$filepath])";
                 return false;
             }
-            if ( !file_exists( CAT_Helper_Directory::sanitizePath( CAT_PATH . '/modules/' . $module . '/' . $filepath ) ) )
+            if ( !file_exists( CAT_Helper_Directory::sanitizePath( CAT_ENGINE_PATH . '/modules/' . $module . '/' . $filepath ) ) )
             {
                 self::getInstance()->log()->logCrit( "sec_register_file() called for non existing file [$filepath] (module: [$module])" );
                 self::$error = "sec_register_file() called for non existing file [$filepath] (module: [$module])";
@@ -1776,7 +1774,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          **/
         public static function getLibraries( $type = NULL )
         {
-            $dir  = CAT_Helper_Directory::sanitizePath( CAT_PATH . '/modules' );
+            $dir  = CAT_Helper_Directory::sanitizePath( CAT_ENGINE_PATH . '/modules' );
             $libs = array();
             if ( $handle = opendir( $dir ) )
             {
@@ -1831,13 +1829,13 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
     	public static function getEditModuleCSSForm($mod_dir,$print=false)
         {
     		global $page_id, $section_id;
-    		if(!file_exists(CAT_PATH.'/backend/addons/edit_module_files.php')) return;
-    		if(!file_exists(CAT_PATH.'/modules/'.$mod_dir.'/info.php'))        return;
+    		if(!file_exists(CAT_ENGINE_PATH.'/backend/addons/edit_module_files.php')) return;
+    		if(!file_exists(CAT_ENGINE_PATH.'/modules/'.$mod_dir.'/info.php'))        return;
             if(!self::checkModulePermissions($mod_dir))                        return;
             $buttons = array();
             $content = '';
             foreach(array('frontend.css','backend.css') as $file)
-                if(file_exists(CAT_PATH.'/modules/'.$mod_dir.'/'.$file))
+                if(file_exists(CAT_ENGINE_PATH.'/modules/'.$mod_dir.'/'.$file))
                     $buttons[] = $file;
     		if(count($buttons))
             {
@@ -1876,7 +1874,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             $self    = self::getInstance();
             if(!$self->checkModulePermissions($mod_dir)) return;
             $content = '';
-            $path    = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/'.$mod_dir);
+            $path    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$mod_dir);
             // find JS files
             $js      = CAT_Helper_Directory::getInstance()
                        ->maxRecursionDepth(5)

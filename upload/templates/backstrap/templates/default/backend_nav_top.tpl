@@ -15,44 +15,46 @@
 {/template}
 <div class="container-fluid">
   <div class="row">
-
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    
-        <div class="navbar-header col-sm-3 col-md-2">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">{translate('Toggle navigation')}</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
-        </div>
-        <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            {topmenu $MAIN_MENU_RECURSIVE}
-          </ul>
-          <ul class="nav navbar-right navbar-nav">
-            <li id="contextual" class="dropdown hidden">
-              <a class="dropdown-toggle" data-toggle="dropdown" title="" href="#">
-                <i class="fa fa-cogs fa-fw"></i> {translate('Context menu')} <i class="fa fa-caret-down"></i>
-              </a>
-              <ul class="dropdown-menu">
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" title="{$USER.display_name}" href="#">
-                <i class="fa fa-user fa-fw"></i> {$USER.display_name} <i class="fa fa-caret-down"></i>
-              </a>
-              <ul class="dropdown-menu dropdown-user">
-                <li><a href="#"><i class="fa fa-user fa-fw"></i> {translate('User Profile')}</a></li>
-                <li class="divider"></li>
-                <li><a href="{$CAT_ADMIN_URL}/logout/"><i class="fa fa-sign-out fa-fw"></i> {translate('Logout')}</a></li>
-              </ul>
-            </li>
-          </ul><!-- /.navbar-top-links -->
-          </div><!-- /.navbar-collapse -->
-  </nav>
-
-  </div><!-- /.row -->
-</div><!-- /.container-fluid -->
+      <div class="navbar-header col-sm-3 col-md-2">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">{translate('Toggle navigation')}</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          {topmenu $MAIN_MENU_RECURSIVE}
+        </ul>
+        <ul class="nav navbar-right navbar-nav">
+          <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" title="{$meta.USER.display_name}" href="#">
+              <i class="fa fa-user fa-fw"></i> {$meta.USER.display_name} <i class="fa fa-caret-down"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-user">
+              <li><a href="#"><i class="fa fa-user fa-fw"></i> {translate('User Profile')}</a></li>
+              <li class="divider"></li>
+              <li><a href="{$CAT_ADMIN_URL}/logout/"><i class="fa fa-sign-out fa-fw"></i> {translate('Logout')}</a></li>
+            </ul>
+          </li>
+        </ul>{* /.navbar-top-links *}
+      </div>{* /.navbar-collapse *}
+    </nav>
+  </div>{* /.row *}
+  <div class="row breadcrumb">
+    <div class="col-md-10 col-md-offset-2" style="padding:0;">
+      <section id="subheader" role="navigation">
+        <div id="contextual" class="pull-right"></div>
+        <ol class="breadcrumb">
+          <li><a href="#">{translate('Home')}</a></li>
+          {if $meta.SECTION}<li><a href="#">{translate($meta.SECTION)}</a></li>{/if}
+          {if $meta.ACTION}<li><a href="#">{translate($meta.ACTION)}</a></li>{/if}
+        </ol>
+      </section>
+    </div>
+  </div>
+</div>{* /.container-fluid *}
 

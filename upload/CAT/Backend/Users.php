@@ -1,27 +1,19 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Backend_Users'))
 {
@@ -32,12 +24,14 @@ if (!class_exists('CAT_Backend_Users'))
 
     class CAT_Backend_Users extends CAT_Object
     {
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
 
         /**
+         * Singleton
          *
          * @access public
-         * @return
+         * @return object
          **/
         public static function getInstance()
         {
@@ -45,8 +39,6 @@ if (!class_exists('CAT_Backend_Users'))
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
-
-
 
         /**
          * get the list of users that are members of the given group
@@ -80,7 +72,7 @@ if (!class_exists('CAT_Backend_Users'))
             if(!$self->user()->hasPerm('groups_delete'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $id   = $self->router()->getParam();
-            if(CAT_Users::deleteUser($id)!==true)
+            if(CAT_Helper_Users::deleteUser($id)!==true)
             {
                 echo CAT_Object::json_error('Unable to delete the user');
             }
@@ -98,12 +90,12 @@ if (!class_exists('CAT_Backend_Users'))
         public static function index()
         {
             $self  = self::getInstance();
-            $data  = CAT_Users::getUsers();
+            $data  = CAT_Helper_Users::getUsers();
             if(count($data))
             {
                 foreach($data as $i => $user)
                 {
-                    $data[$i]['groups'] = CAT_Users::getUserGroups($user['user_id']);
+                    $data[$i]['groups'] = CAT_Helper_Users::getUserGroups($user['user_id']);
                 }
             }
             if(self::asJSON())
@@ -131,7 +123,7 @@ if (!class_exists('CAT_Backend_Users'))
             if(!$self->user()->hasPerm('users_membership'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
             $id    = $self->router()->getParam();
-            $users = CAT_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
+            $users = CAT_Helper_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
