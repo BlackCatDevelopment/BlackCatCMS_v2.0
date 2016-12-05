@@ -191,48 +191,38 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return boolean
          **/
-        public function authenticate()
+        public function login()
         {
-            $this->reset();
+			$this->reset();
 
-            $field = CAT_Helper_Validate::sanitizePost('username_fieldname');
-            $user  = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
-            $name  = preg_match('/[\;\=\&\|\<\> ]/',$user) ? '' : $user;
+			$field	= CAT_Helper_Validate::sanitizePost('username_fieldname');
+			$user	= htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
+			$name	= preg_match('/[\;\=\&\|\<\> ]/',$user) ? '' : $user;
 
-            $field = CAT_Helper_Validate::sanitizePost('password_fieldname');
-            $pass  = sha1(CAT_Helper_Validate::sanitizePost($field));
+			// If no name was given or not allowed chars were sent
+			if ($name == '') return false;
+			else {
+				$uid	= $dbh->query(
+					'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `user_id`=:uid',
+					array( 'uid' => $name )
+				)->fetchColumn();
 
-            $this->log()->addDebug(sprintf('Trying to authenticate user [%s]',$name));
-
-            $get_user = $this->db()->query(
-                'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `username`=:name AND `password`=:pw AND `active`=1',
-                array('name'=>$name,'pw'=>$pass)
-            );
-    		$id = $get_user->fetch(\PDO::FETCH_ASSOC);
-            if(is_array($id) && isset($id['user_id']))
-            {
-                $this->initUser($id['user_id']);
-                // 2-Step Auth
-                if(CAT_Registry::get('enable_tfa') && $this->get('tfa_enabled') == 'Y')
-                {
-                    $field = CAT_Helper_Validate::sanitizePost('token_fieldname');
-                    $token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
-                    $tfa   = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE);
-                    $this->log()->addDebug('Trying to verify TFA secret');
-                    if($tfa->verifyCode($this->get('tfa_secret'),$token) !== true)
-                    {
-                        $this->reset();
-                        $this->setError('Two step authentication failed!');
-                        return false;
-                    }
-                }
-                $this->log()->addDebug('Authentication succeeded');
-                // save user id
-                $_SESSION['USER_ID'] = $this->getID();
-                return true;
-            }
-            return false;
-        }   // end function authenticate()
+				// Get fieldname of password and the password itself
+				$field	= CAT_Helper_Validate::sanitizePost('password_fieldname');
+				$passwd	= CAT_Helper_Validate::sanitizePost($field);
+				
+				// Get the token
+				$field = CAT_Helper_Validate::sanitizePost('token_fieldname');
+				$token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
+				
+				
+				// check whether the password is correct
+				if (CAT_Authenticate::getInstance()->authenticate($uid, $passwd, $token)) return true;
+				
+				else $this->setError('No such user, user not active, or invalid password!');
+				return false;
+			}
+        }   // end function login()
 
         /**
          * handle user login
@@ -277,17 +267,16 @@ if (!class_exists('CAT_User'))
          * @access public
          * @return binary  QRCode image
          **/
-        public function createSecret()
+        public function setSecret()
         {
-            $ignore = new CAT_Helper_QRCode(); // just to make sure the helper is loaded
-            $mp = new CAT_Helper_QRCodeProvider(); // needed for image creation
-            $tfa = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
-            $secret = $tfa->createSecret(); // generate a new secret
-            $this->db()->query(
-                'UPDATE `:prefix:rbac_users` SET `secret`=? WHERE `username`=?',
-                array($secret,$this->get('username'))
-            );
-            return $tfa->getQRCodeImageAsDataUri($this->get('display_name'), $secret);
+			$secret	= CAT_Authenticate::getInstance()->setSecret();
+			$QRCode	= CAT_Authenticate::getInstance()->createQRCode($this->id);
+
+			$this->db()->query(
+				'UPDATE `:prefix:rbac_users` SET `secret`=? WHERE `username`=?',
+				array($secret,$this->get('username'))
+			);
+			return $QRCode;
         }   // end function createSecret()
 
         /**
