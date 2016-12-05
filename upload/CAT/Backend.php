@@ -304,7 +304,7 @@ if (!class_exists('CAT_Backend', false))
         public static function authenticate()
         {
             $self = self::getInstance();
-            if($self->user()->authenticate() === true)
+            if($self->user()->login() === true)
             {
                 $self->log()->addDebug('Authentication succeeded');
                 $_SESSION['USER_ID'] = $self->user()->get('user_id');

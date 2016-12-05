@@ -200,11 +200,15 @@ if (!class_exists('CAT_User'))
 			$name	= preg_match('/[\;\=\&\|\<\> ]/',$user) ? '' : $user;
 
 			// If no name was given or not allowed chars were sent
-			if ($name == '') return false;
-			else {
-				$uid	= $dbh->query(
-					'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `user_id`=:uid',
-					array( 'uid' => $name )
+			if ($name == '')
+            {
+                return false;
+            }
+			else
+            {
+				$uid = $this->db()->query(
+					'SELECT `user_id` FROM `:prefix:rbac_users` WHERE `username`=:username',
+					array( 'username' => $name )
 				)->fetchColumn();
 
 				// Get fieldname of password and the password itself
@@ -214,10 +218,16 @@ if (!class_exists('CAT_User'))
 				// Get the token
 				$field = CAT_Helper_Validate::sanitizePost('token_fieldname');
 				$token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
-				
-				
+
 				// check whether the password is correct
-				if (CAT_Authenticate::getInstance()->authenticate($uid, $passwd, $token)) return true;
+				if (CAT_Authenticate::getInstance()->authenticate($uid, $passwd, $token))
+                {
+                    $this->db()->query(
+                        'UPDATE `:prefix:rbac_users` SET `login_when`=?, `login_ip`=? WHERE `user_id`=?',
+                        array(time(), $_SERVER['REMOTE_ADDR'], $uid)
+                    );
+                    return true;
+                }
 				
 				else $this->setError('No such user, user not active, or invalid password!');
 				return false;
@@ -245,6 +255,11 @@ if (!class_exists('CAT_User'))
             if(!isset($_POST['_cat_ajax']) && session_id() !== '') {
                 @session_destroy();
             }
+
+            $this->db()->query(
+                'UPDATE `:prefix:rbac_users` SET `login_when`=?, `login_ip`=? WHERE `user_id`=?',
+                array(0, 0, $this->user()->getID())
+            );
 
             // redirect to admin login
             if(!isset($_POST['_cat_ajax']))
