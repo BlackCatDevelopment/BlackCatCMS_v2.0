@@ -68,28 +68,79 @@ if (!class_exists('CAT_Backend_Page'))
         public static function edit()
         {
             $self    = self::getInstance();
-            $page_id = $self->router()->getParam(-1);
+            $pageID  = $self->router()->getParam(-1);
 
-            if(!$page_id || !is_numeric($page_id) || !CAT_Helper_Page::exists($page_id))
+            if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
                 CAT_Object::printFatalError('Invalid data');
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
-            if(!$self->user()->hasPerm('pages_edit') || !$self->user()->hasPagePerm($page_id,'pages_edit'))
+            if(!$self->user()->hasPerm('pages_edit') || !$self->user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
-            $curr_tpl   = CAT_Helper_Page::getPageTemplate($page_id);
-            $page       = CAT_Page::getInstance($page_id);
-            $sections   = CAT_Helper_Page::getSections($page_id);
+            // now, let's load the form(s)
+            $form = CAT_Backend::initForm();
+            $form->loadFile('pages.forms.php',__dir__.'/forms');
+
+            $curr_tpl   = CAT_Helper_Page::getPageTemplate($pageID);
+            $page       = CAT_Helper_Page::properties($pageID);
+            $sections   = CAT_Helper_Page::getSections($pageID);
+            $languages  = array();
+            $templates  = array();
+            $pages      = \wblib\wbList::sort(CAT_Helper_Page::getPages(1),0);
+
+            // to fill the several page select fields (f.e. "parent")
+            $pages_select = array();
+            foreach($pages as $p)
+                $pages_select[$p['page_id']] = $p['menu_title'];
+
+            // language select
+            $langs      = CAT_Helper_I18n::getLanguages();
+            if(is_array($langs) && count($langs))
+            {
+                foreach(array_values($langs) as $lang)
+                {
+                    $data = CAT_Helper_Addons::getAddonDetails($lang);
+                    $languages[] = $data;
+                }
+            }
+
+            // template select
+            if(is_array(($tpls=CAT_Helper_Addons::get_addons('template','template'))))
+            {
+                foreach(array_values($tpls) as $tpl)
+                {
+                    $templates[$tpl['directory']] = $tpl['name'];
+                }
+            }
+
+
+            $form->setForm('be_page_settings');
+            $form->setData($page);
+
+            $form->setForm('be_page_general');
+            $form->getElement('parent')
+                 ->setAttr('options',array_merge(
+                     array('0'=>'['.$self->lang()->t('none').']'),
+                     $pages_select
+                   ))
+                 ->setValue($page['parent'])
+                 ;
+            $form->getElement('template')
+                 ->setAttr('options',array_merge(
+                     array(''=>'System default'),
+                     $templates
+                   ))
+                 ->setValue($curr_tpl)
+                 ;
+
             $blockcount = 0;
             $tpl_data   = array(
                 'meta'      => array(
                     'menus'     => CAT_Helper_Template::get_template_menus($curr_tpl),
-                    'templates' => CAT_Helper_Addons::get_addons('template','template'),
-                    'languages' => CAT_Helper_I18n::getLanguages(),
                     'variants'  => CAT_Helper_Template::getVariants($curr_tpl),
                     'pages'     => \wblib\wbList::sort(CAT_Helper_Page::getPages(1),0),
-                    'page'      => CAT_Helper_Page::properties($page_id),
+                    'page'      => CAT_Helper_Page::properties($pageID),
                 ),
                 'blocks'    => array(),
             );

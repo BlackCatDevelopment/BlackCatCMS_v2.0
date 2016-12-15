@@ -172,6 +172,12 @@ if(!class_exists('CAT_Helper_I18n',false))
                 array_unshift(self::$search_paths, $path);
                 self::$search_paths = array_unique(self::$search_paths);
             }
+
+            // check for file suffix; should be the same as the suffix of
+            // this class
+            if(pathinfo($file,PATHINFO_EXTENSION) !== pathinfo(__FILE__,PATHINFO_EXTENSION))
+                $file .= '.'.pathinfo(__FILE__,PATHINFO_EXTENSION);
+
             foreach(self::$search_paths as $path)
             {
 	            $filename = CAT_Helper_Directory::sanitizePath($path.'/'.$file);

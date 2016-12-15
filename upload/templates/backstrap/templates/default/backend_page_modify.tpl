@@ -17,6 +17,7 @@
     <ul class="nav nav-tabs" role="tablist">{* Tabs *}
       <li role="presentation" class="active"><a href="#contents" aria-controls="contents" role="tab" data-toggle="tab">{translate('Content')}</a></li>
       <li role="presentation"><a href="#config" aria-controls="config" role="tab" data-toggle="tab">{translate('Settings')}</a></li>
+      <li role="presentation"><a href="#translations" aria-controls="translations" role="tab" data-toggle="tab">{translate('Translations')}</a></li>
     </ul>
 
     <div class="tab-content">{* Tab panes *}
@@ -74,113 +75,13 @@
 
           {* START meta tab *}
           <div role="tabpanel" class="tab-pane active" id="meta">
-            <form class="form-horizontal">
-              <div class="form-group">
-                <label for="page_title" class="col-sm-2 control-label">{translate('Page title')}</label>
-                <div class="col-sm-10">
-                  <input type="text" class="form-control" id="page_title" value="{$meta.page.page_title}">
-                  <span class="help-block">{translate('The title should be a nice &quot;human readable&quot; text having 30 up to 55 characters.')}</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="menu_title" class="col-sm-2 control-label">{translate('Menu title')}</label>
-                <div class="col-sm-10">
-                  <input type="text" class="form-control" id="menu_title" value="{$meta.page.menu_title}">
-                  <span class="help-block">{translate('The menu title is used for the navigation menu. Hint: Use short but descriptive titles.')}</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="page_description" class="col-sm-2 control-label">{translate('Description')}</label>
-                <div class="col-sm-10">
-                  <input type="text" class="form-control" id="page_description" value="{$meta.page.description}">
-                  <span class="help-block">{translate('The description should be a nice &quot;human readable&quot; text having 70 up to 156 characters.')}</span>
-                </div>
-              </div>
-              <div class="form-group">
-			    <label for="language" class="col-sm-2 control-label">{translate('Language')}:</label>
-                <div class="col-sm-10">
-                  <select name="language" id="language" class="form-control">
-                  {foreach $meta.languages lang}
-				    <option value="{$lang.directory}"{if $lang.name == $meta.page.language} selected="selected"{/if}>{$lang.name}</option>
-                  {/foreach}
-			      </select>
-                  <span class="help-block">{translate('The (main) language of the page contents.')}</span>
-                </div>
-              </div>
-            </form>
-
+            {cat_form('be_page_settings')}
           </div>
           {* END meta tab *}
 
           {* START general tab *}
           <div role="tabpanel" class="tab-pane" id="general">
-            <form class="form-horizontal">
-              <div class="form-group">
-			    <label for="parent" class="col-sm-2 control-label">{translate('Parent page')}:</label>
-                <div class="col-sm-10">
-                  <select name="parent" id="parent" class="form-control">
-                  <option value="">[{translate('none')}]</option>
-                  {foreach $meta.pages page}
-				    <option value="{$page.page_id}"{if $page.page_id == $meta.page.parent} selected="selected"{/if}>{if $page.level > 0}{for i 1 $page.level}-{/for}{/if}{$page.menu_title}</option>
-                  {/foreach}
-			      </select>
-                  <span class="help-block">{translate('The position of the page in the page tree.')}</span>
-                </div>
-              </div>
-              <div class="form-group">
-              {if cat_get('MULTIPLE_MENUS') == 1 && $meta.menus && count($meta.menus) > 1}
-                <label for="page_menu" class="col-sm-2 control-label">{translate('Menu')}</label>
-                <div class="col-sm-10">
-                  <select name="page_menu" id="page_menu" class="form-control">
-                    {foreach $meta.menus menu}
-                    <option>{$menu.NAME}</option>
-                    {/foreach}
-			      </select>
-                  <span class="help-block">{translate('Menu')}</span>
-                </div>
-              {/if}
-              </div>
-              <div class="form-group">
-                <label for="template" class="col-sm-2 control-label">{translate('Template')}:</label>
-                <div class="col-sm-10">
-    			  <select name="template" id="template" class="form-control">
-    				<option value="" selected="selected">{translate('System default')}</option>
-    				<option value="" disabled="disabled">----------------------</option>
-    				{foreach $meta.templates template}
-    				<option value="{$template.addon_id}">{$template.name}</option>
-    				{/foreach}
-                  </select>
-                  <span class="help-block">{translate('You may override the system settings for the template here.')}</span>
-                </div>
-              </div>
-              {if $meta.variants && count($meta.variants) > 1}
-              <div class="form-group">
-                <label for="template_variant" class="col-sm-2 control-label">{translate('Variant')}:</label>
-                <div class="col-sm-10">
-                  <select name="template_variant" id="template_variant" class="form-control">
-                    {foreach $variants variant}
-                    <option value="{$variant}"{if $variant == $template_variant} selected="selected"{/if}>{$variant}</option>
-                    {/foreach}
-    			  </select>
-                  <span class="help-block">{translate('You may override the system settings for the template variant here.')}</span>
-                </div>
-              </div>
-              {/if}
-
-              <div class="form-group">
-                <label for="visibility" class="col-sm-2 control-label">{translate('Visibility')}:</label>
-                <div class="col-sm-10">
-    			  <select name="visibility" id="visibility" class="form-control">
-                    <option value="public" class="">{translate('public')}</option>
-                    <option value="private" class="">{translate('private')}</option>
-                    <option value="registered" class="">{translate('registered')}</option>
-                    <option value="hidden" class="">{translate('hidden')}</option>
-                    <option value="none" class="">{translate('none')}</option>
-    			  </select>
-                  <span class="help-block">{translate('public - visible for all visitors; registered - visible for configurable groups of visitors; ...')}</span>
-                </div>
-              </div>
-            </form>
+            {cat_form('be_page_general')}
           </div>
           {* END general tab *}
 
@@ -195,6 +96,10 @@
         </div>{* end INNER *}
         
       </div>{* END #config tab-pane *}
+
+      <div role="tabpanel" class="tab-pane" id="translations">{* START #translations tab-pane *}
+      {translate('You can link any page to other pages in different languages that have the same content.')}
+      </div>
     </div>{* END tab content *}
   </div>{* END col *}
 </div>{* END row *}

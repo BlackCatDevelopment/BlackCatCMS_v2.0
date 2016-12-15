@@ -161,16 +161,6 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                     self::$prefix = $opt['DB_PREFIX'];
                     define('CAT_TABLE_PREFIX',self::$prefix);
                 }
-                if(defined('WB2COMPAT') && WB2COMPAT === true)
-                {
-                    define('DB_TYPE', $opt['DB_TYPE']);
-                    define('DB_HOST', $opt['DB_HOST']);
-                    define('DB_PORT', $opt['DB_PORT']);
-                    define('DB_USERNAME', $opt['DB_USERNAME']);
-                    ##define('DB_PASSWORD', CAT_DB_PASSWORD);
-                    define('DB_NAME', $opt['DB_NAME']);
-
-                }
             }
             self::restoreExceptionHandler();
             return self::$conn;

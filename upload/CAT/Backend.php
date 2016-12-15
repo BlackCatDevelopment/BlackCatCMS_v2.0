@@ -58,6 +58,10 @@ if (!class_exists('CAT_Backend', false))
                     ));
                 }
                 self::$instance->initPaths();
+                self::$instance->lang()->addFile(
+                    strtoupper(CAT_Registry::get('language',NULL,CAT_Helper_I18n::getLang())),
+                    dirname(__FILE__).'/Backend/languages/'
+                );
             }
             return self::$instance;
         }   // end function getInstance()
@@ -239,17 +243,10 @@ if (!class_exists('CAT_Backend', false))
         {
             if(!self::$form)
             {
-                self::$form = \wblib\wbForms::getInstance();
-                $init = CAT_Helper_Directory::sanitizePath(
-                    CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME').'/forms.init.php'
-                );
-                if(file_exists($init))
-                    require $init;
-                self::$form->set('lang_path',CAT_ENGINE_PATH.'/languages');
+                self::$form = CAT_Object::form();
                 \wblib\wbFormsJQuery::set('enabled',false);
                 \wblib\wbFormsJQuery::set('load_ui_theme',false);
                 \wblib\wbFormsJQuery::set('disable_tooltips',true);
-                \wblib\wbFormsElementFieldset::setClass('');
             }
             return self::$form;
         }   // end function initForm()

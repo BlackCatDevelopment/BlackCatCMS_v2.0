@@ -103,6 +103,27 @@ if(!class_exists('CAT_Object',false))
             }
             return CAT_Object::$objects['getid3'];
         }   // end function fileinfo()
+
+        /**
+         * create a global FormBuilder handler
+         *
+         * @access public
+         * @return
+         **/
+        public static function form()
+        {
+            if(!isset(CAT_Object::$objects['formbuilder']) || !is_object(CAT_Object::$objects['formbuilder']))
+            {
+                CAT_Object::$objects['formbuilder'] = \wblib\wbForms::getInstance();
+                $init = CAT_Helper_Directory::sanitizePath(
+                    CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get((CAT_Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')).'/forms.init.php'
+                );
+                if(file_exists($init))
+                    require $init;
+                CAT_Object::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/languages');
+            }
+            return CAT_Object::$objects['formbuilder'];
+        }   // end function form()
         
         /**
          * accessor to I18n helper
