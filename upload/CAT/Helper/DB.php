@@ -139,6 +139,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                     'user'     => (isset($opt['DB_USERNAME']) ? $opt['DB_USERNAME'] : 'root'     ),
                     'port'     => (isset($opt['DB_PORT'])     ? $opt['DB_PORT']     : 3306       ),
                 );
+
                 if(function_exists('xdebug_is_enabled'))
                     $xdebug_state = xdebug_is_enabled();
                 else

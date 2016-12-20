@@ -114,11 +114,14 @@ if (!class_exists('CAT_Backend_Page'))
                 }
             }
 
-
+            // page settings form
             $form->setForm('be_page_settings');
             $form->setData($page);
 
+            // ----- general / common page attributes form -----
             $form->setForm('be_page_general');
+
+            // page parent
             $form->getElement('parent')
                  ->setAttr('options',array_merge(
                      array('0'=>'['.$self->lang()->t('none').']'),
@@ -126,6 +129,7 @@ if (!class_exists('CAT_Backend_Page'))
                    ))
                  ->setValue($page['parent'])
                  ;
+            // template
             $form->getElement('template')
                  ->setAttr('options',array_merge(
                      array(''=>'System default'),
@@ -133,18 +137,24 @@ if (!class_exists('CAT_Backend_Page'))
                    ))
                  ->setValue($curr_tpl)
                  ;
+            // remove variant select if no variants are available
+            $variants = CAT_Helper_Template::getVariants($curr_tpl);
+            if(!$variants) $form->removeElement('template_variant');
+            else           $form->getElement('template_variant')->setAttr('options',$variants);
+            // remove menu select if there's only one menu block
+            $menus    = CAT_Helper_Template::get_template_menus($curr_tpl);
+            if(!$menus)    $form->removeElement('page_menu');
+            else           $form->getElement('page_menu')->setAttr('options',$menus);
+            // visibility
+            $vis_list = CAT_Helper_Page::getVisibilities();
+            $form->getElement('visibility')->setAttr('options',$vis_list)->setValue($page['vis_id']);
 
+            $tpl_data = array('page'=>$page,'blocks'=>array());
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// wofür brauchen wir das???
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $blockcount = 0;
-            $tpl_data   = array(
-                'meta'      => array(
-                    'menus'     => CAT_Helper_Template::get_template_menus($curr_tpl),
-                    'variants'  => CAT_Helper_Template::getVariants($curr_tpl),
-                    'pages'     => \wblib\wbList::sort(CAT_Helper_Page::getPages(1),0),
-                    'page'      => CAT_Helper_Page::properties($pageID),
-                ),
-                'blocks'    => array(),
-            );
-
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             foreach ($sections as $block => $items)
             {
                 foreach($items as $section)
@@ -221,6 +231,7 @@ if (!class_exists('CAT_Backend_Page'))
             return $pages;
         }   // end function list()
 
+
         /**
          *
          * @access public
@@ -241,6 +252,9 @@ if (!class_exists('CAT_Backend_Page'))
             {
                 CAT_Object::json_error('Invalid value');
             }
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// MUSS ANGEPASST WERDEN! Neue Spalte vis_id (FK)
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             $self->db()->query(
                 'UPDATE `:prefix:pages` SET `visibility`=? WHERE `page_id`=?',
                 array($newval,$page_id)

@@ -16,7 +16,7 @@
     '<div class="form-group">
 	  %label%
       <div class="col-sm-10">
-        <select%name%%id%%class%%style%%title%%multiple%%tabindex%%accesskey%%disabled%%readonly%%required%%aria-required%%onblur%%onchange%%onclick%%onfocus%%onselect%>\n%options%</select> %after%
+        <select%name%%id%%class%%style%%title%%multiple%%tabindex%%accesskey%%disabled%%readonly%%required%%aria-required%%onblur%%onchange%%onclick%%onfocus%%onselect%>%options%</select> %after%
       </div>
     </div>'
 );

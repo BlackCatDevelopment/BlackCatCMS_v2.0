@@ -1,4 +1,4 @@
-<div class="detach">{translate('Page')}: {$meta.page.menu_title} (ID: {$meta.page.page_id})</div>
+<div class="detach">{translate('Page')}: {$page.menu_title} (ID: {$page.page_id})</div>
 
 <div class="row flex">
   <div class="col-md-12">
@@ -10,7 +10,7 @@
         <option value="{$addon.addon_id}">{$addon.name}</option>
         {/foreach}
       </select>
-      <button class="btn btn-primary" id="bsAddonAdd" data-page="{$meta.page.page_id}" data-block="1">{translate('Submit')}</button>
+      <button class="btn btn-primary" id="bsAddonAdd" data-page="{$page.page_id}" data-block="1">{translate('Submit')}</button>
     </span>
     {/if}
 
@@ -87,9 +87,8 @@
 
           {* START header tab *}
           <div role="tabpanel" class="tab-pane" id="header">
-            <form class="form-horizontal">
-              
-            </form>
+            To be added later...<br />
+            cat_form('be_page_headerfiles')
           </div>
           {* END header tab *}
 
@@ -98,7 +97,7 @@
       </div>{* END #config tab-pane *}
 
       <div role="tabpanel" class="tab-pane" id="translations">{* START #translations tab-pane *}
-      {translate('You can link any page to other pages in different languages that have the same content.')}
+        {translate('You can link any page to other pages in different languages that have the same content.')}
       </div>
     </div>{* END tab content *}
   </div>{* END col *}

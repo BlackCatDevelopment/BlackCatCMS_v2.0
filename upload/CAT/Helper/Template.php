@@ -196,8 +196,13 @@ if (!class_exists('CAT_Helper_Template'))
             return $driver->lang()->translate('Main');
         }   // end function get_template_block_name()
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Die Funktion muss ueberarbeitet werden, wenn Templates keine info.php mehr
+// haben.
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     	/**
-    	 * get all menus of an template
+    	 * get all menus of a template
     	 *
     	 * @access public
     	 * @param  mixed $template (default: DEFAULT_TEMPLATE)
@@ -207,31 +212,25 @@ if (!class_exists('CAT_Helper_Template'))
     	public static function get_template_menus($template=NULL, $selected=1)
     	{
             if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
-    		if(CAT_Registry::get('MULTIPLE_MENUS') !== false)
-    		{
-    			$template_location
-                    = ($template != '')
-                    ? CAT_ENGINE_PATH.'/templates/'.$template.'/info.php'
-                    : CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php'
-                    ;
 
-    			if(file_exists($template_location))
-    			{
-    				require $template_location;
-    			}
+			$tpl_info
+                = ($template != '')
+                ? CAT_ENGINE_PATH.'/templates/'.$template.'/info.php'
+                : CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php'
+                ;
+
+			if(file_exists($tpl_info))
+            {
+				require $tpl_info;
     			if(!isset($menu[1]) || $menu[1] == '')
-    			{
     				$menu[1]	= 'Main';
-    			}
+
+                $result = array();
     			foreach($menu as $number => $name)
     			{
-    				self::$template_menus[$number] = array(
-    					'NAME'			=> $name,
-    					'VALUE'			=> $number,
-    					'SELECTED'		=> ($selected == $number || $selected == $name) ? true : false
-    				);
+    				$result[$number] = $name;
     			}
-    			return self::$template_menus;
+    			return $result;
     		}
     		else
             {

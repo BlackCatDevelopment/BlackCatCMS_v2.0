@@ -40,7 +40,8 @@ $(function() {
     });
 
     // delegate the click event to the detached button
-    $('body').delegate('#bsAddWidget','click',function(e) {
+    //$('body').delegate('#bsAddWidget','click',function(e) {
+    $('body').on('click','#bsAddWidget',function(e) {
         e.preventDefault();
         $('#modal_dialog .modal-body').html( $('div#bs_available_widgets').html() );
         $('#modal_dialog').modal('show');

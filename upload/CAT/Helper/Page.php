@@ -35,6 +35,7 @@ if (!class_exists('CAT_Helper_Page'))
         private   static $pages               = array();
         private   static $id_to_index         = array();
         private   static $pages_sections      = array();
+        private   static $visibilities        = array();
 
         private   static $jquery_enabled      = false;
         private   static $jquery_seen         = false;
@@ -462,6 +463,28 @@ if (!class_exists('CAT_Helper_Page'))
         }   // end function getSections()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getVisibilities()
+        {
+            if(!count(self::$visibilities))
+            {
+                $sth = self::$instance->db()->query(
+                    'SELECT * FROM `:prefix:pages_visibility`'
+                );
+                $temp = $sth->fetchAll();
+                foreach($temp as $item)
+                {
+                    self::$visibilities[$item['vis_id']] = $item['vis_name'];
+                }
+            }
+            return self::$visibilities;
+        }   // end function getVisibilities()
+        
+
+        /**
          * checks if page is active (=has active sections and is between
          * publ_start and publ_end)
          *
@@ -489,7 +512,7 @@ if (!class_exists('CAT_Helper_Page'))
         public static function isDeleted($page_id)
         {
             $page    = self::properties($page_id);
-            if($page['visibility']=='deleted')
+            if($page['vis_id']==5)
                 return true;
             return false;
         } // end function isDeleted()
@@ -507,25 +530,25 @@ if (!class_exists('CAT_Helper_Page'))
             $show_it = false;
             $page    = self::properties($page_id);
 
-            switch ($page['visibility'])
+            switch ($page['vis_id'])
             {
-                // never shown in FE
-                case 'none':
-                case 'deleted':
+                // public - always visible
+                case 1:
+                    $show_it = true;
+                    break;
+                // none, deleted - never shown in FE
+                case 4:
+                case 5:
                     $show_it = false;
                     break;
-                // shown if called, but not in menu; skip intro page (selectPage(true))
-                case 'hidden':
+                // hidden - shown if called, but not in menu; skip intro page (selectPage(true))
+                case 3:
                     if(CAT_Page::getID()==$page_id)
                         $show_it = true;
                     break;
-                // always visible
-                case 'public':
-                    $show_it = true;
-                    break;
-                // shown if user is allowed
-                case 'private':
-                case 'registered':
+                // private, registered - shown if user is allowed
+                case 2:
+                case 6:
                     if (CAT_User::getInstance()->is_authenticated() == true)
                     {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1040,7 +1063,11 @@ if (!class_exists('CAT_Helper_Page'))
             if(count(self::$pages)==0 || $force)
             {
                 $result = self::$instance->db()->query(
-                    'SELECT * FROM `:prefix:pages` ORDER BY `level` ASC, `position` ASC'
+                      'SELECT `t1`.*, `t2`.`vis_name` AS `visibility` '
+                    . 'FROM `:prefix:pages` AS `t1` '
+                    . 'JOIN `:prefix:pages_visibility` AS `t2` '
+                    . 'ON `t1`.`vis_id`=`t2`.`vis_id` '
+                    . 'ORDER BY `level` ASC, `position` ASC'
                 );
                 self::$pages = $result->fetchAll();
                 // map index to page id

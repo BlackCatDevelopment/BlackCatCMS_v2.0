@@ -1,4 +1,4 @@
-        <table class="table">
+        <table class="table dtable">
             <thead>
                 <tr>
                     <th>{* icons column *}</th>
@@ -13,11 +13,11 @@
             {foreach $groups group}
                 <tr>
                     <td>
-                        <span class="fa fa-fw{if $group.group_builtin == 'Y'} fa-anchor{/if}"></span>
-                        {if $PERMS.groups_delete && $group.group_builtin != 'Y'}
-                        <a href="#" class="delete" data-toggle="tooltip" title="{translate('Delete group')}" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}" data-name="{$group.group_title}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>
+                        <span class="fa fa-fw{if $group.group_builtin == 'Y'} fa-anchor" data-title="{translate('Built-in objects cannot be removed')}"{else}"{/if}></span>
+                        {if user_has_perm('groups_delete') && $group.group_builtin != 'Y'}
+                        <a href="#" class="delete" data-title="{translate('Delete group')}" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}" data-name="{$group.group_title}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>
                         {/if}
-                        {if $PERMS.groups_users}
+                        {if user_has_perm('groups_users')}
                         {if $group.member_count > 0}<a href="#" class="members" data-toggle="tooltip" title="{translate('Manage group members')}" data-group-id="{$group.group_id}"><span class="fa fa-fw fa-groups"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                         <a href="#" class="add_member" data-toggle="tooltip" title="{translate('Add group members')}" data-group-id="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/users""><span class="fa fa-fw fa-user-plus text-success"></span></a>
                         {else}
@@ -36,11 +36,12 @@
 
         <span class="fa fa-fw fa-groups text-primary"></span> = {translate('Edit group members')}
         <span class="fa fa-fw fa-user-plus text-success"></span> = {translate('Add group members')}
-        {include 'legend.tpl'}
+        <span data-title="{translate('Built-in objects cannot be removed')}"><span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}</span>
+        <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
-        {if $PERMS.groups_add}
+        {if user_has_perm('groups_add')}
         <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/groups/create">
-            {translate('Create new')}
+            {translate('Create new group')}
             <div class="form-group">
                 <input type="text" placeholder="{translate('Title')}" class="form-control" name="group_name" id="group_name" />
             </div>
@@ -52,72 +53,95 @@
         </form>
         {/if}
 
-        {include(file='fuelux_repeater.tpl' repeater_id='bs_rep_groups' repeater_title='Users')}
-        {include(file='backend_modal.tpl' modal_id='modal_users' modal_title='Add group members', modal_text='Choose the users you wish to add and click [Save]')}
+        {include(file='backend_modal.tpl' modal_id='modal_group' modal_savebtn='1')}
 
+        <div id="bs_userlist" style="display:none">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{* icons *}</th>
+                        <th>{translate('User ID')}</th>
+                        <th>{translate('Login name')}</th>
+                        <th>{translate('Display name')}</th>
+                        <th>{translate('eMail')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-col="1">
+                            {if user_has_perm('groups_users')}
+                            <a href="#" class="deleteuser" data-title="{translate('Remove group member')}" data-id="" data-username="" data-url="{$CAT_ADMIN_URL}/groups/deleteuser">
+                              <span class="fa fa-fw fa-trash text-danger"></span>
+                            </a>
+                            {/if}
+                        </td>
+                        <td data-col="2"></td>
+                        <td data-col="3"></td>
+                        <td data-col="4"></td>
+                        <td data-col="5"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        {* get the name of the language file; allows to check if it exists *}
+        {$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
         <script type="text/javascript">
         //<![CDATA[
-            function customColumnRenderer(helpers, callback) {
-                // Determine what column is being rendered and review
-                var column = helpers.columnAttr;
-                // get all the data for the entire row
-                var rowData = helpers.rowData;
-                var customMarkup = '';
-                // Only override the output for specific columns.
-                // This will default to output the text value of the row item
-                switch(column) {
-                    case 'tpl_icon_delete':
-                    {if $PERMS.users_delete}
-                        if(typeof '{$PERMS.users_delete}' != 'undefined' && rowData.user_id != 1)
-                        {
-                            customMarkup = '<a class="deleteuser" href="#" data-url="{$CAT_ADMIN_URL}/groups/'
-                                         + rowData.group_id + '/deleteuser/' + rowData.user_id
-                                         + '" data-username="'+rowData.username+'"><span class="fa fa-fw fa-trash red"></span></a>';
-                        }
-                    {/if}
-                        break;
-                    default:
-                        // otherwise, just use the existing text value
-                        customMarkup = helpers.item.text();
-                        break;
-                }
-                helpers.item.html(customMarkup);
-                callback();
-            }
             $(function() {
+
+                // reset infopanel
+                function infoPanelReset() {
+                    $('div.infopanel span#message').html('');
+                    $('div.infopanel').hide();
+                }
+
+                var dtable = $('table.dtable').DataTable({
+                    mark: true,
+                    stateSave: true,
+                    orderClasses: false{if cat_file_exists($file)},
+                    language: {
+                        url: "{cat_asset_url($file,'js')}"
+                    }
+                    {/if}
+                });
+                // delete a group member
                 $(document).on('click', 'a.deleteuser', function(event) {
                     event.preventDefault();
-                    // reset infopanel
                     infoPanelReset();
-                    $('#myModalLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> '+cattranslate('Remove group member'));
-                    $('div.modal-body').html(cattranslate('Do you really want to remove this group member?')+'<br />'+cattranslate('Title')+': '+$(this).data('username'));
+                    var id = $(this).data('id');
+                    $('#bsmodal_groupLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> {translate("Remove group member")}: '+$(this).data('username'));
+                    $('#modal_group').modal('show');
+                    $('div.modal-body').html('{translate("Do you really want to remove this group member?")}');
                     $('#modal_users').modal('show');
                     var _this = $(this);
                     $('button.btn-primary').on('click',function(e) {
                         $('#modal_users').modal('hide');
                         $.ajax({
                             type    : 'POST',
-                            url     : _this.data('url'),
+                            url     : _this.data('url')+"/"+id,
                             dataType: 'json',
                             success : function(data, status) {
                                 _this.parent().parent().remove();
-                                $('div.infopanel span#message').html(cattranslate('Group member successfully removed'));
+                                $('div.infopanel span#message').html("{translate('Group member successfully removed')}");
                                 $('div.infopanel').removeClass('alert-danger').addClass('alert-success').show();
                             }
                         });
                     });
                 });
+                // delete a group
                 $('a.delete').on('click', function(event) {
                     event.preventDefault();
                     // reset infopanel
                     infoPanelReset();
                     var id = $(this).data('group-id');
-                    $('#myModalLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> '+cattranslate('Delete group'));
-                    $('div.modal-body').html(cattranslate('Do you really want to delete this group?')+'<br />'+cattranslate('Title')+': '+$(this).data('name'));
-                    $('#modal_users').modal('show');
+                    $('#bsmodal_groupLabel').html('<span id="modalicon" class="fa fa-fw fa-warning"></span> {translate("Delete group")}: '+$(this).data('name'));
+                    $('div.modal-body').html("{translate('Do you really want to delete this group?')}");
+                    $('#modal_group').modal('show');
                 });
+                // add a group member
                 $('a.add_member').on('click', function(event) {
-                    // reset infopanel
                     infoPanelReset();
                     var id = $(this).data('group-id');
                     $.ajax({
@@ -170,78 +194,56 @@
                         }
                     });
                 });
-
+                // show group members
                 $('a.members').on('click', function(event) {
-                    // reset infopanel
-                    $('div.infopanel span#message').html('');
-                    $('div.infopanel').hide();
-
                     var id = $(this).data('group-id');
-                    if($('#bs_rep_groups_'+id).length) {
-                        // remove
+                    if($('.bs_group_users').length) {
+                        // remove other
                         $('tr').removeClass('highlight');
-                        $('#bs_rep_groups_'+id).hide('slow').parent().parent().remove();
+                        $('.bs_group_users').hide('slow').remove();
                     }
-                    else
-                    {
-                        var _this = $(this);
-                        $.ajax({
-                            type    : 'POST',
-                            url     : '{$CAT_ADMIN_URL}/users/bygroup/' + id,
-                            dataType: 'json',
-                            success : function(data, status) {
-                                // activate for debugging:
-                                //console.log(data);
-                                var rep = $('div#bs_rep_groups').clone().prop('id','bs_rep_groups_'+id),
-                                    pg  = 1;
-                                if(data.length && data.length > 10) {
-                                    pg = data.length / 10;
-                                }
-                                rep.repeater({
-                                    list_columnRendered: customColumnRenderer,
-                                    dataSource: function (options, callback) {
-                                        // define the datasource
-                                        var dataSource = {
-                                            'page': 0,
-                                            'pages': pg,
-                                            'count': data.length,
-                                            'start': 0,
-                                            'end': data.length,
-                                            'columns': [{
-                                                label: '',
-                                                property: 'tpl_icon_delete'
-                                            },{
-                            					label: cattranslate('User ID'),
-                            					property: 'user_id',
-                            					sortable: true
-                            				},{
-                            					label: cattranslate('Login name'),
-                            					property: 'username',
-                            					sortable: true
-                                            },{
-                            					label: cattranslate('Display name'),
-                            					property: 'display_name',
-                            					sortable: true
-    				                        },{
-                                                label: cattranslate('eMail'),
-                                                property: 'email',
-                                                sortable: true
-                                            }],
-                                            'items': data
-                                        };
-                                        // pass the datasource back to the repeater
-                                        callback(dataSource);
+                    var _this = $(this);
+                    $.ajax({
+                        type    : 'POST',
+                        url     : '{$CAT_ADMIN_URL}/users/bygroup/' + id,
+                        dataType: 'json',
+                        success : function(data, status) {
+                            // activate for debugging:
+                            //console.log(data);
+                            if(data.length) {
+                                var table = $('div#bs_userlist table').clone();
+                                var tbody = $(table).find('tbody');
+                                var line  = $(tbody).find('tr').remove();
+                                for(i=0;i<data.length;i++)
+                                {
+                                    // activate for debugging:
+                                    //console.log('adding data line',data[i]);
+                                    var curr_line = $(line).clone();
+                                    $(curr_line).find('td[data-col="2"]').html(data[i].id);
+                                    $(curr_line).find('td[data-col="3"]').html(data[i].username);
+                                    $(curr_line).find('td[data-col="4"]').html(data[i].display_name);
+                                    $(curr_line).find('td[data-col="5"]').html(data[i].email);
+                                    if(data[i].protected == 'Y') {
+                                        $(curr_line).find('td[data-col="1"]').html('<span class="fa fa-fw fa-anchor" data-title="{translate("Built-in objects must not be removed")}"></span>');
                                     }
-                                });
+                                    else {
+                                        $(curr_line).find('td[data-col="1"] > a').attr('data-id',data[i].id);
+                                        $(curr_line).find('td[data-col="1"] > a').attr('data-username',data[i].username);
+                                    }
+                                    $(curr_line).appendTo($(tbody));
+                                }
                                 var parent = $(_this).parent().parent(),
-                                    td     = $('<td>').prop('colspan',6).html(rep.show());
-                                var line   = $('<tr>').addClass('highlight').html(td).hide();
-                                line.insertAfter(parent).show('slow');
+                                    td     = $('<td>').prop('colspan',6).html(table.show());
+                                    row    = $('<tr>').addClass('bs_group_users highlight').html(td);
+                                row.insertAfter(parent).show('slow');
                                 parent.addClass('highlight');
-                                rep.repeater('resize');
+                                $('[data-title!=""]').qtip({
+                                    content: { attr: 'data-title' },
+                                    style: { classes: 'qtip-bootstrap' }
+                                });
                             }
-                        });
-                    };
+                        }
+                    });
                     event.preventDefault();
                 });
             });

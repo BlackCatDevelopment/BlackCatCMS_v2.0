@@ -40,7 +40,6 @@ if (defined('CAT_PATH')) {
 }
 
 $LANG = array(
-    'Built in' => 'Eingebaut',
     'Context menu' => 'Kontextmenü',
     'Filter by type' => 'Nach Typ filtern',
     'Show catalog' => 'Zeige Katalog',

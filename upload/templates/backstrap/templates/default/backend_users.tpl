@@ -1,4 +1,4 @@
-<table class="table">
+<table class="table dtable">
     <thead>
         <tr>
             <th>{* icons column *}</th>
@@ -16,7 +16,7 @@
                 <span class="fa fa-fw{if $user.protected == 'Y'} fa-anchor{/if}"></span>
                 {if user_has_perm('users_edit')}<a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}dis{else}en{/if}abled"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                 {if $user.protected != 'Y'}
-                {if user_has_perm('users_delete')}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}"><span class="fa fa-fw fa-trash red"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                {if user_has_perm('users_delete')}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                 {/if}
             </td>
             <td>{$user.user_id}</td>
@@ -28,7 +28,7 @@
                 <div class="pillbox" data-initialize="pillbox" id="groupList">
                     <ul class="clearfix pill-group">
                         {foreach $user.groups group}
-                        <li class="btn btn-default pill" data-value="foo">
+                        <li class="btn btn-default btn-xs pill" data-value="foo">
                             <span{if $group.primary == 'Y'} class="text-primary"{/if}>{$group.group_title}</span>
                             <span class="glyphicon glyphicon-close"><span class="sr-only">{translate('Remove')}</span></span>
                         </li>
@@ -44,19 +44,24 @@
     </tbody>
 </table>
 
-{$file = cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
+<span class="text-success fa fa-fw fa-lock"></span> = {translate('Two-Step Authentication enabled')}
+<span class="text-success fa fa-fw fa-unlock"></span> = {translate('Two-Step Authentication disabled')}
+<span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}
+<span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
+
+{$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
 <script type="text/javascript">
 //<![CDATA[
     $(function() {
-        var lang   = '{$LANGUAGE}'.toLowerCase();
-        var dtable = $('table.table').DataTable({
+        var dtable = $('table.dtable').DataTable({
             mark: true,
             stateSave: true,
             orderClasses: false{if cat_file_exists($file)},
             language: {
-                url: CAT_URL + "/js?files={cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}"
+                url: "{cat_asset_url($file,'js')}"
             }
             {/if}
         });
+    });
 //]]>
 </script>

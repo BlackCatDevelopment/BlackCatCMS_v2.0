@@ -48,10 +48,13 @@ if (!class_exists('CAT_Frontend', false))
         {
             $self   = self::getInstance();
 
-            // serve media files
-            if($self->router()->match('~^media/~i'))
+            // serve asset files
+            if(($type=$self->router()->match('~^('.implode('|',self::$asset_paths).')~i'))!==false)
             {
-                require CAT_ENGINE_PATH.'/'.$self->router()->getRoute();
+                parse_str($self->router()->getQuery(),$files);
+                // remove leading / from all files
+                foreach($files as $i => $f) $files[$i] = preg_replace('~^/~','',$f,1);
+                CAT_Helper_Assets::serve($type,$files);
                 return;
             }
 

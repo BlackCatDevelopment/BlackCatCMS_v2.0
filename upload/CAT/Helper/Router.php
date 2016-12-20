@@ -75,9 +75,6 @@ if(!class_exists('CAT_Helper_Router',false))
             $this->controller = 'CAT_' . ucfirst($controller);
             // function name
             $this->func       = $function;
-//files=/modules/lib_bootstrap/vendor/css/bootstrap.min.css,/modules/lib_bootstrap/vendor/css/font-awesome.min.css,/templates/backstrap/css/default/login.css
-            // additional query string (for assets, for example)
-            #if(isset($_SERVER['REDIRECT_QUERY_STRING']))
         }   // end function __construct()
 
         /**
@@ -106,6 +103,16 @@ if(!class_exists('CAT_Helper_Router',false))
                 );
                 CAT_Object::printFatalError('Access denied');
             }
+            // check if controller exists
+            if(!class_exists($controller) || !is_callable(array($controller,$function)))
+            {
+                $this->log()->error(
+                    'Routing error: No such controller [{controller}] or function not callable [{func}]',
+                    array('controller'=>$controller,'func'=>$function)
+                );
+                CAT_Object::printFatalError('Access denied');
+            }
+            // hand over to controller
             return $controller::$function($this->getParam());
             exit;
         }   // end function dispatch()
@@ -154,6 +161,21 @@ if(!class_exists('CAT_Helper_Router',false))
          **/
         public function setFunction($name)
         {
+            if(!$name || !strlen($name))
+            {
+                $this->log()->error(
+                    'Router error: setFunction called with empty function name'
+                );
+                return;
+            }
+            if(is_numeric($name))
+            {
+                $this->log()->error(
+                    'Router error: setFunction called with numeric function name'
+                );
+                return;
+            }
+
             $this->func = $name;
         }   // end function setFunction()
 
@@ -183,8 +205,9 @@ if(!class_exists('CAT_Helper_Router',false))
          * @access public
          * @return
          **/
-        public function getParam($index=0,$shift=false)
+        public function getParam($index=-1,$shift=false)
         {
+            if(!is_array($this->params)) return NULL;
             if($index == -1) { // last param
                 end($this->params);
                 $index = key($this->params);
@@ -282,12 +305,19 @@ if(!class_exists('CAT_Helper_Router',false))
         /**
          *
          * @access public
-         * @return
+         * @return mixed
          **/
         public function match($pattern)
         {
-            if(preg_match($pattern,$this->getRoute()))
+            // if the pattern has brackets, we return the first match
+            // if not, we return boolean true
+            if(preg_match($pattern,$this->getRoute(),$m))
+            {
+                if(count($m) && strlen($m[0]))
+                    return $m[0];
                 return true;
+            }
+            return false;
         }   // end function match()
 
         /**

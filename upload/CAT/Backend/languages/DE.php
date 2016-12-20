@@ -23,6 +23,7 @@ $LANG = array(
     'Logout'        => 'Abmelden',
     'Open all'      => 'Alle öffnen',
     'User Profile'  => 'Benutzerprofil',
+    'Built-in objects must not be removed' => 'Standard-Objekte können nicht gelöscht werden',
 
     // --------------- Backend -> Session ---------------
     'Close Backend' => 'Backend schließen',
@@ -120,6 +121,7 @@ $LANG = array(
 
     // --------------- Backend -> Users ---------------
     'Add users'     => 'Benutzer hinzufügen',
+    'Built in'      => 'Standard (mitgeliefert)',
     'Delete user'   => 'Benutzer löschen',
     'Display name'  => 'Anzeigename',
     'Choose the users you wish to add and click [Save]' => 'Die gewünschten Benutzer auswählen und [Speichern] anklicken',
@@ -160,7 +162,7 @@ $LANG = array(
     'Backend access' => 'Backend-Zugang',
     'Create a new page' => 'Neue Seite anlegen',
     'Create a new role' => 'Neue Rolle anlegen',
-    'Create a new user group' => 'Neue Gruppe anlegen',
+    'Create new group' => 'Neue Gruppe anlegen',
     'Create new users' => 'Neue Benutzer anlegen',
     'Create root pages (level 0)' => 'Root-Seiten anlegen (Level 0)',
     'Delete groups' => 'Gruppen löschen',

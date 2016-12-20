@@ -74,6 +74,7 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
                 $files,
                 $filters
             );
+
             // create the asset manager instance
             $am = new \Assetic\AssetManager();
             $am->set('assets', $assets);
@@ -82,6 +83,5 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
             $writer->writeManagerAssets($am);
             return CAT_URL.'/'.$assets->getTargetPath();
         }   // end function serve()
-        
     }
 }

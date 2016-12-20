@@ -72,7 +72,7 @@ $(function() {
 
     // handle nested tabs
     $("ul.nav-tabs.inner a").click(function (e) {
-      e.preventDefault();
+        e.preventDefault();
         $(this).tab('show');
     });
 

@@ -43,9 +43,8 @@ div.dashboard li.ui-sortable-handle{margin-bottom:20px;}
 /* dark backdrop for session timed out modal */
 .dark.fade.in ~ .modal-backdrop.fade.in {opacity:.9 !important;}
 
-/* fixes Fuel UX Repeater for Bootswatch Themes */
-.fuelux .repeater-header, .fuelux .repeater-footer{background-color:transparent;}
-.fuelux .repeater-thumbnail{overflow:hidden;}
+/* remove pillbox border */
+.fuelux .pillbox{border:0;}
 
 /* draggable panels with left icon bar for page modification */
 ul.draggable-panel{list-style:none outside none;padding-left:0;}

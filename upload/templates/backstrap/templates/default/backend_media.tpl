@@ -94,7 +94,7 @@
         });
         $('a.has-child').on('mouseover',function() {
             $(this).addClass('fa-caret-right');
-        }
+        });
     });
 //]]>
 </script>
