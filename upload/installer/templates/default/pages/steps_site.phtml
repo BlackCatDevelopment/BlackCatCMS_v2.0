@@ -1,0 +1,10 @@
+            <div class="row setup-content" id="step-<?php echo $no; ?>">
+                <div class="col-xs-12">
+                    <div class="col-md-12">
+                        <h3> Step <?php echo $no; ?>: Site</h3>
+
+                        <?php if($no>1): include realpath(dirname(__FILE__)).'/btn_left.phtml'; endif; ?>
+                        <?php if($no<$stepcnt): include realpath(dirname(__FILE__)).'/btn_right.phtml'; endif; ?>
+                    </div>
+                </div>
+            </div>

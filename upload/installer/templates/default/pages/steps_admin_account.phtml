@@ -1,0 +1,38 @@
+            <div class="row setup-content tab-pane" id="step-<?php echo $no; ?>">
+                <div class="col-xs-12">
+                    <div class="col-md-12">
+                        <h3><?php echo CAT_Installer::lang()->t('Step') ?> <?php echo $no; ?>: <?php echo CAT_Installer::lang()->t('Admin account') ?></h3>
+                        <div class="alert alert-info col-md-offset-2 col-sm-10">
+                            <?php echo CAT_Installer::lang()->t('All settings on this page can be changed in the admin backend later!') ?>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label"><?php echo CAT_Installer::lang()->t('Admin user') ?></label>
+                            <div class="col-sm-10">
+                                <input type="text" name="admin_username" id="admin_username" required="required" class="form-control" placeholder="<?php echo CAT_Installer::lang()->t('Please choose a username for the admin user') ?>" value="<?php echo ( isset(CAT_Installer::$data['admin_username']) ? CAT_Installer::$data['admin_username'] : '' ); ?>" />
+                                <p class="help-block small"><?php echo CAT_Installer::lang()->t("You may use your eMail address here if you wish. You should avoid to use login names that are easy to guess, like 'admin' or 'root'.") ?></p>
+                            </div>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label" for="admin_password"><?php echo CAT_Installer::lang()->t('Password') ?></label>
+                            <div class="col-sm-10">
+                                <input type="password" data-match="#admin_password_repeat" name="admin_password" id="admin_password" required="required" class="form-control" placeholder="" data-toggle="popover" value="<?php echo ( isset(CAT_Installer::$data['admin_password']) ? CAT_Installer::$data['admin_password'] : '' ); ?>" />
+                                <p class="help-block small"><?php echo CAT_Installer::lang()->t('The password of the admin user you entered above. A good password should be at least 8 characters long and contain upper-/lowercase letters, digits, and special characters.') ?></p>
+                            </div>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label"><?php echo CAT_Installer::lang()->t('Repeat password') ?></label>
+                            <div class="col-sm-10">
+                                <input type="password" data-match="#admin_password" name="admin_password_repeat" id="admin_password_repeat" required="required" class="form-control" placeholder="" data-toggle="popover" value="<?php echo ( isset(CAT_Installer::$data['admin_password_repeat']) ? CAT_Installer::$data['admin_password_repeat'] : '' ); ?>" />
+                                <p class="help-block small"><?php echo CAT_Installer::lang()->t('Please repeat the password. This will avoid lock-outs if you mistyped your password.') ?></p>
+                            </div>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label"><?php echo CAT_Installer::lang()->t('eMail address') ?></label>
+                            <div class="col-sm-10">
+                                <input type="email" name="admin_email" id="admin_email" required="required" class="form-control" placeholder="<?php echo CAT_Installer::lang()->t('Please enter a valid eMail address') ?>" value="<?php echo ( isset(CAT_Installer::$data['admin_email']) ? CAT_Installer::$data['admin_email'] : '' ); ?>" />
+                                <p class="help-block small"><?php echo CAT_Installer::lang()->t('The eMail address will not be posted anywhere, but you may need it if you forget your login credentials.') ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

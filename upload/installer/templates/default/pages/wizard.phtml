@@ -1,0 +1,18 @@
+<?php
+
+// current step for use in template
+if(!isset($step)) $step = 1;
+
+// include header and steps file
+foreach(array_values(array('header','steps')) as $file) {
+    include CAT_Installer::getTemplate($file);
+}
+
+// load step files
+$stepcnt = count(CAT_Installer::$steps[CAT_Installer::$mode]);
+foreach(CAT_Installer::$steps[CAT_Installer::$mode] as $no => $pg) {
+    $no++;
+    include CAT_Installer::getTemplate('steps_'.$pg);
+}
+// load footer
+include CAT_Installer::getTemplate('footer');

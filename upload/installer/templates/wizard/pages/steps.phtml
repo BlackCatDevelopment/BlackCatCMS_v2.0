@@ -1,0 +1,12 @@
+        <div id="rootwizard">
+            <ul id="wizHeader">
+                <?php foreach(CAT_Installer::$steps[CAT_Installer::$mode] as $i => $label): $i++;?>
+                <li>
+                    <a id="step-<?php echo $i ?>-trigger" href="#step-<?php echo $i ?>" data-toggle="tab" data-step="<?php echo $i ?>"><?php echo CAT_Installer::lang()->t(ucfirst(str_replace('_',' ',$label))); ?></a>
+                </li>
+                <?php endforeach; ?>
+            </ul><br />
+            <div id="bar" class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+            </div>
+            <div class="tab-content">

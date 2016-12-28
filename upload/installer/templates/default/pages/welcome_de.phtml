@@ -1,0 +1,43 @@
+<?php include realpath(dirname(__FILE__).'/header.phtml'); ?>
+        <div class="row vertical-center-row">
+            <div class="col-md-8 col-center-block welcome-widget">
+                <h1>Willkommen bei BlackCat CMS!</h1>
+
+                <p>Der BlackCat CMS Installation Wizard wird Sie durch den Installationsprozeß führen.</p>
+
+                <p>BlackCat CMS ist mit der GNU General Public License (GPL) lizensiert. Bitte
+                <a href="gpl-3.0-standalone.html" class="dlg" title="GNU General Public License v3.0">lesen Sie die Lizenzbedingungen</a>,
+                bevor Sie mit der Installation fortfahren.</p>
+
+                <h2>Bitte wählen Sie den Installationsmodus</h2>
+                
+                <ul class="nav nav-tabs nav-justified lead" role="tablist">
+                    <li role="presentation" class="active"><a href="#simple" aria-controls="simple" role="tab" data-toggle="tab">Einfach</a></li>
+                    <li role="presentation"><a href="#adv" aria-controls="adv" role="tab" data-toggle="tab">Experte</a></li>
+                </ul>
+
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade in active" id="simple">
+                        Im einfachen Modus werden nur die notwendigsten Optionen angeboten. Der einfache Modus ist eine gute Wahl wenn:<br /><br />
+                        <ol>
+                            <li>dies das erste Mal ist, daß Sie BlackCat CMS installieren, und Sie nicht mit allen Einstellmöglichkeiten konfrontiert (und vielleicht verwirrt) werden wollen;</li>
+                            <li>Sie bereits mit BlackCat CMS vertraut sind, aber die Installation schnellstmöglich durchführen möchten</li>
+                        </ol><br />
+                        <div class="alert alert-info" role="alert">Der Installer wird in diesem Fall sinnvolle Voreinstellungen vornehmen.</div>
+                        <a href="<?php echo CAT_Installer::$wizard_url ?>?mode=simple&amp;page=wizard" class="btn btn-primary btn-block">Installation im einfachen Modus starten</a>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="adv">
+                        Der Experten-Modus ist eine gute Wahl wenn:<br /><br />
+                        <ol>
+                            <li>Sie sich bereits auskennen und alle verfügbaren Optionen sehen und bearbeiten möchten</li>
+                            <li>Sie die Voreinstellungen aller Optionen sehen möchten</li>
+                        </ol><br />
+                        <div class="alert alert-info" role="alert">In diesem Modus können die meisten Voreinstellungen bearbeitet werden.</div>
+                        <a href="<?php echo CAT_Installer::$wizard_url ?>?mode=advanced&amp;page=wizard" class="btn btn-primary btn-block">Installation im Experten-Modus starten</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+<?php include realpath(dirname(__FILE__).'/footer.phtml'); ?>
+

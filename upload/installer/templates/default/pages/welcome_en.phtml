@@ -1,0 +1,44 @@
+<?php include realpath(dirname(__FILE__).'/header.phtml'); ?>
+        <div class="row vertical-center-row">
+            <div class="col-md-8 col-center-block welcome-widget">
+                <h1>Welcome to BlackCat CMS!</h1>
+
+                <p>The Black Cat CMS Installation Wizard will guide you through the
+                installation process.</p>
+
+                <p>Black Cat CMS is released under the GNU General Public License (GPL). Please
+                <a href="gpl-3.0-standalone.html" class="dlg" title="GNU General Public License v3.0">read the license</a>
+                before you proceed with the installation.</p>
+
+                <h2>Please choose your installation mode</h2>
+                
+                <ul class="nav nav-tabs nav-justified lead" role="tablist">
+                    <li role="presentation" class="active"><a href="#simple" aria-controls="simple" role="tab" data-toggle="tab">Simple</a></li>
+                    <li role="presentation"><a href="#adv" aria-controls="adv" role="tab" data-toggle="tab">Advanced</a></li>
+                </ul>
+
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade in active" id="simple">
+                        Simple mode offers a reduced set of options. Simple Mode is a good choice if:<br /><br />
+                        <ol>
+                            <li>this is the first time you install BlackCat CMS and don't want to be confronted (and confused) with all the bells and whistles;</li>
+                            <li>you're already familiar with BlackCat CMS but wish fastest install possible</li>
+                        </ol><br />
+                        <div class="alert alert-info" role="alert">The installer will use sensible defaults in this case.</div>
+                        <a href="<?php echo CAT_Installer::$wizard_url ?>?mode=simple&amp;page=wizard" class="btn btn-primary btn-block">Start simple mode installation</a>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="adv">
+                        Advanced mode is a good choice if:<br /><br />
+                        <ol>
+                            <li>you're an expert and wish to have as much influence as possible</li>
+                            <li>you wish to see all options and be able to change the defaults</li>
+                        </ol><br />
+                        <div class="alert alert-info" role="alert">You will be able to edit most defaults in this mode.</div>
+                        <a href="<?php echo CAT_Installer::$wizard_url ?>?mode=advanced&amp;page=wizard" class="btn btn-primary btn-block">Start advanced mode installation</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+<?php include realpath(dirname(__FILE__).'/footer.phtml'); ?>
+

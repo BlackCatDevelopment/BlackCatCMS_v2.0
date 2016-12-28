@@ -1,0 +1,27 @@
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>BlackCat CMS Installation Wizard</title>
+<?php
+    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
+    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
+    CAT_Helper_Page::addCSS(self::$wizard_path.'/templates/default/css/progress-wizard.min.css');
+    CAT_Helper_Page::addCSS(self::$wizard_path.'/templates/'.CAT_Installer::$skin.'/css/wizard.css');
+    CAT_Helper_Page::addJS('/modules/lib_jquery/jquery-core/jquery-core.min.js','footer');
+
+    CAT_Helper_Page::addJS('modules/lib_bootstrap/vendor/js/bootstrap.min.js','footer');
+    CAT_Helper_Page::addJS('modules/lib_bootstrap/vendor/js/validator.min.js','footer');
+    CAT_Helper_Page::addJS(self::$wizard_path.'/templates/'.CAT_Installer::$skin.'/js/wizard.js','footer');
+
+    echo CAT_Helper_Page::getAssets('header',NULL,true);
+?>
+    <script type="text/javascript">
+    //<![CDATA[
+        var CAT_INST_URL = '<?php echo CAT_Installer::$base_url; ?>';
+    //]]>
+    </script>
+</head>
+<body>
+    <div class="container">
+        <form class="form-horizontal col-md-10 col-center-block" data-toggle="validator" role="form">

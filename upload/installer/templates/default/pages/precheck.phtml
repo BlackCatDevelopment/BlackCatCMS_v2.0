@@ -1,0 +1,33 @@
+<?php include realpath(dirname(__FILE__).'/header.phtml'); ?>
+        <div class="row vertical-center-row">
+            <div class="col-md-8 col-center-block welcome-widget">
+                <h1>BlackCat CMS Installer</h1>
+                <div class="alert alert-danger">
+                    <span class="fa fa-warning"></span>
+                    <?php echo CAT_Installer::lang()->translate('Pre-installation check(s) failed!') ?>
+                </div>
+                <?php echo CAT_Installer::lang()->translate('Sorry, but we encountered some issue(s) that will inhibit the installation.') ?>
+                <?php echo CAT_Installer::lang()->translate('Please check the results below and fix the issue(s) listed there.') ?>
+                <?php echo CAT_Installer::lang()->translate('If you need help, please <a href="">visit our forum</a>.') ?><br /><br />
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><?php echo CAT_Installer::lang()->translate('Check') ?></th>
+                            <th><?php echo CAT_Installer::lang()->translate('Required') ?></th>
+                            <th><?php echo CAT_Installer::lang()->translate('Actual') ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+<?php foreach(CAT_Installer::$errors as $error): ?>
+                        <tr>
+                            <td><?php echo $error['check'] ?></td>
+                            <td><?php echo $error['required'] ?></td>
+                            <td><?php echo $error['actual'] ?></td>
+                        </tr>
+<?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+<?php include realpath(dirname(__FILE__).'/footer.phtml'); ?>

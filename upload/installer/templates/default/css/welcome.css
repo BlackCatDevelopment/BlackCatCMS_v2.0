@@ -1,0 +1,37 @@
+body{background-color:#efefef;}
+.col-center-block {
+    display: block;
+    float: none;
+    margin-left: auto;
+    margin-right: auto;
+}
+html, body, .container {
+    height: 100%;
+    width: 100%;
+}
+.container {
+    display: table;
+    vertical-align: middle;
+}
+.vertical-center-row {
+    vertical-align: middle;
+}
+.welcome-screen-bg {
+    background-color: #efefef;
+}
+.panel-git {
+    border: 1px solid #d8dee2;
+}
+.panel-git h3 {
+    color: #ffffff;
+}
+.panel-git .panel-heading {
+    background-color: #829aa8;
+}
+.welcome-widget {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 5px 5px 5px #959595;
+    padding: 30px;
+}
+.tab-pane{padding:15px;}

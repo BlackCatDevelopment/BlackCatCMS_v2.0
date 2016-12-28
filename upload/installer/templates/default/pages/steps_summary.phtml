@@ -1,0 +1,31 @@
+            <div class="row setup-content  tab-pane" id="step-<?php echo $no; ?>">
+                <div class="col-xs-12">
+                    <div class="col-md-12">
+                        <h3><?php echo CAT_Installer::lang()->t('Step') ?> <?php echo $no; ?>: <?php echo CAT_Installer::lang()->t('Summary') ?></h3>
+
+                        <div id="summary_missing_data" class="alert alert-danger" style="display:none;">
+                            <?php echo CAT_Installer::lang()->t('Please note: You have not set all mandatory options. Go back to the appropriate step to add missing data. The missing options are highlighted below.'); ?>
+                        </div>
+
+                        <table class="table">
+<?php foreach(CAT_Installer::$pages as $region => $items): ?>
+                            <thead>
+                                <tr><th colspan="2"><?php echo CAT_Installer::lang()->t(ucfirst($region)) ?></th></tr>
+                                <tr>
+                                    <th><?php echo CAT_Installer::lang()->t('Setting') ?></th>
+                                    <th><?php echo CAT_Installer::lang()->t('Value') ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+<?php foreach($items as $key => $text): ?>
+                                <tr<?php if(!isset(CAT_Installer::$data[$key]) || CAT_Installer::$data[$key]==''): ?> class="danger"<?php endif; ?>>
+                                    <td><?php echo CAT_Installer::lang()->t($text) ?></td>
+                                    <td><?php if($key=='ssl_available'): echo '<span class="fa fa-fw fa-thumbs-'.(CAT_Installer::$data[$key]==1 ? 'up' : 'down' ).'"></span>'; else: echo (isset(CAT_Installer::$data[$key]) ? CAT_Installer::lang()->t(CAT_Installer::$data[$key]) : ''); endif;?></td>
+                                </tr>
+<?php endforeach; ?>
+                            </tbody>
+<?php endforeach; ?>
+                        </table>
+                    </div>
+                </div>
+            </div>

@@ -1,0 +1,48 @@
+@import url(../../default/css/popover.css);
+
+body{margin-top:20px;background-color:#efefef;}
+html, body, .container{height:100%;width:100%;}
+.radio-inline{padding-left:0}
+.col-center-block{display:block;float:none;margin-left:auto;margin-right:auto;}
+.container{display:table;vertical-align:middle;}
+.vertical-center-row{vertical-align:middle;}
+.welcome-widget, form {background-color:#ffffff;border-radius:10px;box-shadow:5px 5px 5px #959595;padding:30px;}
+.tab-pane{padding:15px;}
+#wizHeader{margin:15px 0 0 0;}
+.progress-bar{background-color:#65d074; /*fallback*/
+background:
+  /* On "top" */
+  repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    #65d074 10px,
+    #1A8529 20px
+  ),
+  /* on "bottom" */
+  linear-gradient(
+    to bottom,
+    #1A8529,
+    #65d074
+  );
+}
+
+.progress-indicator > li:first-child .bubble::after, .progress-indicator > li:first-child .bubble::before{margin-left:0;z-index:1;}
+.progress-indicator > li:last-child .bubble::after, .progress-indicator > li:last-child .bubble::before {margin:0;}
+.progress-indicator > li{color:#fff;}
+.progress-indicator > li.active .bubble, .progress-indicator > li.completed, .progress-indicator > li.completed .bubble{color:#fff;}
+.progress-indicator > li .bubble {width:40px;height:40px;line-height:40px;font-size:20px;font-weight:900;z-index:2;}
+.progress-indicator > li .bubble::after, .progress-indicator > li .bubble::before {top:19px !important;z-index:1;}
+.progress-indicator > li .bubble::after, .progress-indicator > li .bubble::before, .progress-indicator > li:first-child .bubble::after, .progress-indicator > li:first-child .bubble::before, .progress-indicator > li:last-child .bubble::after, .progress-indicator > li:last-child .bubble::before{width:40%;}
+.progress-indicator > li .bubble::after, .progress-indicator > li .bubble::before{height:2px;}
+.progress-indicator > li.disabled a{color:#bbb;pointer-events: none;cursor: default;}
+
+.form-group.required label::after {
+    content: "\f069";
+    font-family: "FontAwesome";
+    font-size: 12px;
+    font-weight: normal;
+    color: #c00;
+    margin-left: 5px;
+    position: absolute;
+}

@@ -1,0 +1,17 @@
+        </form>
+    </div>
+    <ul class="pager wizard">
+		<li class="previous first"><a href="#"><span class="fa fa-step-backward"></span> <?php echo CAT_Installer::lang()->t('First'); ?></a></li>
+		<li class="previous"><a href="#"><span class="fa fa-chevron-circle-left"></span> <?php echo CAT_Installer::lang()->t('Previous'); ?></a></li>
+	  	<li class="next"><a href="#"><?php echo CAT_Installer::lang()->t('Next'); ?> <span class="fa fa-chevron-circle-right"></span></a></li>
+        <li class="install pull-right" style="display:none;"><a href="#"><span class="fa fa-check-square-o"></span> <?php echo CAT_Installer::lang()->t('Start installation') ?></a></li>
+	</ul>
+
+<?php
+    CAT_Helper_Page::addJS(self::$wizard_path.'/templates/wizard/js/jquery.bootstrap.wizard.min.js','footer');
+    echo CAT_Helper_Page::getAssets('footer',NULL,true);
+?>
+
+
+</body>
+</html>
