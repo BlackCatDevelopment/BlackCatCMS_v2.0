@@ -15,34 +15,27 @@
 
 */
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
+if(!class_exists('CAT_Object',false)) {
     @include dirname(__FILE__).'/../Object.php';
 }
 
-if ( !class_exists('CAT_Helper_Menu', false) )
+if(!class_exists('CAT_Helper_Menu',false))
 {
 	class CAT_Helper_Menu extends CAT_Object
 	{
-        protected static $loglevel        = \Monolog\Logger::EMERGENCY;
+        protected static $loglevel  = \Monolog\Logger::EMERGENCY;
         /**
          * holds local instance
          **/
         private   static $instance;
         /**
-         * wbList accessor
+         * holds local list builder instance
          **/
-        private   static $list            = NULL;
-        /**
-         * this maps SM2 classes to wbList settings
-         **/
-        private   static $sm2_classes     = array(
-            'menu-current' => 'current_li_class',
-            'menu_current' => 'current_li_class',
-        );
+        private   static $list      = NULL;
         /**
          * this maps some settings to shorter aliases
          **/
-        private   static $alias_map       = array(
+        private   static $alias_map = array(
             'prefix'       => 'css_prefix',
             'first'        => 'first_li_class',
             'last'         => 'last_li_class',
@@ -55,14 +48,10 @@ if ( !class_exists('CAT_Helper_Menu', false) )
         /**
          * create a singular instance (for object oriented use)
          **/
-        public static function getInstance($reset=false)
+        public static function getInstance()
         {
             if (!self::$instance)
-            {
                 self::$instance = new self();
-                $reset = true;
-            }
-            if($reset) self::$instance->reset();
             return self::$instance;
         }   // end function getInstance()
 
@@ -78,28 +67,24 @@ if ( !class_exists('CAT_Helper_Menu', false) )
         }   // end function __call()
 
         /**
-         * initialize wbList, so we don't need to do this more than once
-         *
-         * @access public
-         * @return object
+         * we need our own list helper here because we will change some
+         * global settings
          **/
-        public static function init_list()
+        protected static function listbuilder($reset=false)
         {
-            if(!is_object(self::$list)) {
-                self::$list = \wblib\wbList::getInstance();
+            if(!self::$list)
+                self::$list = self::lb();
+            if($reset)
+            {
+                self::$list->reset();
+                self::$list->set(
+                    array(
+                        '__id_key'    => 'page_id',
+                        '__title_key' => 'menu_title',
+                    ));
             }
-            // reset list to defaults
-            self::$list->reset();
-            self::$list->set(
-                array(
-                    '__id_key'         => 'page_id',
-                    '__title_key'      => 'menu_title',
-                    '__current_key'    => 'is_current',
-                    'create_level_css' => false,
-                )
-            );
             return self::$list;
-        }    // end function init_list()
+        }
 
         /**
          * creates a breadcrumb menu (path to current page)
@@ -112,9 +97,9 @@ if ( !class_exists('CAT_Helper_Menu', false) )
         public static function breadcrumbMenu(array &$options = array())
         {
             self::log()->addDebug('breadcrumbMenu');
+            $pid = NULL;
             self::checkPageId($pid);
             self::checkOptions($options);
-            $self = self::getInstance();
             self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu     = array();
             // get the level of the current page
@@ -142,12 +127,13 @@ if ( !class_exists('CAT_Helper_Menu', false) )
                     array_unshift($menu,$item);
                 }
             }
-            $self->log()->debug('pages: '.print_r($menu,1));
+            self::log()->debug('pages: '.print_r($menu,1));
+
             // set root id to the root parent to make the listbuilder work
             #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
             $options['root_id'] = 0;
             // return the menu
-            return self::$list->buildList($menu,$options);
+            return self::listbuilder(true)->buildList($menu,$options);
         }   // end function breadcrumbMenu()
         
         /**
@@ -160,21 +146,23 @@ if ( !class_exists('CAT_Helper_Menu', false) )
          **/
         public static function fullMenu($menu_number=NULL,array &$options = array())
         {
-            self::log()->debug('fullMenu - menu number [{num}]',array('num'=>$menu_number));
+            self::log()->addDebug('fullMenu - menu number [{num}]',array('num'=>$menu_number));
             $pid = NULL;
             self::checkPageId($pid);
             self::checkOptions($options);
-            self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
+            self::log()->addDebug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu = $menu_number
                   ? CAT_Helper_Page::getPagesForMenu($menu_number)
                   : CAT_Helper_Page::getPages()
                   ;
+            self::markTrail($pid,$menu);
 // -----------------------------------------------------------------------------
 // ----- !!!FIX ME!!! ----------------------------------------------------------
             #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
             $options['root_id'] = 0;
 // -----------------------------------------------------------------------------
-            return self::$list->buildList($menu,$options);
+            self::listbuilder(true)->set($options);
+            return self::listbuilder()->buildList($menu,$options);
         }   // end function fullMenu()
 
         /**
@@ -189,22 +177,23 @@ if ( !class_exists('CAT_Helper_Menu', false) )
          **/
         public static function siblingsMenu($pid=NULL,array &$options = array())
         {
+            self::log()->addDebug('siblingsMenu');
+            $pid = NULL;
             self::checkPageId($pid);
             self::checkOptions($options);
-            $self = self::getInstance();
-            $self->log()->debug(sprintf('create a siblingsmenu for page with id [%s]',$pid));
-            $self->log()->debug('options:',$options);
+            self::log()->addDebug(sprintf('create a siblingsmenu for page with id [%s]',$pid));
+            self::log()->addDebug('options:',$options);
             // get the menu number
             $menu_no  = CAT_Helper_Page::properties($pid,'menu');
             // get the level of the current/given page
             $level    = CAT_Helper_Page::properties($pid,'level');
             // pages
             $menu     = CAT_Helper_Page::getPagesForLevel($level,$menu_no);
-            $self->log()->debug('pages:',$menu);
+            self::log()->addDebug('pages:',$menu);
             // set root id to the parent page to make the listbuilder work
             $options['root_id'] = CAT_Helper_Page::properties($pid,'parent');
             // return the menu
-            return self::$list->buildList($menu,$options);
+            return self::listbuilder(true)->buildList($menu,$options);
         }   // end function siblingsMenu()
         
         /**
@@ -217,17 +206,21 @@ if ( !class_exists('CAT_Helper_Menu', false) )
          **/
         public static function subMenu($pid=NULL,array &$options = array())
         {
+            self::log()->addDebug('subMenu');
+            $pid = NULL;
             self::checkPageId($pid);
             self::checkOptions($options);
             // get the pages
             $pages = CAT_Helper_Page::getSubPages($pid);
             // add current page to menu
             $menu  = array(CAT_Helper_Page::properties($pid));
+            // we need a fresh copy here...
+            $lb    = self::listbuilder(true);
             if(isset($options['levels']))
             {
                 $maxlevel = $menu[0]['level'] + $options['levels'];
                 if(!$maxlevel) $maxlevel = 1;
-                self::$list->set('maxlevel',$maxlevel);
+                $lb->set('maxlevel',$maxlevel);
             }
             // add the pages
             foreach($pages as $sid)
@@ -235,7 +228,7 @@ if ( !class_exists('CAT_Helper_Menu', false) )
             // set the root id to the current page
             $options['root_id'] = $pid;
             // return the menu
-            return self::$list->buildList($menu,$options);
+            return $lb->buildList($menu,$options);
         }   // end function subMenu()
 
         /**
@@ -255,15 +248,13 @@ if ( !class_exists('CAT_Helper_Menu', false) )
                 {
                     $key   = $m[1];
                     $value = array_shift($options);
-                    if(array_key_exists($key,self::$sm2_classes))
-                        $key = self::$sm2_classes[$key];
                     if(array_key_exists($key,self::$alias_map))
                         $key = self::$alias_map[$key];
                     $lbopt[str_replace('-','_',$key)] = $value;
                     continue;
                 }
             }
-            self::init_list()->set($lbopt);
+            self::lb()->set($lbopt);
             $options = $lbopt;
         }   // end function checkOptions()
 
@@ -280,5 +271,28 @@ if ( !class_exists('CAT_Helper_Menu', false) )
             if($pid===NULL) $pid = CAT_Page::getID();
             if($pid===0)    $pid = CAT_Helper_Page::getRootParent($page_id);
         }   // end function checkPageId()
+
+        /**
+         * mark pages in trail
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function markTrail($pid, &$menu)
+        {
+            $trailpages = array_reverse(CAT_Helper_Page::getPageTrail($pid,false,true));
+            foreach(array_values($trailpages) as $id)
+            {
+                foreach($menu as $i => $item)
+                {
+                    if($item['page_id']==$id)
+                    {
+                        $menu[$i]['is_in_trail'] = true;
+                        continue;
+                    }
+                }
+            }
+        }   // end function markTrail()
+        
     }
 }

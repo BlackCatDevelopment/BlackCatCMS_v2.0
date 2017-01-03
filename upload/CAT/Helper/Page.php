@@ -310,16 +310,16 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         public static function getDefaultPage()
         {
-            if ( ! count(self::$pages) )
+            if(!count(self::$pages))
                 self::init();
             // for all pages with level 0...
-            $root = array();
-            $now  = time();
+            $root    = array();
+            $now     = time();
             $ordered = CAT_Helper_Array::ArraySort(self::$pages,'position');
             foreach( $ordered as $page )
             {
                 if (
-                       $page['level'] == 0
+                       $page['level']      == 0
                     && $page['visibility'] == 'public'
                     && self::isActive($page['page_id'])
                 ) {
@@ -420,6 +420,32 @@ if (!class_exists('CAT_Helper_Page'))
             }
             return false;
         }   // end function getLinkedByLanguage()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getPageForRoute($route)
+        {
+            // remove suffix from route
+            $route  = str_ireplace(CAT_Registry::get('PAGE_EXTENSION'), '', $route);
+            // remove trailing /
+            $route  = rtrim($route,"/");
+            // add / to front
+            if(substr($route,0,1) !== '/') $route = '/'.$route;
+            // find page in DB
+            $result = self::db()->query(
+                'SELECT `page_id` FROM `:prefix:pages` WHERE `link`=?',
+                array($route)
+            );
+            $data   = $result->fetch();
+            if(!$data || !is_array($data) || !count($data))
+                CAT_Page::print404();
+            else
+                return $data['page_id'];
+        }   // end function getPageForRoute()
+        
 
         /**
          * get properties for page $page_id
@@ -558,7 +584,7 @@ if (!class_exists('CAT_Helper_Page'))
         public static function getParentIDs($page_id)
         {
             $ids = array();
-            while ( self::properties($page_id,'parent') !== NULL )
+            while(self::properties($page_id,'parent') !== NULL)
             {
                 if ( self::properties($page_id,'level') == 0 )
                     break;
@@ -1214,6 +1240,10 @@ if (!class_exists('CAT_Helper_Page'))
                     . 'ON `t1`.`vis_id`=`t2`.`vis_id` '
                     . 'ORDER BY `level` ASC, `position` ASC'
                 );
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO:
+//     Infos zu is_in_trail etc fehlen noch
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 self::$pages = $result->fetchAll();
                 // map index to page id
                 foreach(self::$pages as $index => $page)
@@ -1268,6 +1298,5 @@ if (!class_exists('CAT_Helper_Page'))
             }
         }   // end function renderFiles()
         
-
     }   // end class CAT_Helper_Page
 }

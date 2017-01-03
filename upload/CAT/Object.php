@@ -147,14 +147,18 @@ if(!class_exists('CAT_Object',false))
         }   // end function lang()
 
         /**
+         * initializes wbList for use with pages
          *
          * @access public
-         * @return
+         * @return object
          **/
         public static function lb()
         {
             if(!isset(CAT_Object::$objects['list']) || !is_object(CAT_Object::$objects['list']) )
-                self::storeObject('list',\wblib\wbList::getInstance(array('__id_key'=>'page_id')));
+                self::storeObject('list',\wblib\wbList::getInstance(array(
+                    '__id_key'    => 'page_id',
+                    '__title_key' => 'menu_title',
+                )));
             return CAT_Object::$objects['list'];
         }   // end function list()
         

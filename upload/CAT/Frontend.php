@@ -69,44 +69,21 @@ if (!class_exists('CAT_Frontend', false))
             if(CAT_Backend::isBackend())
                 return CAT_Backend::dispatch();
 
-            // internally handled route
+            // internally handled route?
             $route = $self->router()->getRoute();
-            $route = substr($route,0,strpos($route,'/'));
-            if(is_callable(array('self',$route)))
+            $func  = substr($route,0,strpos($route,'/'));
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Sollte es zufällig eine Seite geben, die einer internen Route entspricht,
+// wird die nie aufgerufen. Ich weiss aber im Moment keine Lösung.
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(is_callable(array('self',$func)))
             {
                 $self->router()->setController('CAT_Frontend');
-                $self->router()->setFunction($route);
+                $self->router()->setFunction($func);
                 $self->router()->dispatch();
             }
-
-            // check if the system is in maintenance mode
-            if(self::isMaintenance())
-            {
-                $result = CAT_Registry::getInstance()->db()->query(
-                    'SELECT `value` FROM `:prefix:settings` WHERE `name`="maintenance_page"'
-                );
-            }
-            else
-            {
-                // no route -> get default page
-                if($route == '')
-                {
-                    $page_id = CAT_Helper_Page::getDefaultPage();
-                }
-                else // find page by route
-                {
-                    // remove suffix from route
-                    $route  = str_ireplace(CAT_Registry::get('PAGE_EXTENSION'), '', $route);
-                    $result = $self->db()->query(
-                        'SELECT `page_id` FROM `:prefix:pages` WHERE `link`=?',
-                        array('/'.$route)
-                    );
-                    $data    = $result->fetch();
-                    if(!$data || !is_array($data) || !count($data))
-                        CAT_Page::print404();
-                    $page_id = $data['page_id'];
-                }
-            }
+            $page_id = CAT_Page::getID();
             // get page handler
             $page   = CAT_Page::getInstance($page_id);
             // hand over to page handler
