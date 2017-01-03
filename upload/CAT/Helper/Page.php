@@ -50,6 +50,10 @@ if (!class_exists('CAT_Helper_Page'))
         private   static $f_js                = array();
         // header static js
         private   static $header_js           = array();
+        // js files having prerequisites
+        private   static $prereq_js           = array();
+        // already loaded files
+        private   static $loaded              = array();
 
         private   static $meta                = array();
         private   static $css                 = array();
@@ -105,15 +109,25 @@ if (!class_exists('CAT_Helper_Page'))
          * @access public
          * @param  string  $url
          * @param  string  $pos   - 'header' (default) or 'footer'
+         * @param  string  $after - optional; name of prerequisite script
          * @return void
          **/
-        public static function addJS($url,$position='header')
+        public static function addJS($url,$position='header',$after=NULL)
         {
-            if ($position == 'header')
-                $ref =& CAT_Helper_Page::$js;
+            if($after)
+            {
+                if(!isset(self::$prereq_js[$after]) || !is_array(self::$prereq_js[$after]))
+                    self::$prereq_js[$after] = array();
+                self::$prereq_js[$after][] = $url;
+            }
             else
-                $ref =& CAT_Helper_Page::$f_js;
-            $ref[] = $url;
+            {
+                if ($position == 'header')
+                    $ref =& CAT_Helper_Page::$js;
+                else
+                    $ref =& CAT_Helper_Page::$f_js;
+                $ref[] = $url;
+            }
         }   // end function addJS()
 
         /**
@@ -185,6 +199,9 @@ if (!class_exists('CAT_Helper_Page'))
             $self  = self::$instance;
 
             // check params
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// FRAGE: Stillschweigend ignorieren (return) oder wirklich Fehlermeldung?
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(!in_array($position,array('header','footer')))
                 $self::printFatalError('Invalid data!');
 
@@ -192,12 +209,17 @@ if (!class_exists('CAT_Helper_Page'))
             if ($position=='header' && defined('CAT_HEADERS_SENT'))
                 return;
 
+            // scan for headers/footers.inc?
             if(!$ignore_inc)
             {
                 // find the paths to scan
                 if(CAT_Backend::isBackend())
                 {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Varianten
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     array_push(self::$scan_paths,CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME'));
+                    // admin tool
                     if($self->router()->match('~\/tool\/~i'))
                     {
                         $route   = $self->router()->getRoute();
@@ -228,12 +250,43 @@ if (!class_exists('CAT_Helper_Page'))
                 }
 
                 // load *.inc.php
+                self::$scan_paths = array_unique(self::$scan_paths);
                 foreach(array_values(self::$scan_paths) as $path)
                 {
                     $file = CAT_Helper_Directory::sanitizePath($path.'/'.$position.'s.inc.php');
                     if(file_exists($file))
                     {
                         self::getIncludes($file,$position);
+                    }
+                }
+            }
+
+            // add backend area / region files
+            if(CAT_Backend::isBackend())
+            {
+                $area = $self->router()->getFunction();
+                foreach(array_values(self::$scan_paths) as $path)
+                {
+                    if($position=='header')
+                    {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Variante
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        $cssfile = CAT_Helper_Directory::sanitizePath($path.'/css/default/'.$area.'.css');
+                        $jsfile  = CAT_Helper_Directory::sanitizePath($path.'/js/'.$area.'.js');
+                        // css in header only
+                        if(file_exists($cssfile))
+                        {
+                            self::addCSS(self::checkPath(CAT_Helper_Validate::path2uri($cssfile)));
+                        }
+                    }
+                    else
+                    {
+                        $jsfile = CAT_Helper_Directory::sanitizePath($path.'/js/'.$area.'_body.js');
+                    }
+                    if(file_exists($jsfile))
+                    {
+                        self::addJS(self::checkPath(CAT_Helper_Validate::path2uri($jsfile)),$position);
                     }
                 }
             }
@@ -291,9 +344,33 @@ if (!class_exists('CAT_Helper_Page'))
 
         /**
          *
+         * @access public
+         * @return
+         **/
+        public static function getExtraHeaderFiles($page_id=NULL)
+        {
+            $data = array(); //'js'=>array(),'css'=>array(),'code'=>''
+            $q    = 'SELECT * FROM `:prefix:pages_headers` WHERE `page_id`=:page_id';
+            $r    = CAT_Object::db()->query($q,array('page_id'=>$page_id));
+            $data = $r->fetchAll();
+
+            foreach($data as $i => $row)
+            {
+                if(isset($row['page_js_files']) && $row['page_js_files']!='')
+                    $data[$i]['js'] = unserialize($row['page_js_files']);
+                if(isset($row['page_css_files']) && $row['page_css_files']!='')
+                    $data[$i]['css'] = unserialize($row['page_css_files']);
+            }
+
+            return $data;
+        }   // end function getExtraHeaderFiles()
+
+        /**
+         * creates a full url for the given pageID
          *
-         *
-         *
+         * @access public
+         * @params integer  $page_id
+         * @return string
          **/
         public static function getLink($page_id)
         {
@@ -312,6 +389,37 @@ if (!class_exists('CAT_Helper_Page'))
                 return $link;
 
         }   // end function getLink()
+
+        /**
+         * get a list of pages in other languages that are linked to the
+         * given page; returns an array of pageIDs or boolean false if no
+         * linked pages are found
+         *
+         * @access public
+         * @param  integer  $page_id
+         * @return mixed
+         **/
+        public static function getLinkedByLanguage($page_id)
+        {
+            $sql     = 'SELECT * FROM `:prefix:pages_langs` AS t1'
+                     . ' RIGHT OUTER JOIN `:prefix:pages` AS t2'
+                     . ' ON `t1`.`link_page_id`=`t2`.`page_id`'
+                     . ' WHERE `t1`.`page_id` = :id'
+                     ;
+
+            $results = self::getInstance()->db()->query($sql,array('id'=>$page_id));
+            if ($results->rowCount())
+            {
+                $items = array();
+                while (($row = $results->fetch()) !== false)
+                {
+                    $row['href'] = self::getLink($row['link']) . (($row['lang'] != '') ? '?lang=' . $row['lang'] : NULL);
+                    $items[]     = $row;
+                }
+                return $items;
+            }
+            return false;
+        }   // end function getLinkedByLanguage()
 
         /**
          * get properties for page $page_id
@@ -367,6 +475,28 @@ if (!class_exists('CAT_Helper_Page'))
                     $pages[] = $pg;
             return $pages;
         }   // end function getPages()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getPagesForLanguage($lang)
+        {
+            if(!count(self::$pages)) self::getInstance();
+            $result = array();
+            foreach(self::$pages as $pg)
+            {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Achtung: isVisible() funktioniert nicht richtig, wenn der Benutzer im BE
+// angemeldet ist, jedoch per AJAX z.B. CAT_Backend::list() aufgerufen wird
+// Daher erst mal zum Testen auskommentiert
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if($pg['language']==$lang) // && self::isVisible($pg['page_id']) )
+                    $result[] = $pg;
+            }
+            return $result;
+        }   // end function getPagesForLanguage()
 
         /**
          * returns pages array for given menu number
@@ -690,31 +820,45 @@ if (!class_exists('CAT_Helper_Page'))
                 {
                     if(preg_match('~CONDITIONAL (.*) START$~',$file,$m)) // opening
                     {
-                        $output .= self::renderFiles('js',$local,true,$cond_open,$condition)
-                                .  self::renderFiles('js',$remote,false,$cond_open,$condition);
+                        $output   .= self::renderFiles('js',$local,true,$cond_open,$condition)
+                                  .  self::renderFiles('js',$remote,false,$cond_open,$condition);
                         $condition = $m[1];
                         $cond_open = true;
-                        $local = array();
-                        $remote = array();
+                        $local     = array();
+                        $remote    = array();
                         continue;
                     }
                     if(preg_match('~CONDITIONAL (.*) END~',$file,$m)) // closing
                     {
                         $condition = $m[1];
-                        $output .= self::renderFiles('js',$local,true,$cond_open,$condition)
-                                .  self::renderFiles('js',$remote,false,$cond_open,$condition);
-                        $local = array();
-                        $remote = array();
+                        $output   .= self::renderFiles('js',$local,true,$cond_open,$condition)
+                                  .  self::renderFiles('js',$remote,false,$cond_open,$condition);
+                        $local     = array();
+                        $remote    = array();
                         $cond_open = false;
                         continue;
                     }
                     if(!preg_match('~^http(s)?://~i',$file)) // it's a local file
                     {
-                        $local[] = preg_replace('~^/~','',$file);
+                        $local[]  = preg_replace('~^/~','',$file);
+                        self::$loaded[] = pathinfo($file,PATHINFO_BASENAME);
                     }
                     else
                     {
                         $remote[] = $file;
+                    }
+                }
+            }
+
+            // add js having prerequisites
+            if(count(self::$prereq_js))
+            {
+                foreach(self::$prereq_js as $required => $urls)
+                {
+                    if(in_array($required,self::$loaded))
+                    {
+                        foreach($urls as $file)
+                            $local[] = preg_replace('~^/~','',$file);
                     }
                 }
             }
@@ -902,8 +1046,9 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         private static function getIncludes($file,$position='header')
         {
+            $self = self::getInstance();
             // load file
-            self::$instance->log()->addDebug(sprintf('loading file [%s], position [%s]',$file,$position));
+            $self->log()->addDebug(sprintf('loading file [%s], position [%s]',$file,$position));
             require $file;
 
             $array   =& ${'mod_'.$position.'s'};
@@ -919,14 +1064,14 @@ if (!class_exists('CAT_Helper_Page'))
 
                 if($position=='header') // header only
                 {
-                    self::$instance->log()->addDebug('checking META');
+                    $self->log()->addDebug('checking META');
                     // ----- check META -----
                     if(    isset($array[$for]['meta'])
                         && is_array($array[$for]['meta'])
                         && count($array[$for]['meta'])
                     ) {
                         $arr =& $array[$for]['meta']; // shorter :)
-                        self::$instance->log()->addDebug(sprintf('   There are [%d] meta entries',count($arr)));
+                        $self->log()->addDebug(sprintf('   There are [%d] meta entries',count($arr)));
                         foreach($arr as $el)
                         {
                             if(!is_array($el) || !count($el)) continue;
@@ -941,11 +1086,11 @@ if (!class_exists('CAT_Helper_Page'))
                             );
                         }
                     }
-                    self::$instance->log()->addDebug('checking CSS');
+                    $self->log()->addDebug('checking CSS');
                     // ----- check CSS -----
                     if(isset($array[$for]['css']) && is_array($array[$for]['css']) && count($array[$for]['css']))
                     {
-                        self::$instance->log()->addDebug(sprintf('   There are [%d] css entries',count($array[$for]['css'])));
+                        $self->log()->addDebug(sprintf('   There are [%d] css entries',count($array[$for]['css'])));
                         // check the paths
                         foreach($array[$for]['css'] as $item)
                         {
@@ -968,16 +1113,16 @@ if (!class_exists('CAT_Helper_Page'))
                         }
                     }
                 }   // end if($position=='header')
-                self::$instance->log()->addDebug('checking jQuery components');
+                $self->log()->addDebug('checking jQuery components');
                 // ----- check jQuery components -----
                 if (isset($array[$for]['jquery']) && is_array($array[$for]['jquery']) && count($array[$for]['jquery']) && !self::$jquery_seen)
                 {
-                    self::$instance->log()->addDebug(sprintf('   There are [%d] jQuery entries',count($array[$for]['jquery'])));
+                    $self->log()->addDebug(sprintf('   There are [%d] jQuery entries',count($array[$for]['jquery'])));
                     $arr = $array[$for]['jquery']; // shorter :)
                     // scan for plugins
                     if (isset($arr['plugins']) && is_array($arr['plugins']))
                     {
-                        self::$instance->log()->addDebug(sprintf('   There are [%d] jQuery plugins to be loaded',count($arr['plugins'])));
+                        $self->log()->addDebug(sprintf('   There are [%d] jQuery plugins to be loaded',count($arr['plugins'])));
                         foreach ($arr['plugins'] as $item)
                         {
                             if(false!==($file=self::findJQueryPlugin($item)))
@@ -1039,7 +1184,7 @@ if (!class_exists('CAT_Helper_Page'))
             }
             else
             {
-                self::$instance->log()->addDebug(sprintf('no $array for [%s]',$for));
+                $self->log()->addDebug(sprintf('no $array for [%s]',$for));
             }
 
             return ( isset($ref) ? $ref : false );

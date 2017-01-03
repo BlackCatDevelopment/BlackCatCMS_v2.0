@@ -194,9 +194,15 @@ if (!class_exists('CAT_Helper_Validate'))
         public static function path2uri($path)
         {
             return str_ireplace(
-                CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH),
-                self::sanitize_url(self::getURI(CAT_URL)),
-                CAT_Helper_Directory::sanitizePath($path)
+                array(
+                    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH),
+                    CAT_Helper_Directory::sanitizePath(CAT_PATH),
+                ),
+                array(
+                    self::sanitize_url(self::getURI(CAT_URL)),
+                    self::sanitize_url(self::getURI(CAT_URL)),
+                ),
+                CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($path))
             );
         }   // end function path2uri(()
 

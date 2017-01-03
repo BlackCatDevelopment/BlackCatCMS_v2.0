@@ -10,15 +10,6 @@ html body.fuelux div.container-fluid div.row div.col-md-10 section ol.breadcrumb
 /* detached buttons */
 div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-left:5px;}
 
-/* dashboard lanes */
-div.dashboard{width:100%;}
-div.dashboard ul{float:left;list-style:none outside none;padding:.3%;min-height:30px;}
-div.dashboard .bs_placeholder{border:1px dashed #ccc;margin:0 1em 1em 0;height:50px;}
-div.dashboard .bs_highlight{background-color:#ccc;}
-/* fix dashboard panels */
-div.dashboard div.panel{margin-bottom:0;}
-div.dashboard li.ui-sortable-handle{margin-bottom:20px;}
-
 /* Font Awesome Aliases */
 .fa-media:before{content:"\f1c8";}
 .fa-settings:before{content:"\f085";}
@@ -76,12 +67,6 @@ ul[role="tablist"]{margin-bottom:15px;}
 .dropdown-submenu.pull-left{float:none;}
 .dropdown-submenu.pull-left>.dropdown-menu{left:-100%;margin-left:10px;-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;border-radius:6px 0 6px 6px;}
 
-/* media preview */
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/* Einstellung draus machen */
-img.thumb{width:80px;}
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
 /* color change for session timeout counter */
 div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite alternate;}
 @-webkit-keyframes colorchange {
@@ -124,4 +109,11 @@ div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite altern
 }
 .main .page-header {
   margin-top: 0;
+}
+
+/*
+ * Firefox fieldset fix
+ **/
+@-moz-document url-prefix() {
+  fieldset { display: table-cell; }
 }

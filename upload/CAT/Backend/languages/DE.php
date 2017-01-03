@@ -15,8 +15,9 @@
 
 */
 
-$LANG = array(
+include CAT_ENGINE_PATH.'/languages/DE.php';
 
+$LANG = array_merge($LANG,array(
     // --------------- Backend ---------------
     'Close all'     => 'Alle schließen',
     'Keep open'     => 'Offenhalten',
@@ -68,6 +69,7 @@ $LANG = array(
     'Expand all'    => 'Alle aufklappen',
     'Header files'  => 'Kopfdateien',
     'hidden'        => 'versteckt',
+    'Linked page'   => 'Verknüpfte Seite',
     'Menu title'    => 'Menütitel',
     'no name'       => 'kein Name',
     'none'          => 'keine',
@@ -77,15 +79,26 @@ $LANG = array(
     'private'       => 'privat',
     'public'        => 'öffentlich',
     'registered'    => 'registriert',
+    'Relations'     => 'Beziehungen',
     'Time from'     => 'Uhrzeit von',
     'Time until'    => 'Uhrzeit bis',
     'Visibility'    => 'Sichtbarkeit',
+    'Add jQuery Plugin' => 'jQuery Plugin hinzufügen',
+    'Add explicit Javascript file' => 'Ein bestimmtes Javascript hinzufügen',
+    'Add explicit CSS file' => 'Eine bestimmte CSS Datei hinzufügen',
     'Change visibility' => 'Sichtbarkeit ändern',
+    'Currently, no extra files are defined for this page.' => 'Zur Zeit sind keine zusätzlichen Dateien für diese Seite konfiguriert.',
+    'Do you really want to unlink the selected page?' => 'Soll diese Seitenbeziehung wirklich entfernt werden?',
     'Icon explanation' => 'Symbolerklärung',
+    'Menu appearance' => 'Menüzugehörigkeit',
     'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
     'Please enter max. 55 characters' => 'Bitte maximal 55 Zeichen',
+    'Please note that there is a bunch of files that is loaded automatically, so there\'s no need to add them here.' => 'Bitte beachten, dass es eine Reihe von Dateien gibt, die automatisch geladen werden und daher hier nicht verwaltet werden können und müssen.',
+    'Remove relation' => 'Beziehung entfernen',
+    'Select the menu the page belongs to. The menu select depends on the chosen template.' => 'Das Menü wählen, zu dem die Seite gehört. Die Auswahl ist abhängig vom eingestellten Template.',
     'Set publishing period' => 'Sichtbarkeits-Zeitraum bearbeiten',
     'System default' => 'Standardeinstellung',
+    'Template variant' => 'Template-Variante',
     'The description should be a nice &quot;human readable&quot; text having 70 up to 156 characters.' => 'Die Beschreibung sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 70 und bis zu 156 Zeichen sein.',
     'The (main) language of the page contents.' => 'Die (hauptsächliche) Sprache der Seiteninhalte.',
     'The menu title is used for the navigation menu. Hint: Use short but descriptive titles.' => 'Der Menütitel wird für das Navigationsmenü verwendet. Tipp: Kurze aber aussagekräftige Titel verwenden.',
@@ -95,9 +108,14 @@ $LANG = array(
     'The page is only accessible to registered users and is not shown in the navigation for non-registered users' => 'Die Seite ist nur für berechtigte Benutzer sichtbar und erscheint nur im Menü, wenn der Benutzer angemeldet ist',
     'The page is only accessible to registered users; the page shows up in the navigation by default' => 'Die Seite ist nur für berechtigte Benutzer sichtbar; sie erscheint üblicherweise auch im Menü',
     'The page was deleted but can be recovered' => 'Die Seite ist gelöscht, kann aber wiederhergestellt werden',
-    'The position of the page in the page tree.' => 'Die Position der Seite im Seitenbaum.',
+    'The position of the page in the page tree' => 'Die Position der Seite im Seitenbaum',
     'The title should be a nice &quot;human readable&quot; text having 30 up to 55 characters.' => 'Der Seitentitel sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 30 und höchstens 55 Zeichen sein.',
-    'You may override the system settings for the template here.' => 'Systemweite Einstellung für diese Seite ändern.',
+    'These settings are page based, to manage global settings, goto Settings -> Header files.' => 'Diese Einstellungen sind seitenbasiert, globale Einstellungen können unter Einstellungen -> Kopfdateien vorgenommen werden.',
+    'Use {language_menu()} in your frontend template to show links to the pages listed below.' => 'Das Markup {language_menu()} im Frontend-Template erzeugt Links zu den untenstehenden Seiten.',
+    'You can link any page to other pages in different languages that have the same content.' => 'Jede Seite kann mit Seiten in anderen Sprachen, die den gleichen Inhalt haben, verknüpft werden.',
+    'You can manage Javascript- and CSS-Files resp. jQuery plugins to be loaded into the page header here.' => 'Hier können Javascript- und CSS-Dateien bzw. jQuery Plugins verwaltet werden, die zusätzlich in den Seitenkopf geladen werden sollen.',
+    'You may override the system settings for the template here' => 'Systemweite Template-Einstellung für diese Seite ändern',
+    'You may override the system settings for the template variant here' => 'Systemweite Template-Varianten-Einstellung für diese Seite ändern',
 
     // --------------- Backend -> Addons ---------------
     'Catalog'       => 'Katalog',
@@ -147,7 +165,14 @@ $LANG = array(
 
     // --------------- Backend -> Media ---------------
     'All types' => 'Alle Dateitypen',
+    'Bits per sample' => 'Auflösung',
+    'Date' => 'Datum',
+    'Filename' => 'Dateiname',
+    'Folders' => 'Verzeichnisse',
     'Images' => 'Bilder',
+    'Resolution X' => 'Breite in Pixel',
+    'Resolution Y' => 'Höhe in Pixel',
+    'Size' => 'Größe',
 
     // --------------- Backend -> Permissions ---------------
     'Access to global dashboard' => 'Zugang zum globalen Dashboard',
@@ -195,6 +220,5 @@ $LANG = array(
     'Default theme variant' => 'Variante',
     'Media directory'  => 'Medien-Verzeichnis',
     'Wysiwyg editor'   => 'WYSIWYG Editor',
-// ---------- Pages region ----------
-    'Translations'     => 'Übersetzungen',
-);
+
+));

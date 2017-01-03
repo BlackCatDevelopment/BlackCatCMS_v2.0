@@ -35,7 +35,7 @@ if (!class_exists('CAT_Backend', false))
 
         // public routes (do not check for authentication)
         private   static $public   = array(
-            'login','authenticate','logout','qr','tfa'
+            'languages','login','authenticate','logout','qr','tfa'
         );
 
         public static function getInstance()
@@ -44,7 +44,7 @@ if (!class_exists('CAT_Backend', false))
             {
                 self::$instance = new self();
                 self::$instance->tpl()->setGlobals(array(
-                    'LANGUAGE'      => strtolower(CAT_Registry::get('language',NULL,CAT_Helper_I18n::getLang())),
+                    'LANGUAGE'      => strtolower(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang())),
                     'CHARSET'       => CAT_Registry::exists('default_charset') ? CAT_Registry::get('default_charset') : "utf-8",
                     'CAT_ADMIN_URL' => CAT_ADMIN_URL,
                     'WEBSITE_TITLE' => CAT_Registry::get('WEBSITE_TITLE'),
@@ -58,10 +58,18 @@ if (!class_exists('CAT_Backend', false))
                     ));
                 }
                 self::$instance->initPaths();
+                $current_language = strtoupper(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang()));
                 self::$instance->lang()->addFile(
-                    strtoupper(CAT_Registry::get('language',NULL,CAT_Helper_I18n::getLang())),
+                    $current_language,
                     dirname(__FILE__).'/Backend/languages/'
                 );
+                if(file_exists(CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('default_theme').'/languages/'.$current_language.'.php'))
+                {
+                    self::$instance->lang()->addFile(
+                        $current_language,
+                        CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('default_theme').'/languages/'
+                    );
+                }
             }
             return self::$instance;
         }   // end function getInstance()
@@ -132,7 +140,7 @@ if (!class_exists('CAT_Backend', false))
                     // pages list
                     if($self->user()->hasPerm('pages_list'))
                     {
-                        $self->tpl()->setGlobals('pages',CAT_Backend_Page::list(1));
+                        $self->tpl()->setGlobals('pages',CAT_Backend_Page::tree());
                         $self->tpl()->setGlobals('sections',CAT_Helper_Page::getSections());
                     }
                 }
@@ -141,6 +149,18 @@ if (!class_exists('CAT_Backend', false))
                 $router->dispatch();
             }
         }   // end function dispatch()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getArea()
+        {
+            $self = self::$instance;
+            $area = $self->router()->getFunction();
+            return $area;
+        }   // end function getArea()
 
         /**
          * get the main menu (backend sections)
@@ -279,9 +299,12 @@ if (!class_exists('CAT_Backend', false))
         public static function isBackend()
         {
             $current_route = CAT_Object::router()->getRoute();
-            $backend_route = CAT_Registry::get('backend_route');
+            $backend_route = defined('CAT_BACKEND_PATH')
+                           ? CAT_BACKEND_PATH
+                           : 'backend';
+//echo "curr $current_route be $backend_route<br />";
 
-            if ( preg_match( '~/?'.$backend_route.'/~i', $current_route ) )
+            if(preg_match('~^/?'.$backend_route.'/~i', $current_route))
                 return true;
             else
                 return false;
@@ -321,6 +344,34 @@ if (!class_exists('CAT_Backend', false))
             #header('Location: '.CAT_ADMIN_URL.'/login');
             exit;
         }   // end function authenticate()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function languages()
+        {
+            $self  = self::getInstance();
+            $langs = self::getLanguages();
+            if(($parm = $self->router()->getRoutePart(-1)) !== false)
+            {
+                switch($parm)
+                {
+                    case 'select':
+                        $langselect = array(''=>'[Please select]');
+                        foreach(array_values($langs) as $l)
+                            $langselect[$l] = $l;
+                        $form = self::initForm();
+                        $form->loadFile('forms.inc.php',__dir__.'/forms');
+                        $form->setForm('lang_select');
+                        $form->getElement('language')->setAttr('options',$langselect);
+                        self::json_success($form->getForm());
+                        break;
+                }
+            }
+            echo self::json_success();
+        }   // end function languages()
 
         /**
          * show the login page

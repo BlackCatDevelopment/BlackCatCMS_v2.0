@@ -249,6 +249,28 @@ if(!class_exists('CAT_Helper_Router',false))
          * @access public
          * @return
          **/
+        public function getRoutePart($index)
+        {
+            if($this->route)
+            {
+                $parts = explode('/',$this->route);
+                if(is_array($parts) && count($parts))
+                {
+                    if($index == -1) { // last param
+                        end($parts);
+                        $index = key($parts);
+                    }
+                    if(isset($parts[$index])) return $parts[$index];
+                }
+            }
+            return false;
+        }   // end function getRoutePart()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public function getQuery()
         {
             if($this->query) return $this->query;

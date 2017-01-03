@@ -45,7 +45,18 @@ if (!class_exists('CAT_Backend_Media'))
          **/
         public static function index()
         {
-            $self = self::getInstance();
+            $self  = self::getInstance();
+
+            // TODO: hartverdrahtetes "backend" durch var ersetzen
+            $base  = 'backend/'.CAT_Backend::getArea();
+
+            // example route: backend/media/index/video
+            // ...where 'video' is the name of the requested sub folder
+            $route = $self->router()->getRoute();
+            $subdir = NULL;
+            if($route != $base)
+                $subdir = str_ireplace(array($base.'/index/',$base),'',$route);
+
             $home = $self->user()->getHomeFolder();
             $dirs = CAT_Helper_Directory::getInstance()
                   ->setRecursion(true)
@@ -53,12 +64,13 @@ if (!class_exists('CAT_Backend_Media'))
 
             $tpl_data = array(
                 'dirs'  => $dirs,
-                'files' => self::list($home)
+                'files' => self::list($home.'/'.urldecode($subdir)),
+                'curr_folder' => '/'.urldecode($subdir),
             );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_media', $tpl_data);
             CAT_Backend::print_footer();
-        }   // end function media()
+        }   // end function index()
 
         /**
          *
@@ -72,19 +84,12 @@ if (!class_exists('CAT_Backend_Media'))
             $paths  = array();
             $files  = array();
 
-            if(is_dir(CAT_PATH.'/media'))
-                array_push($paths,CAT_PATH.'/media');
-            if(is_dir(CAT_ENGINE_PATH.'/media'))
-                array_push($paths,CAT_ENGINE_PATH.'/media');
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: CHECK PERMISSIONS
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//$home = $self->user()->getHomeFolder();
+            $files  = CAT_Helper_Media::getMediaFromDir($path,$filter);
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// TODO: Benutzer-Homeverzeichnis berücksichtigen
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            foreach($paths as $path)
-            {
-                $data = CAT_Helper_Media::getMediaFromDir($path,$filter);
-                $files = array_merge($files,$data);
-            }
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');

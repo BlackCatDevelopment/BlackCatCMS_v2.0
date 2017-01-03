@@ -133,10 +133,10 @@ if (!class_exists('CAT_User'))
         public function getHomeFolder()
         {
             if($this->is_root())
-                return CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.CAT_Registry::get('MEDIA_DIRECTORY'));
+                return CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.CAT_Registry::get('MEDIA_DIRECTORY'));
             $home = $this->get('home_folder');
             if(strlen($home))
-                return CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$home);
+                return CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$home);
             return NULL;
         }   // end function getHomeFolder()
 

@@ -312,6 +312,7 @@ if(!class_exists('CAT_Helper_Directory', false))
                     $temp[] = array(
                         'id'      => $i+1,
                         'title'   => $name,
+                        'path'    => self::getName($dir),
                         'parent'  => $parent,
                         'level'   => count($dir)
                     );
@@ -583,7 +584,8 @@ if(!class_exists('CAT_Helper_Directory', false))
                 while( false !== ($file = $dh->read())) {
                     $self->log()->addDebug('current directory entry: '.$file);
                     if ( ! self::$show_hidden && substr($file,0,1) == '.' ) continue;
-                    if ( ! ( $file == '.' || $file == '..' ) ) {
+                    if ( ! ( $file == '.' || $file == '..' ) )
+                    {
 						if ( count($skip_dirs) && in_array( pathinfo( $dir.'/'.$file, (is_dir($dir.'/'.$file)?PATHINFO_BASENAME:PATHINFO_DIRNAME)), $skip_dirs) )
 						{
                             $self->log()->addDebug('skipping (found in $skip_dirs)');
@@ -684,9 +686,10 @@ if(!class_exists('CAT_Helper_Directory', false))
 		public static function maxRecursionDepth($number=15)
 		{
 		    if (is_numeric($number))
-		    {
 		        self::$max_recursion_depth = $number;
-			}
+            if($number > 0)
+                self::$recurse = true;
+
             if(self::$instance) return self::$instance;
 		}   // end function setRecursion()
 
@@ -829,7 +832,6 @@ if(!class_exists('CAT_Helper_Directory', false))
                 {
                     $fh = fopen($dir.'/index.php', 'w');
                     fwrite($fh, '<' . '?' . 'php' . "\n");
-        	        fwrite($fh, self::_class_secure_code());
         	        fclose($fh);
                 }
                 while(false !== ($file=$handle->read()) )
@@ -1138,36 +1140,5 @@ if(!class_exists('CAT_Helper_Directory', false))
         {
             return (mb_detect_encoding($file,'UTF-8',true) ? $file : utf8_encode($file));
         }   // end function getName()
-
-// ?????????????????????????????????????????????????????????????????????????????
-// MUSS GGFS ÜBERARBEITET WERDEN
-// ?????????????????????????????????????????????????????????????????????????????
-		/**
-		 *
-		 *
-		 *
-		 *
-		 **/
-		private static function _class_secure_code()
-		{
-			return "
-if (defined('CAT_ENGINE_PATH')) {
-	include(CAT_ENGINE_PATH.'/framework/class.secure.php');
-} else {
-    \$root = \"../\";
-	\$level = 1;
-	while ((\$level < 10) && (!file_exists(\$root.'/framework/class.secure.php'))) {
-        \$root .= '../';
-		\$level += 1;
-	}
-	if (file_exists(\$root.'/framework/class.secure.php')) {
-		include(\$root.'/framework/class.secure.php');
-	} else {
-		trigger_error(sprintf(\"[ <b>%s</b> ] Can't include class.secure.php!\", \$_SERVER['SCRIPT_NAME']), E_USER_ERROR);
-	}
-}
-";
-		}   // end function _class_secure_code()
-
 	}
 }

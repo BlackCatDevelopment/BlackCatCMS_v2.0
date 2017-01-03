@@ -32,6 +32,9 @@ if (!class_exists('CAT_Helper_Media'))
                 'filepath',
                 'filename',
                 'filenamepath',
+                'bits_per_sample',
+                'resolution_x',
+                'resolution_y',
                 'encoding',
                 'error',
                 'warning',
@@ -101,6 +104,9 @@ if (!class_exists('CAT_Helper_Media'))
                 end($data);
                 $index = key($data);
 
+                $data[$index]['filename'] = CAT_Helper_Directory::getName($filename);
+                $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
+
                 $info = $self->fileinfo()->analyze($filename);
 
                 // base data
@@ -109,8 +115,15 @@ if (!class_exists('CAT_Helper_Media'))
                     $data[$index][$attr]
                         = isset($info[$attr])
                         ? $info[$attr]
-                        : 'n/a'
-                        ;
+                        : NULL;
+                    if(!$data[$index][$attr])
+                    {
+                        foreach(array_values(array('video')) as $key)
+                        {
+                            if(isset($info[$key][$attr]))
+                                $data[$index][$attr] = $info[$key][$attr];
+                        }
+                    }
                 }
                 if(isset($data[$index]['filesize']) && $data[$index]['filesize'] != 'n/a')
                 {
@@ -124,27 +137,42 @@ if (!class_exists('CAT_Helper_Media'))
                     list($group,$type) = explode('/',$info['mime_type']);
                     switch($group)
                     {
+                        case 'video':
+                            $data[$index]['video']    = true;
+                            break;
                         case 'image':
                             if($type == 'jpeg') $type = 'jpg';
-                            $data[$index]['image']   = true;
-                            $data[$index]['preview'] = CAT_Helper_Validate::path2uri($filename);
-                            if(isset($info[$type]) && isset($info[$type]['exif']))
-                            {
-                                foreach(self::$tag_map as $key => $attrs)
-                                {
-                                    if(isset($info[$type]['exif'][$key]))
-                                    {
-                                        $arr = $info[$type]['exif'][$key];
-                                        foreach($attrs as $attr)
-                                        {
-                                            $tmp[$attr] = ( isset($arr[$attr]) ? $arr[$attr] : '?' );
-                                        }
-                                    }
-                                }
-                                $data[$index]['exif'] = $tmp;
-                            }
+                            $data[$index]['image']    = true;
+                            $data[$index]['preview']  = CAT_Helper_Validate::path2uri($filename);
                             break;
                     }
+                    if(isset($info[$type]) && isset($info[$type]['exif']))
+                    {
+                        foreach(self::$tag_map as $key => $attrs)
+                        {
+                            if(isset($info[$type]['exif'][$key]))
+                            {
+                                $arr = $info[$type]['exif'][$key];
+                                foreach($attrs as $attr)
+                                {
+                                    $tmp[$attr] = ( isset($arr[$attr]) ? $arr[$attr] : '?' );
+                                }
+                            }
+                        }
+                        $data[$index]['exif'] = $tmp;
+                    }
+                    if(
+                           isset($info['tags'])
+                        && isset($info['tags']['iptc'])
+                        && isset($info['tags']['iptc']['IPTCApplication'])
+                        && isset($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
+                    ) {
+                        $data[$index]['copyright']
+                            = is_array($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
+                            ? $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'][0]
+                            : $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'];
+                    }
+
                 }
             }
 

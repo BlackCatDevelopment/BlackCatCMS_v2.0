@@ -1,49 +1,41 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
-if (defined('CAT_PATH')) {
-	include(CAT_PATH.'/framework/class.secure.php');
-} else {
-	$root = "../";
-	$level = 1;
-	while (($level < 10) && (!file_exists($root.'/framework/class.secure.php'))) {
-		$root .= "../";
-		$level += 1;
-	}
-	if (file_exists($root.'/framework/class.secure.php')) {
-		include($root.'/framework/class.secure.php');
-	} else {
-		trigger_error(sprintf("[ <b>%s</b> ] Can't include class.secure.php!", $_SERVER['SCRIPT_NAME']), E_USER_ERROR);
-	}
-}
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         backstrap
+
+*/
 
 $LANG = array(
-    'Context menu' => 'Kontextmenü',
-    'Filter by type' => 'Nach Typ filtern',
-    'Show catalog' => 'Zeige Katalog',
+    'Context menu'      => 'Kontextmenü',
+    'Delete item'       => 'Element löschen',
+    'Filter by type'    => 'Nach Typ filtern',
+    'Grid'              => 'Kacheln',
+    'List'              => 'Liste',
+    'Other'             => 'Sonstige',
+    'Remove plugin'     => 'Plugin entfernen',
+    'Select folder'     => 'Verzeichnis wählen',
+    'Show catalog'      => 'Zeige Katalog',
+    'Submit changes'    => 'Änderungen speichern',
     'Toggle navigation' => 'Navigation umschalten',
+
+    'Do you really want to unlink the selected file?' => 'Soll diese Datei-Verknüpfung wirklich entfernt werden?',
+    'Do you really want to unlink the selected plugin?' => 'Soll dieses Plugin wirklich von der Seite entfernt werden?',
+    'Left click for more details' => 'Für weitere Informationen Linksklick',
+    'Sorry, no preview available for this mime type!' => 'Für diesen Mime-Typ ist leider keine Vorschau verfügbar!',
+    'The loading of the settings form failed!' => 'Das Nachladen des Einstellungen-Formulars ist fehlgeschlagen!',
+    'There are no linked pages yet' => 'Es sind noch keine Seiten verknüpft',
+    'Unlink plugin file' => 'Plugin-Datei entfernen',
     'Use widget setting' => 'Einstellung des Widgets verwenden',
+    'Your browser does not support the video tag' => 'Der Browser unterstützt das video Tag nicht',
     '<span id="modalicon" class="fa fa-fw fa-warning"></span> Are you sure?' => '<span id="modalicon" class="fa fa-fw fa-warning"></span> Sind Sie sicher?'
 );

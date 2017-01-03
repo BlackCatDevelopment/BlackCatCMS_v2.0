@@ -3,7 +3,7 @@
 /**
  *
  *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
+ *   @copyright       2016 Black Cat Development
  *   @link            http://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
  *   @category        CAT_Core
@@ -61,3 +61,11 @@ $mod_headers = array(
 
 if(file_exists(CAT_PATH.'/modules/lib_jquery/jquery-ui/ui/i18n/jquery-ui-i18n.min.js'))
     $mod_headers['backend']['js'][] = 'modules/lib_jquery/jquery-ui/ui/i18n/jquery-ui-i18n.min.js';
+
+if(CAT_Backend::getArea() == 'media')
+{
+    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_jquery/plugins/jquery.fileupload/css/jquery.fileupload.css');
+    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_jquery/plugins/jquery.gridder/css/gridder.css');
+    $mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js';
+    $mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.gridder/js/gridder.js';
+}

@@ -82,7 +82,7 @@ if(!class_exists('CAT_Object',false))
          * @access public
          * @return object
          **/
-        public function db()
+        public static function db()
         {
             if(!isset(CAT_Object::$objects['db']) || !is_object(CAT_Object::$objects['db']) )
                self::storeObject('db',CAT_Helper_DB::getInstance());
@@ -116,11 +116,17 @@ if(!class_exists('CAT_Object',false))
             {
                 CAT_Object::$objects['formbuilder'] = \wblib\wbForms::getInstance();
                 $init = CAT_Helper_Directory::sanitizePath(
-                    CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get((CAT_Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')).'/forms.init.php'
+                    CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get(
+                        (CAT_Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')
+                    ).'/forms.init.php'
                 );
                 if(file_exists($init))
                     require $init;
                 CAT_Object::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/languages');
+                if(CAT_Backend::isBackend())
+                {
+                    CAT_Object::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/'.CAT_BACKEND_PATH.'/languages');
+                }
             }
             return CAT_Object::$objects['formbuilder'];
         }   // end function form()
@@ -135,7 +141,7 @@ if(!class_exists('CAT_Object',false))
         {
             if(!isset(CAT_Object::$objects['lang']) || !is_object(CAT_Object::$objects['lang']) )
             {
-                self::storeObject('lang',CAT_Helper_I18n::getInstance(CAT_Registry::get('LANGUAGE',NULL,NULL)));
+                self::storeObject('lang',\wblib\wbLang::getInstance(CAT_Registry::get('LANGUAGE',NULL,NULL)));
             }
             return CAT_Object::$objects['lang'];
         }   // end function lang()
@@ -332,6 +338,74 @@ if(!class_exists('CAT_Object',false))
                 substr($s,20);
             return $guidText;
         }   // end function createGUID()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getJQueryFiles($type=NULL,$plugin=NULL)
+        {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Eventuell gibt es spaeter spezielle Berechtigungen fuer den Zugriff
+// auf jQuery
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            $basedir = CAT_ENGINE_PATH.'/modules/lib_jquery/plugins';
+            if(!$type)
+            {
+                $data = CAT_Helper_Directory::getInstance(true)
+                      ->maxRecursionDepth(0)
+                      ->scanDirectory(
+                          $basedir,
+                          false,
+                          false,
+                          $basedir.'/'
+                      );
+            }
+            else
+            {
+                if($plugin && file_exists($basedir.'/'.$plugin))
+                    $basedir .= '/'.$plugin;
+
+                $data = CAT_Helper_Directory::getInstance(true)
+                      ->maxRecursionDepth(5)
+                      ->setSuffixFilter(array($type))
+                      ->scanDirectory(
+                          $basedir,
+                          true,
+                          true,
+                          $basedir.'/'
+                      );
+            }
+
+            return $data;
+        }   // end function getJQueryFiles()
+
+        /**
+         * returns a list of installed languages
+         *
+         * if $langs_only is true (default), only the list of available langs
+         * will be returned; if set to false, the complete result of
+         * CAT_Helper_Addons::get_addons will be returned
+         *
+         * @access public
+         * @param  boolean  $langs_only
+         * @return array
+         **/
+        public static function getLanguages($langs_only=true)
+        {
+            $addons = CAT_Helper_Addons::get_addons('language','language');
+            if($langs_only)
+            {
+                $result = array();
+                foreach($addons as $item)
+                {
+                    $result[] = $item['directory'];
+                }
+                return $result;
+            }
+            return $addons;
+        }   // end function getLanguages()
 
         /**
          * converts variable names like "default_template_variant" into human

@@ -24,3 +24,13 @@ $mod_footers = array(
     )
 );
 
+if(CAT_Backend::getArea() == 'media')
+{
+    $mod_footers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.fileupload/js/jquery.iframe-transport.js';
+    $mod_footers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.fileupload/js/jquery.fileupload.js';
+    CAT_Helper_Page::addJS(
+        'templates/backstrap/js/load_datatable.js',
+        'footer',
+        'jquery.dataTables.min.js'
+    );
+}

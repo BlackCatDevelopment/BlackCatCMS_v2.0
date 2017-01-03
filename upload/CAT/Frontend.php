@@ -58,14 +58,25 @@ if (!class_exists('CAT_Frontend', false))
                 return;
             }
 
-            // forward to backend router
-            if(CAT_Backend::isBackend())
-                return CAT_Backend::dispatch();
-
             // forward to modules
             if($self->router()->match('~^modules/~i'))
             {
                 require CAT_ENGINE_PATH.'/'.$self->router()->getRoute();
+                return;
+            }
+
+            // forward to backend router
+            if(CAT_Backend::isBackend())
+                return CAT_Backend::dispatch();
+
+            // internally handled route
+            $route = $self->router()->getRoute();
+            $route = substr($route,0,strpos($route,'/'));
+            if(is_callable(array('self',$route)))
+            {
+                $self->router()->setController('CAT_Frontend');
+                $self->router()->setFunction($route);
+                $self->router()->dispatch();
             }
 
             // check if the system is in maintenance mode
@@ -77,7 +88,6 @@ if (!class_exists('CAT_Frontend', false))
             }
             else
             {
-                $route = $self->router()->getRoute();
                 // no route -> get default page
                 if($route == '')
                 {
