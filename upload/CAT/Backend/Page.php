@@ -72,18 +72,45 @@ if (!class_exists('CAT_Backend_Page'))
          **/
         public static function edit()
         {
-            $self    = self::getInstance();
             $pageID  = self::getPageID();
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
-            if(!$self->user()->hasPerm('pages_edit') || !$self->user()->hasPagePerm($pageID,'pages_edit'))
+            if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
+
+            // get sections
+            $sections = CAT_Sections::getSections($pageID);
 
             $tpl_data = array(
                 'page'   => CAT_Helper_Page::properties($pageID),
                 'linked' => CAT_Helper_Page::getLinkedByLanguage($pageID),
+                'blocks' => NULL,
             );
+
+            if(count($sections))
+            {
+                foreach($sections as $section)
+                {
+                    // spare some typing
+                    $section_id = $section['section_id'];
+                    $module     = $section['module'];
+                    $class      = 'CAT_Addon_Page_'.ucfirst($module);
+                    $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
+                    if (file_exists($handler))
+                    {
+                        CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                        self::setTemplatePaths($module);
+                        include_once $handler;
+                        $class::initialize();
+                        $content = $class::modify($section_id);
+                        $tpl_data['blocks'][] = array_merge(
+                            $section,
+                            array('content' => $content)
+                        );
+                    }
+                }
+            }
 
             if(self::asJSON())
             {
@@ -92,7 +119,7 @@ if (!class_exists('CAT_Backend_Page'))
             }
 
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_page_modify', $tpl_data);
+            self::tpl()->output('backend_page_modify', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function edit()
 

@@ -112,6 +112,7 @@ if(!class_exists('CAT_Helper_Router',false))
                 );
                 CAT_Object::printFatalError('Access denied');
             }
+
             // hand over to controller
             return $controller::$function($this->getParam());
             exit;

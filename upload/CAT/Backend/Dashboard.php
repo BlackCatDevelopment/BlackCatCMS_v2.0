@@ -86,7 +86,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
 
             // validate path
             if(!$path)
-                $path = $self->router()->getRoute();
+                $path = self::router()->getRoute();
             $dash = CAT_Helper_Dashboard::getDashboardID($path);
 
             // check if dashboard exists
@@ -96,15 +96,15 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 {
                     CAT_Helper_Dashboard::saveDashboardConfig(
                         NULL,
-                        $self->user()->getID(),
+                        self::user()->getID(),
                         $path,
                         2
                     );
                 }
                 else
                 {
-                    $self->log()->addAlert(sprintf('No such dashboard! [id: %d; path: %s]',$dash,$path));
-                    $self->printFatalError('Access denied');
+                    self::log()->addAlert(sprintf('No such dashboard! [id: %d; path: %s]',$dash,$path));
+                    self::printFatalError('Access denied');
                 }
             }
 
@@ -120,7 +120,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
             );
 
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_dashboard', $tpl_data);
+            self::tpl()->output('backend_dashboard', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function index()
         

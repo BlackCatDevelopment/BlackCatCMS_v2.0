@@ -296,7 +296,7 @@ if(!class_exists('CAT_Object',false))
          * @access public
          * @return object
          **/
-        public function user()
+        public static function user()
         {
             if(!isset(CAT_Object::$objects['user']) || !is_object(CAT_Object::$objects['user']) )
                 self::storeObject('user',CAT_User::getInstance());
@@ -470,6 +470,41 @@ if(!class_exists('CAT_Object',false))
             }
             return self::$settings;
         }   // end function loadSettings()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function setTemplatePaths($name,$type='module')
+        {
+            $base = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'s/'.$name.'/templates');
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Varianten
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(file_exists($base.'/default'))
+            {
+                self::tpl()->setPath($base.'/default');
+                self::tpl()->setFallbackPath($base.'/default');
+                return;
+            }
+
+            if(file_exists($base))
+            {
+                self::tpl()->setPath($base);
+                self::tpl()->setFallbackPath($base);
+                return;
+            }
+/*
+            if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE'))))
+            {
+                self::tpl()->setFallbackPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
+                self::tpl()->setPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE')));
+            }
+*/
+        }   // end function setTemplatePaths()
+        
         
 
 // =============================================================================

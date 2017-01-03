@@ -428,6 +428,7 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         public static function getPageForRoute($route)
         {
+            if(CAT_Backend::isBackend()) return 0;
             // remove suffix from route
             $route  = str_ireplace(CAT_Registry::get('PAGE_EXTENSION'), '', $route);
             // remove trailing /
@@ -445,7 +446,7 @@ if (!class_exists('CAT_Helper_Page'))
             else
                 return $data['page_id'];
         }   // end function getPageForRoute()
-        
+
 
         /**
          * get properties for page $page_id

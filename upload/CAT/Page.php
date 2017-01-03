@@ -156,6 +156,9 @@ if (!class_exists('CAT_Page', false))
                 $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
                 if (file_exists($handler))
                 {
+                    // this will use the current language
+                    CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                    self::setTemplatePaths($module);
                     include_once $handler;
                     $output[] = $class::view($section_id);
                 }

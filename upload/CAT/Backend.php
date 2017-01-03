@@ -81,7 +81,7 @@ if (!class_exists('CAT_Backend', false))
         {
             $self   = self::getInstance();
             // get the route handler
-            $router = new CAT_Helper_Router();
+            $router = self::router();
             $self->log()->addDebug('checking if route is protected');
             // check for protected route
             if(!in_array($router->getFunction(),self::$public))
@@ -439,8 +439,8 @@ if (!class_exists('CAT_Backend', false))
             ));
             $tpl_data['MAIN_MENU_UL'] = $lb->buildList($menu);
 
-            self::getInstance()->log()->addDebug('printing header');
-            self::getInstance()->tpl()->output('header', $tpl_data);
+            self::log()->addDebug('printing header');
+            self::tpl()->output('header', $tpl_data);
         }   // end function print_header()
 
         /**
