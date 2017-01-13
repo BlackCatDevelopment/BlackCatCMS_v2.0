@@ -53,6 +53,9 @@ $(function() {
                     }
                     else
                     {
+                        // reset form
+                        $('input.form-control.u').val('');
+                        $('input.form-control.p').val('');
                         $('#bsSessionTimedOutDialog').modal('hide');
                         // reset session timer
                         CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');
@@ -82,18 +85,8 @@ $(function() {
     // add tooltip
     $('[data-title!=""]').qtip({
         content: { attr: 'data-title' },
-        style: { classes: 'qtip-bootstrap' }
-    });
-
-    // page tree off-canvas toggle
-    $('[data-toggle=offcanvas]').click(function() {
-        $('.row-offcanvas').toggleClass('active');
-        $(this).find('i').toggleClass('fa-caret-right').toggleClass('fa-caret-left');
-    });
-
-    // page tree caret toggle
-    $('div#sidebar li span').on('click',function(e) {
-        $(this).toggleClass('fa-caret-down').toggleClass('fa-caret-right');
+        style: { classes: 'qtip-bootstrap' },
+        viewport: $(window)
     });
 
     // page tree hover tooltips

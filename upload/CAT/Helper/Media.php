@@ -72,6 +72,30 @@ if (!class_exists('CAT_Helper_Media'))
          * @access public
          * @return
          **/
+        public static function getAttributes($id)
+        {
+            $attr = array();
+            $sth = self::db()->query(
+                'SELECT * FROM `:prefix:media_data` WHERE `media_id`=?',
+                array($id)
+            );
+            $data = $sth->fetchAll();
+            if(is_array($data) && count($data))
+            {
+                foreach($data as $item)
+                {
+                    $attr[$item['attribute']] = $item['value'];
+                }
+                $attr['hfilesize'] = CAT_Helper_Directory::byte_convert($attr['filesize']);
+            }
+            return $attr;
+        }   // end function getAttributes()
+        
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function getMediaFromDir($dir,$filter=NULL)
         {
             $self     = self::getInstance();
@@ -98,86 +122,162 @@ if (!class_exists('CAT_Helper_Media'))
                     );
             CAT_Helper_Directory::reset();
 
+            // load file data from database
+            $sth = self::db()->query(
+                  'SELECT * FROM `:prefix:media` AS `t1` '
+                . 'WHERE `path`=?',
+                array($dir)
+            );
+            $dbdata  = $sth->fetchAll();
+            $dbfiles = array();
+            if(is_array($dbdata) && count($dbdata))
+            {
+                foreach($dbdata as $index => $item)
+                {
+                    $dbfiles[$item['filename']] = $item;
+                }
+            }
+
             foreach($files as $index => $filename)
             {
                 $data[] = array();
                 end($data);
                 $index = key($data);
 
-                $data[$index]['filename'] = CAT_Helper_Directory::getName($filename);
+                // add info to db
+                if(!isset($dbfiles[pathinfo($filename, PATHINFO_BASENAME)]))
+                {
+                    self::db()->query(
+                          'INSERT INTO `:prefix:media` ( `site_id`, `path`, `filename`, `checksum` ) '
+                        . 'VALUES (?, ?, ?, ? )',
+                        array(1, $dir, pathinfo($filename, PATHINFO_BASENAME), sha1_file($filename))
+                    );
+                    $data[$index] = self::analyzeFile(self::db()->lastInsertId(),$filename);
+                } else {
+                    $data[$index] = self::getAttributes($dbfiles[pathinfo($filename,PATHINFO_BASENAME)]['media_id']);
+                }
+
+                $data[$index]['filename'] = CAT_Helper_Directory::getName(pathinfo($filename,PATHINFO_BASENAME));
                 $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
-
-                $info = $self->fileinfo()->analyze($filename);
-
-                // base data
-                foreach(array_values(self::$tag_map['basedata']) as $attr)
-                {
-                    $data[$index][$attr]
-                        = isset($info[$attr])
-                        ? $info[$attr]
-                        : NULL;
-                    if(!$data[$index][$attr])
-                    {
-                        foreach(array_values(array('video')) as $key)
-                        {
-                            if(isset($info[$key][$attr]))
-                                $data[$index][$attr] = $info[$key][$attr];
-                        }
-                    }
-                }
-                if(isset($data[$index]['filesize']) && $data[$index]['filesize'] != 'n/a')
-                {
-                    $data[$index]['hfilesize'] = CAT_Helper_Directory::byte_convert($data[$index]['filesize']);
-                }
-                $data[$index]['moddate'] = CAT_Helper_DateTime::getDateTime(CAT_Helper_Directory::getModdate($filename));
-                        
-                if(isset($info['mime_type']))
-                {
-                    $tmp = array();
-                    list($group,$type) = explode('/',$info['mime_type']);
-                    switch($group)
-                    {
-                        case 'video':
-                            $data[$index]['video']    = true;
-                            break;
-                        case 'image':
-                            if($type == 'jpeg') $type = 'jpg';
-                            $data[$index]['image']    = true;
-                            $data[$index]['preview']  = CAT_Helper_Validate::path2uri($filename);
-                            break;
-                    }
-                    if(isset($info[$type]) && isset($info[$type]['exif']))
-                    {
-                        foreach(self::$tag_map as $key => $attrs)
-                        {
-                            if(isset($info[$type]['exif'][$key]))
-                            {
-                                $arr = $info[$type]['exif'][$key];
-                                foreach($attrs as $attr)
-                                {
-                                    $tmp[$attr] = ( isset($arr[$attr]) ? $arr[$attr] : '?' );
-                                }
-                            }
-                        }
-                        $data[$index]['exif'] = $tmp;
-                    }
-                    if(
-                           isset($info['tags'])
-                        && isset($info['tags']['iptc'])
-                        && isset($info['tags']['iptc']['IPTCApplication'])
-                        && isset($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
-                    ) {
-                        $data[$index]['copyright']
-                            = is_array($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
-                            ? $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'][0]
-                            : $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'];
-                    }
-
-                }
             }
 
             return $data;
         }   // end function getMediaFromDir()
+
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function analyzeFile($id,$filename)
+        {
+            $self = self::getInstance();
+
+            $info = $self->fileinfo()->analyze($filename);
+            $data = array();
+
+            // base data
+            foreach(array_values(self::$tag_map['basedata']) as $attr)
+            {
+                $data[$attr]
+                    = isset($info[$attr]) ? $info[$attr] : NULL;
+
+                if(!$data[$attr])
+                {
+                    foreach(array_values(array('video')) as $key)
+                    {
+                        if(isset($info[$key][$attr]))
+                            $data[$attr] = $info[$key][$attr];
+                    }
+                }
+
+                if($data[$attr])
+                {
+                    self::db()->query(
+                          'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
+                        . 'VALUES(?, ?, ?)',
+                        array($id, $attr, $data[$attr])
+                    );
+                }
+            }
+
+            // file size
+            if(isset($data['filesize']) && $data['filesize'] != 'n/a')
+            {
+                $data['hfilesize'] = CAT_Helper_Directory::byte_convert($data['filesize']);
+                self::db()->query(
+                      'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
+                    . 'VALUES(?, ?, ?)',
+                    array($id, 'filesize', $data['filesize'])
+                );
+            }
+
+            // modification time
+            $data['moddate'] = CAT_Helper_DateTime::getDateTime(CAT_Helper_Directory::getModdate($filename));
+            self::db()->query(
+                  'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
+                . 'VALUES(?, ?, ?)',
+                array($id, 'moddate', $data['moddate'])
+            );
+
+            if(isset($info['mime_type']))
+            {
+                $tmp = array();
+                list($group,$type) = explode('/',$info['mime_type']);
+                switch($group)
+                {
+                    case 'video':
+                        $data['video']    = true;
+                        break;
+                    case 'image':
+                        if($type == 'jpeg') $type = 'jpg';
+                        $data['image']    = true;
+                        $data['preview']  = CAT_Helper_Validate::path2uri($filename);
+                        break;
+                }
+
+                if(isset($info[$type]) && isset($info[$type]['exif']))
+                {
+                    foreach(self::$tag_map as $key => $attrs)
+                    {
+                        if(isset($info[$type]['exif'][$key]))
+                        {
+                            $arr = $info[$type]['exif'][$key];
+                            foreach($attrs as $attr)
+                            {
+                                $tmp[$attr] = ( isset($arr[$attr]) ? $arr[$attr] : '?' );
+                                self::db()->query(
+                                      'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
+                                    . 'VALUES(?, ?, ?)',
+                                    array($id, $attr, $tmp[$attr])
+                                );
+                            }
+                        }
+                    }
+                    $data['exif'] = $tmp;
+                }
+
+                if(
+                       isset($info['tags'])
+                    && isset($info['tags']['iptc'])
+                    && isset($info['tags']['iptc']['IPTCApplication'])
+                    && isset($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
+                ) {
+                    $data['copyright']
+                        = is_array($info['tags']['iptc']['IPTCApplication']['CopyrightNotice'])
+                        ? $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'][0]
+                        : $info['tags']['iptc']['IPTCApplication']['CopyrightNotice'];
+                    self::db()->query(
+                          'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
+                        . 'VALUES(?, ?, ?)',
+                        array($id, 'copyright', $data['copyright'])
+                    );
+                }
+            }
+
+            return $data;
+        }   // end function analyzeFile()
+        
         
 
     }   // ----- class CAT_Helper_Media -----

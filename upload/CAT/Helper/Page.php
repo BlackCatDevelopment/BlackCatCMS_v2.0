@@ -24,12 +24,26 @@ if (!class_exists('CAT_Helper_Page'))
 
     class CAT_Helper_Page extends CAT_Object
     {
+        /**
+         * log level
+         **/
         protected static $loglevel            = \Monolog\Logger::EMERGENCY;
         #protected static $loglevel            = \Monolog\Logger::DEBUG;
+        /**
+         * current instance (singleton pattern)
+         **/
         private   static $instance            = NULL;
-
+        /**
+         * output template for meta tags
+         **/
         private   static $meta_tpl            = '<meta %%content%% />';
+        /**
+         * output template for external stylesheets
+         **/
         private   static $css_tpl             = '<link rel="stylesheet" href="%%file%%" media="%%media%%" />';
+        /**
+         * output template for external javascripts
+         **/
         private   static $js_tpl              = '%%condition_open%%<script type="text/javascript" src="%%file%%">%%code%%</script>%%condition_close%%';
 
         private   static $pages               = array();
@@ -104,6 +118,29 @@ if (!class_exists('CAT_Helper_Page'))
         }   // end function addCSS()
 
         /**
+         * allows to add a headers.inc.php or footers.inc.php at runtime;
+         * used by WYSIWYG for example to include the editor's inc files
+         *
+         * if $position is omitted, the method will try to get it from the
+         * $file name (example: headers.inc.php -> header); defaults to
+         * header on failure
+         *
+         * @access public
+         * @param  string  $file      file path
+         * @param  string  $position  header|footer (optional)
+         * @return void
+         **/
+        public static function addInc($file,$position=NULL)
+        {
+            if(!$position)
+            {
+                preg_match('~^(.*)s\.inc\.php$~i',pathinfo($file,PATHINFO_BASENAME),$m);
+                $position = ( isset($m[1]) ? $m[1] : 'header' );
+            }
+            self::getIncludes($file,$position);
+        }   // end function addInc()
+
+        /**
          * allows to add a JS file programmatically
          *
          * @access public
@@ -148,7 +185,7 @@ if (!class_exists('CAT_Helper_Page'))
         }   // end function addMeta()
 
         /**
-         * clear all CSS info collected so far
+         * clear all (!) CSS info collected so far
          *
          * @access public
          * @return
@@ -199,11 +236,11 @@ if (!class_exists('CAT_Helper_Page'))
             $self  = self::$instance;
 
             // check params
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// FRAGE: Stillschweigend ignorieren (return) oder wirklich Fehlermeldung?
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(!in_array($position,array('header','footer')))
-                $self::printFatalError('Invalid data!');
+            {
+                self::log()->addError(sprintf('invalid position [%s] passed',$position));
+                return false;
+            }
 
             // don't do this twice
             if ($position=='header' && defined('CAT_HEADERS_SENT'))
@@ -236,7 +273,7 @@ if (!class_exists('CAT_Helper_Page'))
                 $page_id = CAT_Page::getID();
                 if($page_id)
                 {
-                    $sections = self::getSections($page_id);
+                    $sections = CAT_Sections::getSections($page_id);
                     if(count($sections))
                     {
                         foreach($sections as $block => $items)
@@ -264,11 +301,25 @@ if (!class_exists('CAT_Helper_Page'))
             // add backend area / region files
             if(CAT_Backend::isBackend())
             {
-                $area = $self->router()->getFunction();
+                $area = CAT_Backend::getArea();
+                self::log()->addDebug(sprintf(
+                    'looking for area specific js/css, current area: [%s]',
+                    $area
+                ));
                 foreach(array_values(self::$scan_paths) as $path)
                 {
                     if($position=='header')
                     {
+                        $cssfile = CAT_Helper_Directory::sanitizePath($path.'/css/default/backend.css');
+                        if(file_exists($cssfile))
+                        {
+                            self::log()->addDebug(sprintf(
+                                'adding CSS file: [%s]',
+                                $cssfile
+                            ));
+                            self::addCSS(self::checkPath(CAT_Helper_Validate::path2uri($cssfile)));
+                        }
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Variante
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -277,6 +328,10 @@ if (!class_exists('CAT_Helper_Page'))
                         // css in header only
                         if(file_exists($cssfile))
                         {
+                            self::log()->addDebug(sprintf(
+                                'adding CSS file: [%s]',
+                                $cssfile
+                            ));
                             self::addCSS(self::checkPath(CAT_Helper_Validate::path2uri($cssfile)));
                         }
                     }
@@ -286,6 +341,10 @@ if (!class_exists('CAT_Helper_Page'))
                     }
                     if(file_exists($jsfile))
                     {
+                        self::log()->addDebug(sprintf(
+                            'adding JS file: [%s], position [%s]',
+                            $jsfile,$position
+                        ));
                         self::addJS(self::checkPath(CAT_Helper_Validate::path2uri($jsfile)),$position);
                     }
                 }
@@ -596,30 +655,6 @@ if (!class_exists('CAT_Helper_Page'))
         }   // end function getParentIDs()
 
         /**
-         * returns the sections of a page
-         *
-         * to get all sections of all pages, leave param empty
-         *
-         * @access public
-         * @param  integer  $page_id
-         * @return array
-         **/
-        public static function getSections($page_id=NULL)
-        {
-            if(!count(self::$pages)) self::getInstance();
-            if(!count(self::$pages_sections))
-                self::$pages_sections = CAT_Sections::getActiveSections();
-
-            if($page_id)
-                return
-                      isset(self::$pages_sections[$page_id])
-                    ? self::$pages_sections[$page_id]
-                    : array();
-                else
-                    return self::$pages_sections;
-        }   // end function getSections()
-
-        /**
          *
          * @access public
          * @return
@@ -651,10 +686,10 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         public static function isActive($page_id)
         {
-            self::getSections($page_id);
+            $sections = CAT_Sections::getSections($page_id);
             if(self::isDeleted($page_id))
                 return false;
-            if(isset(self::$pages_sections[$page_id]) && count(self::$pages_sections[$page_id]))
+            if(count($sections))
                 return true;
             return false;
         } // end function isActive()
@@ -880,10 +915,19 @@ if (!class_exists('CAT_Helper_Page'))
             // add js having prerequisites
             if(count(self::$prereq_js))
             {
+                self::log()->addDebug(sprintf(
+                    'checking [%d] prerequisites', count(self::$prereq_js)
+                ));
                 foreach(self::$prereq_js as $required => $urls)
                 {
+                    self::log()->addDebug(sprintf(
+                        '    checking required [%s]', $required
+                    ));
                     if(in_array($required,self::$loaded))
                     {
+                        self::log()->addDebug(sprintf(
+                            '        found, adding [%d] urls', count($urls)
+                        ));
                         foreach($urls as $file)
                             $local[] = preg_replace('~^/~','',$file);
                     }
@@ -1074,8 +1118,10 @@ if (!class_exists('CAT_Helper_Page'))
         private static function getIncludes($file,$position='header')
         {
             $self = self::getInstance();
+            $file = CAT_Helper_Directory::sanitizePath($file);
+
             // load file
-            $self->log()->addDebug(sprintf('loading file [%s], position [%s]',$file,$position));
+            self::log()->addDebug(sprintf('loading file [%s], position [%s]',$file,$position));
             require $file;
 
             $array   =& ${'mod_'.$position.'s'};

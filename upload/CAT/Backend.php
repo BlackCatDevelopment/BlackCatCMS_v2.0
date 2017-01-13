@@ -141,7 +141,7 @@ if (!class_exists('CAT_Backend', false))
                     if($self->user()->hasPerm('pages_list'))
                     {
                         $self->tpl()->setGlobals('pages',CAT_Backend_Page::tree());
-                        $self->tpl()->setGlobals('sections',CAT_Helper_Page::getSections());
+                        $self->tpl()->setGlobals('sections',CAT_Sections::getSections());
                     }
                 }
 
@@ -157,9 +157,10 @@ if (!class_exists('CAT_Backend', false))
          **/
         public static function getArea()
         {
-            $self = self::$instance;
-            $area = $self->router()->getFunction();
-            return $area;
+            $route = self::router()->getRoute();
+            // example route: backend/page/edit/1
+            $parts = explode('/',$route);
+            return $parts[1];
         }   // end function getArea()
 
         /**
@@ -329,19 +330,26 @@ if (!class_exists('CAT_Backend', false))
                 $self->log()->addDebug('Authentication succeeded');
                 $_SESSION['USER_ID'] = $self->user()->get('user_id');
                 // forward
-                echo json_encode(array(
-                    'success' => true,
-                    'url'     => CAT_ADMIN_URL.'/dashboard'
-                ));
-                exit;
+                if(self::asJSON())
+                {
+                    echo json_encode(array(
+                        'success' => true,
+                        'url'     => CAT_ADMIN_URL.'/dashboard'
+                    ));
+                }
+                else
+                {
+                    header('Location: '.CAT_ADMIN_URL.'/dashboard');
+                }
             }
             else
             {
                 $self->log()->debug('Authentication failed!');
-                self::json_error('Authentication failed!');
+                if(self::asJSON())
+                    self::json_error('Authentication failed!');
+                else
+                    self::printFatalError('Authentication failed!');
             }
-            #
-            #header('Location: '.CAT_ADMIN_URL.'/login');
             exit;
         }   // end function authenticate()
 
@@ -425,6 +433,7 @@ if (!class_exists('CAT_Backend', false))
             // templates renders the HTML output)
             $lb = CAT_Object::lb();
             $lb->set('__id_key','id');
+            $lb->set('__title_key','title');
 
             $tpl_data['MAIN_MENU'] = $lb->sort($menu,0);
 

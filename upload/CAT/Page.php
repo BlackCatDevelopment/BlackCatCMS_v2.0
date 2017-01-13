@@ -141,33 +141,47 @@ if (!class_exists('CAT_Page', false))
                 }
             }
             // get active sections
-            $sections = CAT_Sections::getActiveSections($page_id,$block);
+
+            $sections = CAT_Sections::getSections($page_id,$block);
 
             if(!count($sections)) // no content for this block
                 return false;
 
             $output = array();
-            foreach ($sections as $section)
+
+            foreach($sections as $block => $items)
             {
-                // spare some typing
-                $section_id = $section['section_id'];
-                $module     = $section['module'];
-                $class      = 'CAT_Addon_Page_'.ucfirst($module);
-                $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
-                if (file_exists($handler))
+                foreach($items as $section)
                 {
-                    // this will use the current language
-                    CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
-                    self::setTemplatePaths($module);
-                    include_once $handler;
-                    $output[] = $class::view($section_id);
-                }
-                else
-                {
-                    self::log()->addError(
-                        sprintf('non existing module [%s] or missing handler [%s], called on page [%d], block [%d]',
-                        $module,'class.'.$module.'.php',$page_id,$block)
-                    );
+                    // spare some typing
+                    $section_id = $section['section_id'];
+                    $module     = $section['module'];
+
+                    // special case
+                    if($module=='wysiwyg')
+                    {
+                        $output[] = CAT_Addon_WYSIWYG::view($section_id);
+                    }
+                    else
+                    {
+                        $class      = 'CAT_Addon_Page_'.ucfirst($module);
+                        $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
+                        if (file_exists($handler))
+                        {
+                            // this will use the current language
+                            CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                            self::setTemplatePaths($module);
+                            include_once $handler;
+                            $output[] = $class::view($section_id);
+                        }
+                        else
+                        {
+                            self::log()->addError(
+                                sprintf('non existing module [%s] or missing handler [%s], called on page [%d], block [%d]',
+                                $module,'class.'.$module.'.php',$page_id,$block)
+                            );
+                        }
+                    }
                 }
             }
             echo implode("\n", $output);
@@ -255,7 +269,7 @@ if (!class_exists('CAT_Page', false))
             ob_clean();
 
             echo $output;
-        }
+        }   // end function show()
 
     } // end class CAT_Page
 

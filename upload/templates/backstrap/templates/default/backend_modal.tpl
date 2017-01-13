@@ -9,9 +9,9 @@
         {if $modal_text}<div class="info">{translate($modal_text)}</div><br /><br />{/if}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{translate('Close')}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{translate('Cancel & close')}</button>
         {if $modal_savebtn}
-        <button type="button" class="btn btn-primary">{translate('Save changes')}</button>
+        <button type="button" class="btn btn-primary">{translate('Confirm')}</button>
         {/if}
       </div>
     </div>

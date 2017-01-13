@@ -7,6 +7,10 @@ ul.nav.nav-sidebar li span,ul.nav-media li span{position:relative;display:inline
 div#sidebar ul.nav.nav-sidebar li li, ul.nav-media li li {padding-left:22px;}
 html body.fuelux div.container-fluid div.row div.col-md-10 section ol.breadcrumb{margin:0;padding:0 0 0 7px;}
 
+/* drag & drop */
+.bs_placeholder{border:1px dashed #9C9C9C;margin:0 1em 1em 0;height:50px;}
+.bs_highlight{background-color:#ccc;}
+
 /* detached buttons */
 div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-left:5px;}
 
@@ -46,6 +50,7 @@ div.panel-content{margin-left:35px;}
 /* fixes panels for Bootswatch Themes */
 ul.draggable-panel li.panel.panel-primary div.panel-body.pos-r{background-color:white;}
 .panel table{background-color:transparent;}
+div.panel-heading table{color:#fff;}
 
 /* edit page icons */
 li.panel div.panel-body.pos-r div.panel-icon-wrapper ul.nav.nav-left li span.fa{display:block;padding:10px 15px;color:#337ab7;}

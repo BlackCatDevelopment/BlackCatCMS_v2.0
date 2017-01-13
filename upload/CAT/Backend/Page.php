@@ -49,7 +49,6 @@ if (!class_exists('CAT_Backend_Page'))
         {
             // note: the access rights for index() are checked by the Backend
             // class, so there's no need to do it here
-            $self  = self::getInstance();
             $pages = self::list(true);
             // sort pages by children
             $tpl_data = array(
@@ -61,7 +60,7 @@ if (!class_exists('CAT_Backend_Page'))
                 exit;
             }
             CAT_Backend::print_header();
-            $self->tpl()->output('backend_pages', $tpl_data);
+            self::tpl()->output('backend_pages', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function index()
 
@@ -79,9 +78,8 @@ if (!class_exists('CAT_Backend_Page'))
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
-            // get sections
-            $sections = CAT_Sections::getSections($pageID);
-
+            // get sections; format: $sections[array_of_blocks[array_of_sections]]
+            $sections = CAT_Sections::getSections($pageID,NULL,false);
             $tpl_data = array(
                 'page'   => CAT_Helper_Page::properties($pageID),
                 'linked' => CAT_Helper_Page::getLinkedByLanguage($pageID),
@@ -90,20 +88,33 @@ if (!class_exists('CAT_Backend_Page'))
 
             if(count($sections))
             {
-                foreach($sections as $section)
+                foreach($sections as $block => $items)
                 {
-                    // spare some typing
-                    $section_id = $section['section_id'];
-                    $module     = $section['module'];
-                    $class      = 'CAT_Addon_Page_'.ucfirst($module);
-                    $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
-                    if (file_exists($handler))
+                    foreach($items as $section)
                     {
-                        CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
-                        self::setTemplatePaths($module);
-                        include_once $handler;
-                        $class::initialize();
-                        $content = $class::modify($section_id);
+                        // spare some typing
+                        $section_id = $section['section_id'];
+                        $module     = $section['module'];
+                        $class      = 'CAT_Addon_Page_'.ucfirst($module);
+
+                        // special case
+                        if($module=='wysiwyg')
+                        {
+                            CAT_Addon_WYSIWYG::initialize();
+                            $content = CAT_Addon_WYSIWYG::modify($section_id);
+                        }
+                        else
+                        {
+                            $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
+                            if (file_exists($handler))
+                            {
+                                CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                                self::setTemplatePaths($module);
+                                include_once $handler;
+                                $class::initialize();
+                                $content = $class::modify($section_id);
+                            }
+                        }
                         $tpl_data['blocks'][] = array_merge(
                             $section,
                             array('content' => $content)
@@ -568,18 +579,11 @@ echo "remove file $remove_file\n<br />";
                     $paths = array(
                         CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/lib_jquery/plugins/')
                     );
-/*
-                if(defined('WYSIWYG_EDITOR') && WYSIWYG_EDITOR != '')
-                {
-                    $cfg_file = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/modules/'.WYSIWYG_EDITOR.'/c_editor.php');
-                    if(file_exists($cfg_file))
-                    {
-                        require $cfg_file;
-                        $c        = new c_editor();
-                        array_push($paths, CAT_Helper_Directory::sanitizePath($c->getPluginsPath()));
-                    }
-                }
-*/
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Dateien des WYSIWYG-Editors, evtl. des Templates?
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     $db = self::db(); // spare some typing...
 
                     foreach($paths as $path)

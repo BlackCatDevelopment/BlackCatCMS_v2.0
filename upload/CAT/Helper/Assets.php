@@ -32,6 +32,7 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
         protected static $mime_map  = array(
             'css'   => 'text/css',
             'js'    => 'text/javascript',
+            'png'   => 'image/png',
         );
 
         public static function getInstance()
@@ -49,6 +50,19 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
         public static function serve($type,$files)
         {
             if(!count($files)) return false;
+
+            if($type=='images')
+            {
+                foreach($files as $file)
+                {
+                    if(file_exists(CAT_ENGINE_PATH.'/'.$file))
+                    {
+                        copy(CAT_ENGINE_PATH.'/'.$file,CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
+                        #header('Content-Type: '.self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]);
+                        echo CAT_URL.'/assets/'.pathinfo($file,PATHINFO_BASENAME);
+                    }
+                }
+            }
 
             // create asset factory and pass engine path as basedir
             $factory = new \Assetic\Factory\AssetFactory(CAT_ENGINE_PATH);

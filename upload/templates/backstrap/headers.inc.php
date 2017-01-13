@@ -33,7 +33,7 @@ $mod_headers = array(
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
             array('file'=>'modules/lib_jquery/plugins/jquery.qtip/jquery.qtip.min.css',),
             array('file'=>'modules/lib_jquery/jquery-ui/themes/base/jquery-ui.css',),
-            array('file'=>'modules/lib_jquery/plugins/jquery.timepicker/jquery.timepicker.min.css',),
+            array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),
             array('file'=>'modules/lib_jquery/plugins/jquery.datatables/css/dataTables.bootstrap.min.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
@@ -47,7 +47,9 @@ $mod_headers = array(
             'modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js',
             'modules/lib_jquery/plugins/jquery.datatables/js/dataTables.mark.min.js',
             'modules/lib_jquery/plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
+            'modules/lib_jquery/plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js',
             'CAT/Backend/js/session.js',
+            'templates/backstrap/js/datetimepicker/jquery.datetimepicker.full.js',
             array(
                 'conditional' => 'lt IE 9',
                 'files' => array(

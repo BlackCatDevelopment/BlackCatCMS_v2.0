@@ -47,6 +47,7 @@ $LANG = array(
     // --------------- Globals ---------------
     'All'             => 'Alle',
     'Cancel'          => 'Abbrechen',
+    'Cancel & close'  => 'Abbrechen & Schließen',
     'Close'           => 'Schließen',
     'Column'          => 'Spalte',
     'Common'          => 'Allgemein',

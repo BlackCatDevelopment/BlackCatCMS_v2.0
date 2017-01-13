@@ -19,13 +19,21 @@ if(!class_exists('CAT_Object',false))
 {
     class CAT_Object
     {
-        // log level
+        /**
+         * log level
+         **/
         private   static $loglevel   = \Monolog\Logger::EMERGENCY;
-        // array to store class/object handlers
+        /**
+         * array to store class/object handlers (for accessor functions)
+         */
         protected static $objects    = array();
-        // current error state
+        /**
+         * current error state; default 500 (Internal server error)
+         **/
         protected static $errorstate = 500;
-        // HTTP status
+        /**
+         * known HTTP status
+         **/
         protected static $state      = array(
             '200' => 'Success',
             '201' => 'Created',
@@ -39,7 +47,9 @@ if(!class_exists('CAT_Object',false))
             '429' => 'Too many requests',
             '500' => 'Internal Server Error',
         );
-        // current settings
+        /**
+         * current settings (data from settings DB table(s))
+         **/
         protected static $settings   = NULL;
 
         /**
@@ -410,6 +420,38 @@ if(!class_exists('CAT_Object',false))
             }
             return $addons;
         }   // end function getLanguages()
+
+        /**
+         * get value for setting $name
+         *
+         * @access public
+         * @param  string   setting name (example: wysiwyg_editor)
+         * @return mixed    setting value or false
+         **/
+        public static function getSetting($name)
+        {
+            if(!self::$settings)
+                self::loadSettings();
+            if(isset(self::$settings[$name]))
+                return self::$settings[$name];
+            return false;
+        }   // end function getSetting()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getStateID($name)
+        {
+            $sth = self::db()->query(
+                'SELECT `state_id` FROM `:prefix:item_states` WHERE `state_name`=?',
+                array($name)
+            );
+            $data = $sth->fetch();
+            if(isset($data['state_id'])) return $data['state_id'];
+            return false;
+        }   // end function getStateID()
 
         /**
          * converts variable names like "default_template_variant" into human

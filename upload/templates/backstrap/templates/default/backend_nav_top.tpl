@@ -1,5 +1,5 @@
 {template topmenu data}
-        {foreach $data item}{if $item.name != 'preferences' && $item.name != 'pages' && $item != 1}
+        {foreach $data item}{if $item.name != 'preferences' && $item.name != 'page' && $item != 1}
         <li{if $item.children} class="dropdown{if $item.level>0}-submenu{/if}{if $item.is_current || $item.is_in_trail} active{/if}"{/if}>
           <a href="{$item.href}"{if $item.children} class="dropdown-toggle" data-toggle="dropdown" aria-has-popup="true" aria-expanded="false"{/if}>
             <i class="fa fa-fw fa-{$item.name}"></i>

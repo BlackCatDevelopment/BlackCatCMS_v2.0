@@ -1,15 +1,19 @@
 <?php
 
-/**
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
+
+   @author          Black Cat Development
+   @copyright       2016 Black Cat Development
+   @link            http://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
 
 if (!class_exists('CAT_Backend_Section'))
 {
@@ -24,6 +28,7 @@ if (!class_exists('CAT_Backend_Section'))
         protected static $instance = NULL;
 
         /**
+         * create an instance (singleton)
          *
          * @access public
          * @return
@@ -36,18 +41,24 @@ if (!class_exists('CAT_Backend_Section'))
         }   // end function getInstance()
 
         /**
+         * delete a section
          *
          * @access public
          * @return
          **/
         public static function delete()
         {
-            $self = self::getInstance();
-            if(!$self->user()->hasPerm('pages_modify'))
+            if(!self::user()->hasPerm('pages_section_delete'))
                 CAT_Object::json_error('You are not allowed for the requested action!');
-            $id   = $self->router()->getParam();
-            $result = CAT_Sections::getInstance()->deleteSection($id);
-            echo CAT_Object::json_result($result,'');
+            $sectionID = self::router()->getParam();
+            if(!CAT_Sections::exists($sectionID))
+                CAT_Object::printFatalError('Invalid data!');
+            $result = CAT_Sections::deleteSection($sectionID);
+            if(self::asJSON())
+            {
+                echo CAT_Object::json_result($result, '');
+                return;
+            }
         }   // end function delete()
 
         /**
@@ -55,43 +66,76 @@ if (!class_exists('CAT_Backend_Section'))
          * @access public
          * @return
          **/
-        public static function edit()
+        public static function order()
         {
-            $self = self::getInstance();
-            if(!$self->user()->hasPerm('pages_modify'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
-            $val    = CAT_Helper_Validate::getInstance();
-            $field  = $val->sanitizePost('name');
-            $id     = $val->sanitizePost('pk');
-            $value  = $val->sanitizePost('value');
-            $result = CAT_Sections::getInstance()->updateSection(
-                $id,
-                array($field=>$value)
-            );
-            echo CAT_Object::json_result($result,'');
-        }   // end function edit()
+            $pageID  = self::getPageID();
+            // the user needs to have the global pages_edit permission plus
+            // permissions for the current page
+            if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
+                CAT_Object::printFatalError('You are not allowed for the requested action!');
+            $order = CAT_Helper_Validate::sanitizePost('order');
+            if(is_array($order) && count($order))
+            {
+                foreach($order as $i => $id)
+                {
+                    if(!CAT_Sections::exists($id)) continue;
+                    $i++;
+                    self::db()->query(
+                        'UPDATE `:prefix:pages_sections` SET `position`=? WHERE `section_id`=?',
+                        array($i,$id)
+                    );
+                }
+                if(self::asJSON())
+                {
+                    echo CAT_Object::json_result(true, '');
+                    return;
+                }
+            }
+        }   // end function order()
 
         /**
+         * delete a section
          *
          * @access public
          * @return
          **/
-        public static function publish()
+        public static function recover()
         {
-            $self  = self::getInstance();
-            $id    = $self->router()->getParam();
-            $start = CAT_Helper_Validate::sanitizePost('publ_start');
-            $end   = CAT_Helper_Validate::sanitizePost('publ_end');
-            $self->db()->query(
-                'UPDATE `:prefix:sections` SET `publ_start`=?, `publ_end`=? WHERE `section_id`=?',
-                array(($start?$start:0),($end?$end:0),$id)
-            );
-            if($self->db()->isError()) echo $self::json_error('error');
-            else                       echo $self::json_success('ok');
+            if(!self::user()->hasPerm('pages_section_recover'))
+                CAT_Object::json_error('You are not allowed for the requested action!');
+            $sectionID = self::router()->getParam();
+            if(!CAT_Sections::exists($sectionID))
+                CAT_Object::printFatalError('Invalid data!');
+            $result = CAT_Sections::recoverSection($sectionID);
+            if(self::asJSON())
+            {
+                echo CAT_Object::json_result($result, '');
+                return;
+            }
+        }   // end function recover()
 
-        }   // end function publish()
-        
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function getPageID()
+        {
+            $self    = self::getInstance();
+            $pageID  = CAT_Helper_Validate::sanitizePost('page_id','numeric',NULL);
 
-    } // class CAT_Helper_Settings
+            if(!$pageID)
+                $pageID  = CAT_Helper_Validate::sanitizeGet('page_id','numeric',NULL);
+
+            if(!$pageID)
+                $pageID = $self->router()->getParam(-1);
+
+            if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
+                CAT_Object::printFatalError('Invalid data');
+
+            return $pageID;
+        }   // end function getPageID()
+
+    } // class CAT_Backend_Section
 
 } // if class_exists()

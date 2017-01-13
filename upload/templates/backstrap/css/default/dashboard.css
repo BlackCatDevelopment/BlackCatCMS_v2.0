@@ -1,0 +1,6 @@
+/* dashboard lanes */
+div.dashboard{width:100%;}
+div.dashboard ul{float:left;list-style:none outside none;padding:.3%;min-height:30px;}
+/* fix dashboard panels */
+div.dashboard div.panel{margin-bottom:0;}
+div.dashboard li.ui-sortable-handle{margin-bottom:20px;}

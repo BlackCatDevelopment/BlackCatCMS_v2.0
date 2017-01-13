@@ -39,6 +39,12 @@ $(function() {
         }
     });
 
+
+// jQuery 1.4.3+
+//$( elements ).delegate( selector, events, data, handler );
+// jQuery 1.7+
+//$( elements ).on( events, selector, data, handler );
+
     // delegate the click event to the detached button
     //$('body').delegate('#bsAddWidget','click',function(e) {
     $('body').on('click','#bsAddWidget',function(e) {

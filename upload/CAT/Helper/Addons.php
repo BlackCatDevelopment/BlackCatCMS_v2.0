@@ -153,16 +153,18 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          * @param  string  $directory
          * @return mixed   array on success, NULL otherwise
          **/
-        public static function getAddonDetails($directory)
+        public static function getAddonDetails($directory,$field='*')
         {
             $self  = self::getInstance();
             $addon = $self->db()->query(
-                'SELECT * FROM `:prefix:addons` WHERE directory=:dir',
+                'SELECT '.$field.' FROM `:prefix:addons` WHERE directory=:dir',
                 array('dir'=>$directory)
             );
             if ( $addon->rowCount() > 0 )
             {
-                return $addon->fetch(PDO::FETCH_ASSOC);
+                $data = $addon->fetch(PDO::FETCH_ASSOC);
+                if($field!='*') return $data[$field];
+                return $data;
             }
             return NULL;
         } // end function getAddonDetails()

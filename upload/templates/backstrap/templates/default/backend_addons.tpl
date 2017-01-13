@@ -92,7 +92,9 @@
         </table>
     </div>
 
-{$file = cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
+{* get the name of the language file; allows to check if it exists *}
+{$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
+
 <script type="text/javascript">
 //<![CDATA[
     var lang   = '{$LANGUAGE}'.toLowerCase();
@@ -101,7 +103,7 @@
         stateSave: true,
         orderClasses: false{if cat_file_exists($file)},
         language: {
-            url: CAT_URL + "/js?files={cat('/modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}"
+            url: "{cat_asset_url($file,'js')}"
         }
         {/if}
     });

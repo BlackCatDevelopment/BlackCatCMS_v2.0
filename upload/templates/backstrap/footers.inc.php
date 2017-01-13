@@ -17,8 +17,6 @@ $mod_footers = array(
             '/modules/lib_bootstrap/vendor/js/bootstrap.min.js',
             '/modules/lib_bootstrap/vendor/js/bootstrap-editable.min.js',
             '/modules/lib_bootstrap/vendor/js/fuelux.min.js',
-            '/modules/lib_jquery/plugins/jquery.timepicker/jquery.timepicker.js',
-            '/modules/lib_jquery/plugins/jquery.timepicker/i18n/jquery-ui-timepicker-addon-i18n.min.js',
             '/modules/lib_jquery/plugins/jquery.qtip/jquery.qtip.min.js',
         )
     )

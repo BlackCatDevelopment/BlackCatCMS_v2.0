@@ -23,9 +23,22 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 
 	class CAT_Sections extends CAT_Object
 	{
-	
-        private static $active   = array();
-        private static $instance = NULL;
+        /**
+         * log level
+         **/
+        public    static $loglevel   = \Monolog\Logger::EMERGENCY;
+        /**
+         * list of all sections
+         **/
+        private   static $sections   = array();
+        /**
+         * list of active sections
+         **/
+        private   static $active     = array();
+        /**
+         * instance
+         **/
+        private   static $instance   = NULL;
 
 	    /**
          * constructor
@@ -36,11 +49,9 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         public static function getInstance()
         {
             if (!self::$instance)
-            {
                 self::$instance = new self();
-            }
             return self::$instance;
-        }
+        }   // end function getInstance()
 
         /**
          * allow to use methods in OO context
@@ -106,17 +117,22 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
          **/
         public static function deleteSection($section_id)
         {
-            $self    = self::getInstance();
-            // get page_id
-            $section = self::getSection($section_id);
             // delete section
-            if($section !== false)
+            if(self::exists($section_id))
             {
-            	$q   = $self->db()->query(
-                    'DELETE FROM `:prefix:sections` WHERE `section_id`=:id',
-                    array('id'=>$section_id)
-                );
-            	return $self->db()->isError();
+                if(self::getSetting('trash_enabled')===true)
+                {
+                    self::db()->query(
+                        'UPDATE `:prefix:sections` SET `state_id`=? WHERE `section_id`=?',
+                        array(self::getStateID('deleted'), $section_id)
+                    );
+                } else {
+                	self::db()->query(
+                        'DELETE FROM `:prefix:sections` WHERE `section_id`=:id',
+                        array('id'=>$section_id)
+                    );
+                }
+            	return ( self::db()->isError() ? false : true );
                 // note: we do not clean the position (order) here as it's no
                 // problem to have a gap
             } else {
@@ -124,60 +140,18 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
             }
         }   // end function deleteSection()
 
-	    /**
-	     * retrieves all active sections for a page
-	     * if $page_id is empty, all active sections are returned
-	     *
-	     * @access public
-	     * @param  integer  $page_id
-	     * @param  integer  $block    optional block ID
-	     * @param  boolean  $backend  default false
-	     * @return array()
-	     **/
-	    public static function getActiveSections($page_id=NULL, $block=null, $backend=false)
-	    {
-            // cache data
-	        if (!self::$active)
-	        {
-                if(!self::$instance)
-                    self::getInstance();
-                // get all sections for all pages
-                $q      = 'SELECT *'
-                        . ' FROM `:prefix:sections` '
-                        . ' ORDER BY block, position';
-	            $sec    = self::$instance->db()->query($q);
-	            if ($sec->rowCount() == 0)
-	                return NULL;
-	            while ($section = $sec->fetch())
-	            {
-	                // skip this section if it is out of publication-date
-	                $now = time();
-	                if (!(($now <= $section['publ_end'] || $section['publ_end'] == 0) && ($now >= $section['publ_start'] || $section['publ_start'] == 0)))
-	                    continue;
-	                self::$active[$section['page_id']][$section['block']][] = $section;
-	            }
-	        }
-
-            // if a block is given
-	        if ( $block )
-				return ( isset( self::$active[$page_id][$block] ) )
-					? self::$active[$page_id][$block]
-					: array();
-
-            // if a page_id is given
-            if($page_id)
-            {
-    			$all = array();
-    			foreach( self::$active[$page_id] as $block => $values )
-    				foreach( $values as $value )
-    			    	array_push( $all, $value );
-    			return $all;
-            }
-
-            // default
-            return self::$active;
-			
-	    }   // end function getActiveSections()
+        /**
+         * check if a section exists
+         *
+         * @access public
+         * @return
+         **/
+        public static function exists($section_id)
+        {
+            $data = self::getSection($section_id);
+            if(!$data || !is_array($data) || !count($data)) return false;
+            return true;
+        }   // end function exists()
 	    
 	    /**
          *
@@ -197,20 +171,112 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         }   // end function getSection()
 
         /**
+         * This method retrieves _all_ sections and saves them into a class
+         * variable.
+         *
+         * If a $block_id is passed, the $page_id is mandatory. The method
+         * will return only sections for that block on that page.
+         *
+         * $active_only defaults to true; it enables the checks for
+         * publ_start and publ_end and "visible" column in pages_sections table.
          *
          * @access public
-         * @return
+         * @param  integer  $page_id     Sections for that page only
+         * @param  integer  $block_id    Sections for that block only
+         * @param  boolean  $active_only Only active sections
+         * @return array
          **/
-        public static function getSections($page_id)
+        public static function getSections($page_id=NULL,$block_id=NULL,$active_only=true)
         {
-            $self = self::getInstance();
-            $q    = $self->db()->query(
-                'SELECT * FROM `:prefix:sections` WHERE `page_id` = :page_id ORDER BY position ASC',
-                array('page_id'=>$page_id)
-            );
-            if($q->rowCount())
-                return $q->fetchAll();
-            return array();
+            // cache data
+	        if (!self::$sections)
+	        {
+                $q = 'SELECT '
+                   . '    `t1`.`section_id`, `t1`.`module`, `t1`.`modified_when`, `t1`.`modified_by`, '
+                   . '    `t2`.`page_id`, `t2`.`position`, `t2`.`block`, '
+                   . '    `t2`.`publ_start`, `t2`.`publ_end`, '
+                   . '    `t2`.`publ_by_time_start`, `t2`.`publ_by_time_end`, '
+                   . '    `t2`.`name`, `t4`.`state_id` '
+                   . 'FROM `:prefix:sections` AS `t1` '
+                   . 'JOIN `:prefix:pages_sections` AS `t2` '
+                   . 'ON `t1`.`section_id`=`t2`.`section_id` '
+                   . 'JOIN `:prefix:pages` AS `t3` '
+                   . 'ON `t2`.`page_id`=`t3`.`page_id` '
+                   . 'JOIN `:prefix:item_states` AS `t4` '
+                   . 'ON `t1`.`state_id`=`t4`.`state_id` '
+                   . 'WHERE `t1`.`site_id`=? '
+                   . 'ORDER BY `block`, `t2`.`position`';
+
+                $sec = self::db()->query($q,array(CAT_SITE_ID));
+	            if($sec->rowCount() == 0) return NULL;
+
+                $data = $sec->fetchAll();
+                foreach($data as $i => $section)
+                {
+                    self::$sections[$section['page_id']][$section['block']][] = $section;
+                }
+            }
+
+            // only active sections
+            if($active_only)
+            {
+                if(!self::$active) // cache
+                {
+                    foreach(self::$sections as $pageID => $items)
+                    {
+                        self::$active[$pageID] = array();
+                        foreach($items as $blockID => $sections)
+                        {
+                            foreach($sections as $section)
+                            {
+                                // skip this section if it is out of publication-date
+                                if($section['publ_start']!='' || $section['publ_end']!='')
+                                {
+                	                $now = time();
+                	                if (!(
+                                           ($now <= $section['publ_end'] || $section['publ_end'] == 0)
+                                        && ($now >= $section['publ_start'] || $section['publ_start'] == 0)
+                                    )) {
+                                        self::log()->addDebug(sprintf(
+                                            'skipping section [%d] by publication date',
+                                            $section['section_id']
+                                        ));
+                	                    continue;
+                                    }
+                	                self::$active[$section['page_id']][$section['block']][] = $section;
+                                }
+                                if($section['publ_by_time_start']!='' || $section['publ_by_time_end']!='')
+                                {
+                                    $now   = new DateTime();
+                                    $start = new DateTime();
+                                    $end   = new DateTime();
+
+                                    $start->setTime(date("H",$section['publ_by_time_start']),date("i",$section['publ_by_time_start']));
+                                    $end->setTime(date("H",$section['publ_by_time_end']),date("i",$section['publ_by_time_end']));
+
+                                    if($now >= $start && $now <= $end)
+                                    {
+                                        self::$active[$section['page_id']][$section['block']][] = $section;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if($page_id)
+                    if(isset(self::$active[$page_id]))
+                        return self::$active[$page_id];
+                    else
+                        return NULL;
+            }
+
+            if($page_id)
+                if(isset(self::$sections[$page_id]))
+                    return self::$sections[$page_id];
+                else
+                    return NULL;
+
+            return self::$sections;
         }   // end function getSections()
         
 	    /**
@@ -302,13 +368,33 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	     * @return boolean
 	     *
 	     **/
-	    public static function hasActiveSections( $page_id )
+	    public static function hasActiveSections($page_id)
 	        {
 	        if (!isset(self::$active[$page_id]) )
 	            self::getActiveSections($page_id);
 	        return ( count(self::$active[$page_id]) ? true : false );
 	    }   // end function hasActiveSections()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function recoverSection($section_id)
+        {
+            if(self::exists($section_id))
+            {
+                self::db()->query(
+                    'UPDATE `:prefix:sections` SET `state_id`=? WHERE `section_id`=?',
+                    array(self::getStateID('default'), $section_id)
+                );
+                return ( self::db()->isError() ? false : true );
+            } else {
+                self::log()->addError('attempt to recover non-existing section');
+                return false; // silently fail
+            }
+        }   // end function recoverSection()
+        
         /**
          * checks if given section is active
          *
