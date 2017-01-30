@@ -18,7 +18,7 @@
 
 if(!defined('CAT_ENGINE_PATH')) die;
 
-define('CAT_ADMIN_URL','https://localhost/backend');
+define('CAT_ADMIN_URL',CAT_URL.'/'.CAT_BACKEND_PATH);
 
 // Composer autoloader
 require __DIR__ . '/vendor/autoload.php';

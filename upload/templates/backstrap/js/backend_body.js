@@ -114,6 +114,14 @@ $(function() {
     $('body').on('hidden.bs.modal', '.modal', function() {
         $(this).removeData('bs.modal');
     });
+    // trigger primary button on enter
+    $("body").on("shown.bs.modal", ".modal", function() {
+        $(this).keypress(function(e) {
+            if (e.which == "13") {
+                $("div.modal-footer > button.btn-primary").trigger('click');
+            }
+        });
+    });
 
     // add session timer
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());

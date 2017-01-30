@@ -50,7 +50,7 @@ if (!class_exists('CAT_Backend_Users'))
         {
             $self = self::getInstance();
             if(!$self->user()->hasPerm('users_membership'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $id   = $self->router()->getParam();
             $data = CAT_Groups::getInstance()->getMembers($id);
             if(self::asJSON())
@@ -69,16 +69,26 @@ if (!class_exists('CAT_Backend_Users'))
         public static function delete()
         {
             $self = self::getInstance();
-            if(!$self->user()->hasPerm('groups_delete'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+            if(!$self->user()->hasPerm('user_delete'))
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $id   = $self->router()->getParam();
             if(CAT_Helper_Users::deleteUser($id)!==true)
             {
-                echo CAT_Object::json_error('Unable to delete the user');
+                if(self::asJSON())
+                {
+                    echo CAT_Helper_JSON::printError('Unable to delete the user');
+                } else {
+                    self::printFatalError('Unable to delete the user');
+                }
             }
             else
             {
-                echo CAT_Object::json_success('User successfully deleted');
+                if(self::asJSON())
+                {
+                    echo CAT_Helper_JSON::printSuccess('User successfully deleted');
+                } else {
+                    self::printMsg('User successfully deleted');
+                }
             }
         }   // end function delete()
 
@@ -121,7 +131,7 @@ if (!class_exists('CAT_Backend_Users'))
         {
             $self = self::getInstance();
             if(!$self->user()->hasPerm('users_membership'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $id    = $self->router()->getParam();
             $users = CAT_Helper_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
             if(self::asJSON())
@@ -141,7 +151,7 @@ if (!class_exists('CAT_Backend_Users'))
         {
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('users_edit'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $id   = $self->router()->getParam();
             $user = new CAT_User($id);
             $tfa  = $user->get('tfa_enabled');
@@ -152,11 +162,11 @@ if (!class_exists('CAT_Backend_Users'))
             );
             if($self->db()->isError())
             {
-                echo CAT_Object::json_error('Unable to save');
+                echo CAT_Helper_JSON::printError('Unable to save');
             }
             else
             {
-                echo CAT_Object::json_success('Success');
+                echo CAT_Helper_JSON::printSuccess('Success');
             }
         }   // end function tfa()
         

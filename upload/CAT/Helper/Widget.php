@@ -43,6 +43,43 @@ if (!class_exists('CAT_Helper_Widget'))
                 return call_user_func_array(array($this, $method), $args);
         }   // end function __call()
 
+/*
+Array
+(
+    [id] => 3
+    [dashboard_id] =>
+    [widget_id] =>
+    [column] => 3
+    [position] => 1
+    [open] => Y
+    [widget_name] => Logs
+    [widget_module] => dashboard
+    [widget_controller] => dashboard_widget_logs
+    [preferred_column] => 3
+    [icon] => fa-align-left
+    [allow_in_global] => Y
+    [data] =>
+)
+*/
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function execute($widget)
+        {
+            $path = CAT_ENGINE_PATH.'/modules/'.$widget['widget_module'].'/inc';
+            if(file_exists($path.'/'.$widget['widget_controller'].'.php'))
+            {
+                $id = isset($widget['id'])
+                    ? $widget['id']
+                    : $widget['widget_id']
+                    ;
+                require_once $path.'/'.$widget['widget_controller'].'.php';
+                return $widget['widget_controller']::view($id);
+            }
+        }   // end function execute()
+
         /**
          *
          * @access public
@@ -110,22 +147,55 @@ if (!class_exists('CAT_Helper_Widget'))
          * @access public
          * @return
          **/
+        public static function handleCall($widget,$data=array())
+        {
+            $path = CAT_ENGINE_PATH.'/modules/'.$widget['widget_module'].'/inc';
+            if(file_exists($path.'/'.$widget['widget_controller'].'.php'))
+            {
+                $id = isset($widget['id'])
+                    ? $widget['id']
+                    : $widget['widget_id']
+                    ;
+                require_once $path.'/'.$widget['widget_controller'].'.php';
+                return $widget['widget_controller']::handleCall($data);
+            }
+        }   // end function handleCall()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function isOnDashboard($id,$dash)
+        {
+            $sth = self::db()->query(
+                  'SELECT * FROM `:prefix:dashboard_has_widgets` '
+                . 'WHERE `widget_id`=? AND `dashboard_id`=?',
+                array($id,$dash)
+            );
+            $data = $sth->fetch();
+            if(count($data)) return true;
+            else             return false;
+        }   // end function isOnDashboard()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function getWidget($id)
         {
-            $self  = self::getInstance();
-            $sth   = $self->db()->query(
-                  'SELECT * FROM `:prefix:dashboard_widgets` AS `t1` '
-                . 'RIGHT JOIN `:prefix:dashboard_widget_data` AS `t2` '
-                . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
-                . 'WHERE `widget_id`=?',
-                array($id)
+            $sql  = 'SELECT `t1`.*, `t2`.`data` '
+                  . 'FROM `:prefix:dashboard_widgets` AS `t1` '
+                  . 'LEFT OUTER JOIN `:prefix:dashboard_widget_data` AS `t2` '
+                  . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
+                  . 'WHERE `t1`.`widget_id`=?';
+            $sth  = self::getInstance()->db()->query(
+                 $sql, array($id)
             );
-echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( $self->db()->getLastStatement(array($id)) );
-echo "</textarea>";
             return $sth->fetch();
         }   // end function getWidget()
-        
+
         /**
          *
          * @access public

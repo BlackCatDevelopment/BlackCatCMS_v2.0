@@ -72,6 +72,24 @@ if(!class_exists('CAT_Helper_Directory', false))
             if ( method_exists( $this, $method ) )
                 return call_user_func_array(array($this, $method), $args);
         }
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function checkPath($path,$inside='SITE')
+        {
+            $check = ( strtoupper($inside) == 'SITE' )
+                   ? CAT_PATH
+                   : ( (strtoupper($inside) == 'MEDIA') ? self::user()->getHomeFolder() : CAT_ENGINE_PATH )
+                   ;
+            $check = self::sanitizePath($check);
+            $path  = self::sanitizePath($path);
+            if(substr_compare($path,$check,0,strlen($check),true)==0)
+                return true;
+            return false;
+        }   // end function checkPath()
 	    
         /**
          * copy directory structure with files

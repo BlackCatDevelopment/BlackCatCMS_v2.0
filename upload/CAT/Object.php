@@ -176,7 +176,7 @@ if(!class_exists('CAT_Object',false))
         /**
          * accessor to Monolog logger
          **/
-        public static function log()
+        public static function log($reset=false)
         {
             // global logger
             if(!isset(CAT_Object::$objects['logger']) || !is_object(CAT_Object::$objects['logger']) )
@@ -205,36 +205,31 @@ if(!class_exists('CAT_Object',false))
             // specific logger
             $class    = get_called_class();
             $loglevel = self::getLogLevel();
-#echo "<br /><br />loglevel for class -$class- from class::getLogLevel() - $loglevel<br />";
+
             if($loglevel != CAT_Object::$loglevel || $loglevel == \Monolog\Logger::DEBUG)
             {
-#echo "enable loglevel -$loglevel- for class -$class-<br />";
-                $logger = CAT_Registry::get('CAT.logger.'.$class);
-#echo "registry logger -$logger-<br />";
+                $logger  = CAT_Registry::get('CAT.logger.'.$class);
+                $logfile = 'core_'.$class.'_'.date('m-d-Y').'.log';
+                if($reset && file_exists(CAT_ENGINE_PATH.'/temp/logs/'.$logfile))
+                    unlink(CAT_ENGINE_PATH.'/temp/logs/'.$logfile);
                 if(!$logger)
                 {
-#echo "creating new logger<br />";
                     $logger = new CAT_Object_LoggerDecorator(new \Monolog\Logger('CAT.'.$class));
                     $stream = new \Monolog\Handler\StreamHandler(
-                        CAT_ENGINE_PATH.'/temp/logs/core_'.$class.'_'.date('m-d-Y').'.log',$class::$loglevel,false
+                        CAT_ENGINE_PATH.'/temp/logs/'.$logfile,
+                        $class::$loglevel,
+                        false
                     );
                     $stream->setFormatter(new \Monolog\Formatter\LineFormatter(
                         "[%datetime%] [%channel%.%level_name%]  %message%  [%extra%]\n"
                     ));
                     $logger->pushHandler($stream);
                     $logger->pushProcessor(new \Monolog\Processor\PsrLogMessageProcessor());
-                    #$logger->pushProcessor(new \Monolog\Processor\IntrospectionProcessor());
-#echo "saving new logger to registry<br />";
                     CAT_Registry::set('CAT.logger.'.$class,$logger);
-#echo "registry logger after creation<br />";
-#echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-#print_r( CAT_Registry::get('CAT.logger.'.$class) );
-#echo "</textarea>";
                 }
                 return $logger;
             }
             else {
-#echo "returning default logger<br />";
                 return CAT_Object::$objects['logger'];
             }
         }   // end function log ()
@@ -569,69 +564,6 @@ if(!class_exists('CAT_Object',false))
                 return false;
         }   // end function asJSON()
 
-        /**
-         * calls json_result() to format a success message
-         *
-         * @access public
-         * @param  string  $message
-         * @param  boolean $exit
-         * @return JSON
-         **/
-        public static function json_success($message,$exit=true)
-        {
-            self::json_result(true,$message,$exit);
-        }   // end function json_success()
-
-        /**
-         * calls json_result() to format an error message
-         *
-         * @access public
-         * @param  string  $message
-         * @param  boolean $exit
-         * @return JSON
-         **/
-        public static function json_error($message,$exit=true)
-        {
-            self::json_result(false,$message,$exit);
-        }   // end function json_error()
-
-        /**
-         * creates an array with 'success' and 'message' keys and encodes it
-         * to JSON using json_encode(); $message will be translated using the
-         * lang() method
-         *
-         * the JSON result is echo'ed; if $exit is set to true, exit()
-         * is called
-         *
-         * if no header was sent, sets 'application/json' as content-type
-         *
-         * @access public
-         * @param  boolean $success
-         * @param  string  $message
-         * @param  boolean $exit
-         * @return void
-         **/
-        public static function json_result($success,$message,$exit=true)
-        {
-            if(!headers_sent())
-                header('Content-type: application/json');
-            $field = (
-                is_scalar($message)
-                ? 'message'
-                : 'data'
-            );
-            $content = (
-                is_scalar($message)
-                ? self::lang()->translate($message)
-                : $message
-            );
-            echo json_encode(array(
-                'success' => $success,
-                $field    => $content
-            ));
-            if($exit) exit();
-        }   // end function json_result()
-
 // =============================================================================
 //  LOGGING / DEBUGGING
 // =============================================================================
@@ -731,7 +663,7 @@ echo "level now: ", $class::$loglevel, "<br />";
 
             if(self::asJSON())
             {
-                echo self::json_error($message,true);
+                echo CAT_Helper_JSON::printError($message,true);
                 exit; // should never be reached
             }
 

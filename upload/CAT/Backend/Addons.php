@@ -126,7 +126,7 @@ if (!class_exists('CAT_Backend_Addons'))
             $data = curl_exec($ch);
             if(curl_error($ch))
             {
-                CAT_Object::json_error(trim(curl_error($ch)));
+                CAT_Helper_JSON::printError(trim(curl_error($ch)));
             }
             $fh = fopen(CAT_ENGINE_PATH.'/temp/catalog.json','w');
             if($fh)
@@ -136,7 +136,7 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             else
             {
-                CAT_Object::json_error('Unable to save file');
+                CAT_Helper_JSON::printError('Unable to save file');
             }
         }
         

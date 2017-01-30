@@ -68,6 +68,8 @@ if(CAT_Backend::getArea() == 'media')
 {
     $mod_headers['backend']['css'][] = array('file'=>'modules/lib_jquery/plugins/jquery.fileupload/css/jquery.fileupload.css');
     $mod_headers['backend']['css'][] = array('file'=>'modules/lib_jquery/plugins/jquery.gridder/css/gridder.css');
+    //$mod_headers['backend']['css'][] = array('file'=>'modules/lib_jquery/plugins/jquery.gridder/css/gridder-ajax.css');
     $mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.datatables/js/jquery.dataTables.min.js';
+    //$mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.gridder/js/gridder.js';
     $mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.gridder/js/gridder.js';
 }

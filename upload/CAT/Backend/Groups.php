@@ -52,12 +52,12 @@ print_r($_REQUEST);
         public static function create()
         {
             if(!CAT_Object::user()->hasPerm('groups_add'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $val   = CAT_Helper_Validate::getInstance();
             $name  = $val->sanitizePost('group_name');
             $desc  = $val->sanitizePost('group_description');
             if(CAT_Groups::getInstance()->exists($name))
-                CAT_Object::json_error('A group with the same name already exists!');
+                CAT_Helper_JSON::printError('A group with the same name already exists!');
             CAT_Groups::getInstance()->addGroup($name,$desc);
         }
 
@@ -73,14 +73,14 @@ print_r($_REQUEST);
         {
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('groups_delete'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $val   = CAT_Helper_Validate::getInstance();
             $id    = $val->sanitizePost('id');
             if(!CAT_Groups::getInstance()->exists($id))
-                CAT_Object::json_error('No such group!');
+                CAT_Helper_JSON::printError('No such group!');
             $group = CAT_Groups::getInstance()->getGroup($id);
             if($group['builtin']=='Y')
-                CAT_Object::json_error('Built-in elements cannot be removed!');
+                CAT_Helper_JSON::printError('Built-in elements cannot be removed!');
             $res   = CAT_Groups::getInstance()->removeGroup($id);
             CAT_Object::json_result($res,($res?'':'Failed!'),($res?true:false));
         }   // end function delete()
@@ -94,7 +94,7 @@ print_r($_REQUEST);
         {
             $self  = self::getInstance();
             if(!$self->user()->hasPerm('groups_users'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $id   = $self->router()->getParam();
             $user = CAT_User::getInstance($id);
             if($user->hasGroup($id))
@@ -112,7 +112,7 @@ print_r($_REQUEST);
         public static function edit()
         {
             if(!CAT_Object::user()->hasPerm('groups_edit'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $val = CAT_Helper_Validate::getInstance();
             $field = $val->sanitizePost('name');
             $id    = $val->sanitizePost('pk');
@@ -147,7 +147,7 @@ print_r($_REQUEST);
                 if(self::asJSON())
                 {
                     echo header('Content-Type: application/json');
-                    echo $self::json_success('Success');
+                    echo CAT_Helper_JSON::printSuccess('Success');
                     return;
                 }
             }
@@ -175,7 +175,7 @@ print_r($_REQUEST);
         public static function users()
         {
             if(!CAT_Object::user()->hasPerm('groups_users'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $self  = self::getInstance();
             $id    = $self->router()->getParam();
             $users = CAT_Groups::getInstance()->getMembers($id);

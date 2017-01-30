@@ -76,7 +76,7 @@ if (!class_exists('CAT_Backend_Page'))
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
-                CAT_Object::printFatalError('You are not allowed for the requested action!');
+                self::printFatalError('You are not allowed for the requested action!');
 
             // get sections; format: $sections[array_of_blocks[array_of_sections]]
             $sections = CAT_Sections::getSections($pageID,NULL,false);
@@ -296,7 +296,7 @@ echo "remove file $remove_file\n<br />";
                 {
                     if(($result=self::addHeaderComponent('js',$plugin.'/'.$file,$pageID)) !== true)
                     {
-                        echo CAT_Object::json_error($result);
+                        echo CAT_Helper_JSON::printError($result);
                         exit;
                     }
                 }
@@ -304,7 +304,7 @@ echo "remove file $remove_file\n<br />";
                 {
                     if(($result=self::addHeaderComponent('css',$plugin.'/'.$file,$pageID)) !== true)
                     {
-                        CAT_Object::json_error($result);
+                        CAT_Helper_JSON::printError($result);
                     }
                 }
                 $ajax    = array(
@@ -327,7 +327,7 @@ echo "remove file $remove_file\n<br />";
             $self = self::getInstance();
 
             if(!$self->user()->hasPerm('pages_list'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
 
             $pages = CAT_Helper_Page::getPages(true);
 
@@ -443,7 +443,7 @@ echo "remove file $remove_file\n<br />";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(self::asJSON())
             {
-                self::json_success($form->getForm());
+                CAT_Helper_JSON::printSuccess($form->getForm());
             }
         }   // end function settings()
 
@@ -457,7 +457,7 @@ echo "remove file $remove_file\n<br />";
             $self = self::getInstance();
 
             if(!$self->user()->hasPerm('pages_list'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
 
             $pages = CAT_Helper_Page::getPages(true);
             $pages = $self->lb()->buildRecursion($pages);
@@ -521,16 +521,16 @@ echo "remove file $remove_file\n<br />";
         {
             $self = self::getInstance();
             if(!$self->user()->hasPerm('pages_edit'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $params  = $self->router()->getParams();
             $page_id = $params[0];
             $newval  = $params[1];
             if(!is_numeric($page_id)) {
-                CAT_Object::json_error('Invalid value');
+                CAT_Helper_JSON::printError('Invalid value');
             }
             if(!in_array($newval,array('public','private','hidden','none','deleted','registered')))
             {
-                CAT_Object::json_error('Invalid value');
+                CAT_Helper_JSON::printError('Invalid value');
             }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // MUSS ANGEPASST WERDEN! Neue Spalte vis_id (FK)
@@ -661,20 +661,26 @@ print_r($item[$type]);
         }   // end function delHeaderComponent()
 
         /**
+         * tries to retrieve 'page_id' by checking (in this order):
+         *
+         *    - $_POST['page_id']
+         *    - $_GET['page_id']
+         *    - Route param['page_id']
+         *
+         * also checks for numeric value
          *
          * @access private
-         * @return
+         * @return integer
          **/
         protected static function getPageID()
         {
-            $self    = self::getInstance();
             $pageID  = CAT_Helper_Validate::sanitizePost('page_id','numeric',NULL);
 
             if(!$pageID)
                 $pageID  = CAT_Helper_Validate::sanitizeGet('page_id','numeric',NULL);
 
             if(!$pageID)
-                $pageID = $self->router()->getParam(-1);
+                $pageID = self::router()->getParam(-1);
 
             if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
                 CAT_Object::printFatalError('Invalid data');

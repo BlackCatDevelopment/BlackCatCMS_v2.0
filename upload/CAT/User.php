@@ -28,7 +28,9 @@ if (!class_exists('CAT_User'))
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
         #protected static $loglevel  = \Monolog\Logger::DEBUG;
         protected static $instances = array();
-        // array to hold the user data
+        /**
+         * array to hold the user data
+         **/
         protected        $user      = array();
         // user ID
         protected        $id        = NULL;
@@ -55,6 +57,9 @@ if (!class_exists('CAT_User'))
          **/
         public function __construct($id=NULL)
         {
+            self::log()->addDebug(sprintf(
+                'constructor called with param [%s]', $id
+            ));
             parent::__construct();
             $this->reset(); // make sure there is no old data
             $this->initUser($id); // load user
@@ -132,12 +137,13 @@ if (!class_exists('CAT_User'))
          **/
         public function getHomeFolder()
         {
+            $default = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.self::getSetting('media_directory'));
             if($this->is_root())
-                return CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.CAT_Registry::get('MEDIA_DIRECTORY'));
+                return $default;
             $home = $this->get('home_folder');
             if(strlen($home))
                 return CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$home);
-            return NULL;
+            return $default;
         }   // end function getHomeFolder()
 
         /**
@@ -344,6 +350,20 @@ if (!class_exists('CAT_User'))
         }   // end function hasPagePerm()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public function hasPathPerm($path)
+        {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Wie speichern wir das???
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            return true;
+        }   // end function hasPathPerm()
+        
+
+        /**
          * checks if the current user has the given permission
          *
          * @access public
@@ -414,6 +434,7 @@ if (!class_exists('CAT_User'))
          **/
         public function reset()
         {
+            self::log()->addDebug('reset()');
             $this->user   = array('user_id'=>-1,'display_name'=>'unknown','username'=>'unknown');
             $this->roles  = array();
             $this->perms  = array();

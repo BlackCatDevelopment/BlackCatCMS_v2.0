@@ -18,13 +18,13 @@
 
 <ul class="nav nav-tabs" role="tablist">{* Tabs *}
     <li role="presentation">
-        <a href="#list" aria-controls="list" role="tab" data-toggle="tab">
+        <a href="#list" aria-controls="list" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
           <span class="fa fa-fw fa-bars"></span>
           {translate('List')}
         </a>
     </li>
     <li role="presentation">
-        <a href="#grid" aria-controls="grid" role="tab" data-toggle="tab">
+        <a href="#grid" aria-controls="grid" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
           <span class="fa fa-fw fa-th"></span>
           {translate('Grid')}
         </a>
@@ -48,9 +48,31 @@
 </ul>
 
 <div class="tab-content">{* Tab panes *}
-    {include file="backend_media_listtab.tpl"}
-    {include file="backend_media_gridtab.tpl"}
-    {if user_has_perm('media_upload')}{include file="backend_media_uploadtab.tpl"}{/if}
+
+{* -------------------- START #list tab-pane -------------------- *}
+      <div role="tabpanel" class="tab-pane" id="list">
+        {* the content will be loaded via AJAX *}
+        <div class="fa fa-fw fa-3x text-center" style="width:100%"></div><span class="sr-only">Loading...</span>
+        <div class="alert alert-danger" style="display:none;">
+            {translate('Unable to load the tab!')}
+        </div>
+        {include file="backend_media_listtab.tpl"}
+      </div>{* END #config tab-pane *}
+
+      <div role="tabpanel" class="tab-pane" id="grid">
+        {* the content will be loaded via AJAX *}
+        <div class="fa fa-fw fa-3x text-center" style="width:100%"></div><span class="sr-only">Loading...</span>
+        <div class="alert alert-danger" style="display:none;">
+            {translate('Unable to load the tab!')}
+        </div>
+        {include file="backend_media_gridtab.tpl"}
+      </div>{* END #grid tab-pane *}
+
+      <div role="tabpanel" class="tab-pane" id="upload">
+        {include file="backend_media_uploadtab.tpl"}
+      </div>{* END #grid tab-pane *}
+
+
 </div>{* Tab panes End *}
 
 

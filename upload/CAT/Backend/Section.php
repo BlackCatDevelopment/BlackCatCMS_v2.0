@@ -49,7 +49,7 @@ if (!class_exists('CAT_Backend_Section'))
         public static function delete()
         {
             if(!self::user()->hasPerm('pages_section_delete'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $sectionID = self::router()->getParam();
             if(!CAT_Sections::exists($sectionID))
                 CAT_Object::printFatalError('Invalid data!');
@@ -102,7 +102,7 @@ if (!class_exists('CAT_Backend_Section'))
         public static function recover()
         {
             if(!self::user()->hasPerm('pages_section_recover'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
+                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
             $sectionID = self::router()->getParam();
             if(!CAT_Sections::exists($sectionID))
                 CAT_Object::printFatalError('Invalid data!');

@@ -53,10 +53,10 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo $self::json_error('error');
+                echo CAT_Helper_JSON::printError('error');
             $widget = CAT_Helper_Validate::sanitizePost('widget_id');
             CAT_Helper_Dashboard::addWidget($widget,$dash);
-            echo $self::json_success('ok');
+            echo CAT_Helper_JSON::printSuccess('ok');
         }   // end function add()
 
         /**
@@ -82,8 +82,6 @@ if (!class_exists('CAT_Backend_Dashboard'))
          **/
         public static function index($path=NULL)
         {
-            $self = self::getInstance();
-
             // validate path
             if(!$path)
                 $path = self::router()->getRoute();
@@ -106,6 +104,36 @@ if (!class_exists('CAT_Backend_Dashboard'))
                     self::log()->addAlert(sprintf('No such dashboard! [id: %d; path: %s]',$dash,$path));
                     self::printFatalError('Access denied');
                 }
+            }
+
+            // forward query data to widget
+            $query   = self::router()->getQuery();
+            if($query)
+            {
+                parse_str($query,$query_data);
+                // widget id?
+                if(isset($query_data['widget']))
+                {
+                    // check if widget exists
+                    if(CAT_Helper_Widget::exists($query_data['widget']))
+                    {
+                        // check if widget is visible on current dashboard
+                        if(CAT_Helper_Widget::isOnDashboard($query_data['widget'],$dash))
+                        {
+                            // forward
+                            $widget = CAT_Helper_Widget::getWidget($query_data['widget']);
+                            CAT_Helper_Widget::handleCall($widget,$query_data);
+                        }
+                    }
+                }
+/*
+Array
+(
+    [widget] => 3
+    [widget_logs_file] => core_CAT_User_01-18-2017.log
+    [_] => 1485528661687
+)
+*/
             }
 
             // get the template contents
@@ -169,11 +197,11 @@ if (!class_exists('CAT_Backend_Dashboard'))
                     . 'ORDER BY `position` ASC;',
                     array($pos,$col,$pos,$id,$dash)
                 );
-                $result = $self::json_success('ok');
+                $result = CAT_Helper_JSON::printSuccess('ok');
             }
             else {
                 $self->log()->addWarn(sprintf('no such dashboard: [%s]',$dash));
-                $result = $self::json_error('not ok');
+                $result = CAT_Helper_JSON::printError('not ok');
             }
 
             if(self::asJSON())
@@ -197,10 +225,10 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo $self::json_error('error');
+                echo CAT_Helper_JSON::printError('error');
             $widget = CAT_Helper_Validate::sanitizePost('widget_id');
             CAT_Helper_Dashboard::removeWidget($widget,$dash);
-            echo $self::json_success('ok');
+            echo CAT_Helper_JSON::printSuccess('ok');
         }   // end function remove()
 
         /**
@@ -220,10 +248,10 @@ if (!class_exists('CAT_Backend_Dashboard'))
                     'UPDATE `:prefix:dashboard_has_widgets` SET `open`=? WHERE `dashboard_id`=? AND `widget_id`=?',
                     array($vis,$dash,$id)
                 );
-                $result = $self::json_success('ok');
+                $result = CAT_Helper_JSON::printSuccess('ok');
             }
             else {
-                $result = $self::json_error('not ok');
+                $result = CAT_Helper_JSON::printError('not ok');
             }
             if(self::asJSON())
             {
@@ -249,7 +277,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
                 $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo $self::json_error('error');
+                echo CAT_Helper_JSON::printError('error');
             // get list of widgets the user is allowed to see
             $all  = CAT_Helper_Widget::getAllowed();
             // get list of widgets already an the dashboard
@@ -267,7 +295,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
                     );
                 }
             );
-            echo $self::json_success(array_values($result));
+            echo CAT_Helper_JSON::printSuccess(array_values($result));
         }   // end function widgets()
         
         

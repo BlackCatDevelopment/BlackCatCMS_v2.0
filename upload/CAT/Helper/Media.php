@@ -29,9 +29,6 @@ if (!class_exists('CAT_Helper_Media'))
             'basedata' => array(
                 'mime_type',
                 'filesize',
-                'filepath',
-                'filename',
-                'filenamepath',
                 'bits_per_sample',
                 'resolution_x',
                 'resolution_y',
@@ -76,7 +73,10 @@ if (!class_exists('CAT_Helper_Media'))
         {
             $attr = array();
             $sth = self::db()->query(
-                'SELECT * FROM `:prefix:media_data` WHERE `media_id`=?',
+                  'SELECT * FROM `:prefix:media` AS `t1` '
+                . 'JOIN `:prefix:media_data` AS `t2` '
+                . 'ON `t1`.`media_id`=`t2`.`media_id` '
+                . ' WHERE `t1`.`media_id`=?',
                 array($id)
             );
             $data = $sth->fetchAll();
@@ -87,6 +87,12 @@ if (!class_exists('CAT_Helper_Media'))
                     $attr[$item['attribute']] = $item['value'];
                 }
                 $attr['hfilesize'] = CAT_Helper_Directory::byte_convert($attr['filesize']);
+                $attr['path']      = $data[0]['path'];
+                $attr['filename']  = $data[0]['filename'];
+                $attr['is_image']  = (substr($attr['mime_type'],0,6) == 'image/')
+                                   ? true
+                                   : false;
+                $attr['url']       = CAT_Helper_Validate::path2uri($attr['path'].'/'.$attr['filename']);
             }
             return $attr;
         }   // end function getAttributes()
@@ -98,7 +104,6 @@ if (!class_exists('CAT_Helper_Media'))
          **/
         public static function getMediaFromDir($dir,$filter=NULL)
         {
-            $self     = self::getInstance();
             $data     = array();
             $suffixes = array();
 
@@ -144,21 +149,26 @@ if (!class_exists('CAT_Helper_Media'))
                 end($data);
                 $index = key($data);
 
+                // convert UTF8
+                $decoded_filename = CAT_Helper_Directory::getName(pathinfo($filename,PATHINFO_BASENAME));
+
                 // add info to db
-                if(!isset($dbfiles[pathinfo($filename, PATHINFO_BASENAME)]))
+                if(!is_dir($filename) && !isset($dbfiles[$decoded_filename]))
                 {
                     self::db()->query(
                           'INSERT INTO `:prefix:media` ( `site_id`, `path`, `filename`, `checksum` ) '
                         . 'VALUES (?, ?, ?, ? )',
-                        array(1, $dir, pathinfo($filename, PATHINFO_BASENAME), sha1_file($filename))
+                        array(1, $dir, $decoded_filename, sha1_file($filename))
                     );
+                    $data[$index]['media_id'] = self::db()->lastInsertId();
+                    $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
                     $data[$index] = self::analyzeFile(self::db()->lastInsertId(),$filename);
                 } else {
-                    $data[$index] = self::getAttributes($dbfiles[pathinfo($filename,PATHINFO_BASENAME)]['media_id']);
+                    $data[$index] = self::getAttributes($dbfiles[$decoded_filename]['media_id']);
+                    $data[$index]['media_id'] = $dbfiles[$decoded_filename]['media_id'];
                 }
 
-                $data[$index]['filename'] = CAT_Helper_Directory::getName(pathinfo($filename,PATHINFO_BASENAME));
-                $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
+                $data[$index]['filename'] = $decoded_filename;
             }
 
             return $data;

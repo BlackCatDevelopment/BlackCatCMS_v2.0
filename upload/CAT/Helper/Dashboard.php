@@ -247,6 +247,10 @@ if (!class_exists('CAT_Helper_Dashboard'))
                         if(is_array($widget_settings) && isset($widget_settings['widget_title']))
                             $widgets[$i]['widget_title'] = $widget_settings['widget_title'];
                     }
+                    else
+                    {
+                        $widgets[$i]['content'] = CAT_Helper_Widget::execute($w);
+                    }
                 }
             }
             return $widgets;

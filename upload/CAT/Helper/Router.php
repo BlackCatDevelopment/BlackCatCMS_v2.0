@@ -97,7 +97,7 @@ if(!class_exists('CAT_Helper_Router',false))
                     $this->protected
                 && !$this->user()->hasPerm($this->perm)
             ) {
-                $this->log()->error(
+                $this->log()->addError(
                     'Routing error: User [{user}] tried to access [{func}] in controller [{controller}]',
                     array('user'=>$this->user()->get('username'),'func'=>$function,'controller'=>$controller)
                 );
@@ -106,7 +106,7 @@ if(!class_exists('CAT_Helper_Router',false))
             // check if controller exists
             if(!class_exists($controller) || !is_callable(array($controller,$function)))
             {
-                $this->log()->error(
+                $this->log()->addError(
                     'Routing error: No such controller [{controller}] or function not callable [{func}]',
                     array('controller'=>$controller,'func'=>$function)
                 );
@@ -164,9 +164,23 @@ if(!class_exists('CAT_Helper_Router',false))
         {
             if(!$name || !strlen($name))
             {
-                $this->log()->error(
-                    'Router error: setFunction called with empty function name'
-                );
+                $caller = debug_backtrace();
+                $dbg    = '';
+                foreach(array('file','function','class','line',) as $key)
+                {
+                    if(isset($caller[0][$key]))
+                    {
+                        $dbg .= "$key => ".$caller[0][$key]." | ";
+                    }
+                    else
+                    {
+                        $dbg .= "$key => not set | ";
+                    }
+                }
+                $this->log()->addError(sprintf(
+                    'Router error: setFunction called with empty function name, caller [%s]',
+                    $dbg
+                ));
                 return;
             }
             if(is_numeric($name))
@@ -287,6 +301,8 @@ if(!class_exists('CAT_Helper_Router',false))
          **/
         public static function initRoute($remove_prefix=NULL)
         {
+            self::log()->addDebug('initializing route');
+
             $route = NULL;
             $query = NULL;
 
@@ -294,8 +310,14 @@ if(!class_exists('CAT_Helper_Router',false))
             {
                 if(isset($_SERVER[$key]))
                 {
+                    self::log()->addDebug(sprintf(
+                        'found key [%s] in $_SERVER', $key
+                    ));
                     $route = parse_url($_SERVER[$key],PHP_URL_PATH);
                     $query = parse_url($_SERVER[$key],PHP_URL_QUERY);
+                    self::log()->addDebug(sprintf(
+                        'route [%s] query [%s]', $route, $query
+                    ));
                     break;
                 }
             }
@@ -322,6 +344,9 @@ if(!class_exists('CAT_Helper_Router',false))
                 $route = substr($route,1,strlen($route));
             }
 
+            self::log()->addDebug(sprintf(
+                'returning result: route [%s] query [%s]', $route, $query
+            ));
             return array($route,$query);
         }   // end function initRoute()
 

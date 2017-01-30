@@ -324,29 +324,39 @@ if (!class_exists('CAT_Backend', false))
          **/
         public static function authenticate()
         {
-            $self = self::getInstance();
-            if($self->user()->login() === true)
+            if(self::user()->login() === true)
             {
-                $self->log()->addDebug('Authentication succeeded');
-                $_SESSION['USER_ID'] = $self->user()->get('user_id');
+                self::log()->addDebug(sprintf(
+                    'Authentication succeeded, username [%s], id [%s]',
+                    self::user()->get('username'), self::user()->get('user_id')
+                ));
+                $_SESSION['USER_ID'] = self::user()->get('user_id');
                 // forward
                 if(self::asJSON())
                 {
-                    echo json_encode(array(
+                    self::log()->addDebug(sprintf(
+                        'sending json result, forward to URL [%s]',
+                        CAT_ADMIN_URL.'/dashboard'
+                    ));
+                    CAT_Helper_JSON::printData(array(
                         'success' => true,
                         'url'     => CAT_ADMIN_URL.'/dashboard'
                     ));
                 }
                 else
                 {
+                    self::log()->addDebug(sprintf(
+                        'forwarding to URL [%s]',
+                        CAT_ADMIN_URL.'/dashboard'
+                    ));
                     header('Location: '.CAT_ADMIN_URL.'/dashboard');
                 }
             }
             else
             {
-                $self->log()->debug('Authentication failed!');
+                self::log()->addDebug('Authentication failed!');
                 if(self::asJSON())
-                    self::json_error('Authentication failed!');
+                    CAT_Helper_JSON::printError('Authentication failed!');
                 else
                     self::printFatalError('Authentication failed!');
             }
@@ -374,11 +384,11 @@ if (!class_exists('CAT_Backend', false))
                         $form->loadFile('forms.inc.php',__dir__.'/forms');
                         $form->setForm('lang_select');
                         $form->getElement('language')->setAttr('options',$langselect);
-                        self::json_success($form->getForm());
+                        CAT_Helper_JSON::printSuccess($form->getForm());
                         break;
                 }
             }
-            echo self::json_success();
+            echo CAT_Helper_JSON::printSuccess();
         }   // end function languages()
 
         /**
@@ -519,7 +529,7 @@ if (!class_exists('CAT_Backend', false))
         public static function tfa()
         {
             $user = new CAT_User(CAT_Helper_Validate::sanitizePost('user'));
-            echo CAT_Object::json_success($user->tfa_enabled());
+            echo CAT_Helper_JSON::printSuccess($user->tfa_enabled());
         }   // end function tfa()
 
     }   // end class CAT_Backend

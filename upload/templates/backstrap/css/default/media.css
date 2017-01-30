@@ -4,12 +4,12 @@
 /* list view */
 table.datatable.compact.dataTable tbody span{display:inline-block;width:16%;}
 table.datatable.compact.dataTable tbody span:first-of-type{width:auto;}
-table.datatable.compact.dataTable tbody span.label{text-align:right;}
+table.datatable.compact.dataTable tbody span.dtlabel{text-align:right;}
 div#list img.thumb{width:80px;padding:5px;}
 
 /* grid view */
-div#grid li.gridder-list{display:inline-block;border:1px solid gray;border-radius:5px;width:200px;height:150px;margin:5px;vertical-align:middle;text-align:center;}
-div#grid li.gridder-list img.thumb{width:150px;padding:5px;}
+div#grid li.gridder-expander{display:inline-block;border:1px solid gray;border-radius:5px;width:200px;height:150px;margin:5px;vertical-align:middle;text-align:center;}
+div#grid li.gridder-expander img.thumb{width:150px;padding:5px;}
 div.fa-file-movie-o{width:80px;height:80px;font-size:80px;}
 div.actions{width:25px;height:100%;float:left;}
 

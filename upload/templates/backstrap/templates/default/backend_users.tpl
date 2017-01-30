@@ -1,4 +1,4 @@
-<table class="table dtable">
+<table class="table datatable">
     <thead>
         <tr>
             <th>{* icons column *}</th>
@@ -49,19 +49,13 @@
 <span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}
 <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
+{include(file='backend_modal.tpl' modal_id='modal_dialog' modal_title='', modal_text='', modal_savebtn='1')}
+
 {$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
 <script type="text/javascript">
 //<![CDATA[
     $(function() {
-        var dtable = $('table.dtable').DataTable({
-            mark: true,
-            stateSave: true,
-            orderClasses: false{if cat_file_exists($file)},
-            language: {
-                url: "{cat_asset_url($file,'js')}"
-            }
-            {/if}
-        });
+        var CAT_ASSET_URL = "{cat_asset_url($file,'js')}";
     });
 //]]>
 </script>

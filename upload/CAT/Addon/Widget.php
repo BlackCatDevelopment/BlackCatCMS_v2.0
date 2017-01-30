@@ -26,7 +26,7 @@ class CAT_Addon_Widget extends CAT_Addon_Module
 	/**
 	 * @inheritDoc
 	 */
-	public function save()
+	public static function save()
 	{
 		// TODO: implement here
 	}
@@ -34,8 +34,19 @@ class CAT_Addon_Widget extends CAT_Addon_Module
 	/**
 	 * @inheritDoc
 	 */
-	public function modify()
+	public static function modify($section_id)
 	{
 		// TODO: implement here
 	}
+
+    /**
+     *
+     * @access public
+     * @return
+     **/
+    public static function upgrade()
+    {
+    
+    }   // end function upgrade()
+    
 }

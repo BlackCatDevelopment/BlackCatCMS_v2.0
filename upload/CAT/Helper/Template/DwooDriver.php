@@ -73,9 +73,13 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
                     $file = CAT_Object::tpl()->findTemplate($_tpl);
                     $this->logger->addDebug(sprintf('Template file [%s]',$file));
                     if($file)
-                        return parent::get( realpath($file), $data, $_compiler, $_output);
+                    {
+                        return parent::get(realpath($file),$data,$_compiler,$_output);
+                    }
                     else
+                    {
                         $this->logger->addWarning('No such template file! (given filename: {file})',array('file'=>$_tpl));
+                    }
                 }
                 else
                 {
