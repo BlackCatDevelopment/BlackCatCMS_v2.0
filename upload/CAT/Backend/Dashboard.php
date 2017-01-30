@@ -47,15 +47,15 @@ if (!class_exists('CAT_Backend_Dashboard'))
          **/
         public static function add($dash=NULL)
         {
-            $self = self::getInstance();
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
+                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
                 echo CAT_Helper_JSON::printError('error');
             $widget = CAT_Helper_Validate::sanitizePost('widget_id');
-            CAT_Helper_Dashboard::addWidget($widget,$dash);
+            $result = CAT_Helper_Dashboard::addWidget($widget,$dash);
+print_r($result);
             echo CAT_Helper_JSON::printSuccess('ok');
         }   // end function add()
 
@@ -219,17 +219,45 @@ Array
          **/
         public static function remove($dash=NULL)
         {
-            $self = self::getInstance();
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
+                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('error');
+                echo CAT_Helper_JSON::printError('Invalid data');
             $widget = CAT_Helper_Validate::sanitizePost('widget_id');
             CAT_Helper_Dashboard::removeWidget($widget,$dash);
             echo CAT_Helper_JSON::printSuccess('ok');
         }   // end function remove()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function reset($dash=NULL)
+        {
+            // validate path
+            if(!$dash)
+                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
+            // check if dashboard exists
+            if(!CAT_Helper_Dashboard::exists($dash))
+                echo CAT_Helper_JSON::printError('Invalid data');
+            // remove current settings
+            self::db()->query(
+                'DELETE FROM `:prefix:dashboard_has_widgets` WHERE `dashboard_id`=?',
+                array($dash)
+            );
+            self::db()->query(
+                'DELETE FROM `:prefix:dashboard_widget_data` WHERE `dashboard_id`=?',
+                array($dash)
+            );
+            if(self::asJSON())
+            {
+                echo CAT_Helper_JSON::printSuccess('success');
+            }
+
+        }   // end function reset()
 
         /**
          *
@@ -271,7 +299,6 @@ Array
          **/
         public static function widgets($dash=NULL)
         {
-            $self = self::getInstance();
             // validate path
             if(!$dash)
                 $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));

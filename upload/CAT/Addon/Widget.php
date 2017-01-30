@@ -40,13 +40,19 @@ class CAT_Addon_Widget extends CAT_Addon_Module
 	}
 
     /**
-     *
-     * @access public
-     * @return
-     **/
+	 * @inheritDoc
+	 */
     public static function upgrade()
     {
-    
-    }   // end function upgrade()
-    
+        // TODO: implement here
+    }
+
+    /**
+	 * @inheritDoc
+	 */
+    public static function view($widget_id,$dashboard_id)
+    {
+		// TODO: implement here
+	}
+
 }

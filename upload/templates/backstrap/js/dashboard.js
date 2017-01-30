@@ -46,7 +46,6 @@ $(function() {
 //$( elements ).on( events, selector, data, handler );
 
     // delegate the click event to the detached button
-    //$('body').delegate('#bsAddWidget','click',function(e) {
     $('body').on('click','#bsAddWidget',function(e) {
         e.preventDefault();
         $('#modal_dialog .modal-body').html( $('div#bs_available_widgets').html() );
@@ -161,6 +160,32 @@ $(function() {
                     //console.log(data);
                     if(data.success) {
                         $this.parent().parent().parent().parent().remove();
+                    } else {
+                        $('div.infopanel span#message').html(data.message);
+                        $('div.infopanel').addClass('alert alert-danger').show();
+                    }
+                }
+            });
+        });
+    });
+
+    // reset dashboard
+    $('#dashboard_reset').unbind('click').on('click',function(e) {
+        e.preventDefault();
+        var $this = $(this);
+        $('#modal_dialog .modal-body').html(cattranslate('Do you really want to reset the Dashboard? All your customization settings will be lost!'));
+        $('#modal_dialog .modal-title').text(cattranslate('Reset Dashboard'));
+        $('#modal_dialog').modal('show');
+        $('button.btn-primary').unbind('click').on('click',function(e) {
+            $('#modal_dialog').modal('hide');
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL + '/dashboard/reset/'+ dashboard_id,
+                dataType: 'json',
+                success: function(data, status) {
+                    // activate for debugging:
+                    if(data.success) {
+                        location.reload();
                     } else {
                         $('div.infopanel span#message').html(data.message);
                         $('div.infopanel').addClass('alert alert-danger').show();

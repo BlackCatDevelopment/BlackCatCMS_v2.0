@@ -52,6 +52,7 @@ $LANG = array_merge($LANG,array(
     'Remove widget'     => 'Widget entfernen',
     'Reset Dashboard'   => 'Dashboard zurücksetzen',
     'Do you really want to remove this widget?' => 'Soll dieses Widget wirklich entfernt werden?',
+    'Do you really want to reset the Dashboard? All your customization settings will be lost!' => 'Soll das Dashboard wirklich zurückgesetzt werden? Alle persönlichen Einstellungen gehen verloren!',
     'No addable widgets found.' => 'Es wurden keine hinzufügbaren Widgets gefunden.',
     'There are no widgets on your dashboard.' => 'Es befinden sich keine Widgets auf diesem Dashboard.',
     'Use widget setting' => 'Widget-Voreinstellung verwenden',

@@ -1,10 +1,8 @@
-{addJS('templates/backstrap/js/backend_dashboard.js','footer')}
-
 <button style="display:none" class="btn btn-xs btn-primary detach" id="bsAddWidget">{translate('Add widget')}</button>
 
 <div class="dashboard" data-id="{$dashboard.id}" data-columns="{$dashboard.columns}">
 {if count($dashboard.widgets)}
-<button role="button" class="btn btn-xs btn-warning detach" id="dashboard_reset">{translate('Reset Dashboard')}</button>
+    <button role="button" class="btn btn-xs btn-warning detach" id="dashboard_reset" data-id="{$dashboard.id}">{translate('Reset Dashboard')}</button>
     <ul class="columnize">
     {foreach $dashboard.widgets widget}
         <li data-row="{$widget.position}" data-col="{$widget.column}">

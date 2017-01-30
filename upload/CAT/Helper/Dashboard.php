@@ -37,13 +37,12 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function addWidget($id,$dash)
         {
-            $self = self::getInstance();
             // check if widget exists
             if(CAT_Helper_Widget::exists($id))
             {
                 // check if widget is already an the dashboard
-                $sth = $self->db()->query(
-                      'SELECT * FROM `:prefix:dashboard_has_widgets` AS t1 '
+                $sth = self::db()->query(
+                      'SELECT * FROM `:prefix:dashboard_has_widgets` AS `t1` '
                     . 'WHERE `t1`.`dashboard_id`=? '
                     . 'AND `t1`.`widget_id`=?',
                     array($dash,$id)
@@ -51,7 +50,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                 if(!$sth->rowCount())
                 {
                     $widget = CAT_Helper_Widget::getWidget($id);
-                    $pos    = $self->db()->query(
+                    $pos    = self::db()->query(
                         'SELECT max(`position`) AS `position` FROM `:prefix:dashboard_has_widgets`'
                     )->fetch();
 
@@ -59,12 +58,13 @@ if (!class_exists('CAT_Helper_Dashboard'))
                               ? $pos['position'] +1
                               : 1;
 
-                    $self->db()->query(
+                    self::db()->query(
                           'INSERT INTO `:prefix:dashboard_has_widgets` '
                         . '(`dashboard_id`,`widget_id`,`column`,`position`) '
                         . 'VALUES(?,?,?,?)',
                         array($dash,$id,$widget['preferred_column'],$position)
                     );
+
                 }
             }
         }   // end function addWidget()
@@ -118,10 +118,9 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function getDashboardConfig($path=NULL)
         {
-            $self = self::getInstance();
-            if(!$path) $path = $self->router()->getRoute(); // global
+            if(!$path) $path = self::router()->getRoute(); // global
             $sql  = 'SELECT `id`, `columns` FROM `:prefix:dashboards` WHERE `user_id`=? AND `path`=?';
-            $sth  = self::getInstance()->db()->query(
+            $sth  = self::db()->query(
                  $sql, array(self::getInstance()->user()->get('user_id'),$path)
             );
             $config = $sth->fetch();
@@ -138,10 +137,9 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function getDashboardID($path=NULL)
         {
-            $self = self::getInstance();
             if(!$path)
-                $path = $self->router()->getRoute();
-            $dash = self::getID($self->user()->getID(),$path);
+                $path = self::router()->getRoute();
+            $dash = self::getID(self::user()->getID(),$path);
             return $dash;
         }   // end function getDashboardID()
 
@@ -176,7 +174,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function getWidgets($dash)
         {
-            $sql  = 'SELECT * FROM `:prefix:dashboard_has_widgets` AS `t1` '
+            $sql  = 'SELECT `t1`.*, `t2`.*, `t3`.`data` FROM `:prefix:dashboard_has_widgets` AS `t1` '
                   . 'JOIN `:prefix:dashboard_widgets` AS `t2` '
                   . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
                   . 'LEFT OUTER JOIN `:prefix:dashboard_widget_data` AS `t3` '
@@ -215,9 +213,6 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function renderDashboard($id)
         {
-            global $widget_data, $widget_id, $dashboard_id;
-            // for use inside the widget
-            $dashboard_id = $id;
             // get widgets
             $widgets = self::getWidgets($id);
 
@@ -249,7 +244,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                     }
                     else
                     {
-                        $widgets[$i]['content'] = CAT_Helper_Widget::execute($w);
+                        $widgets[$i]['content'] = CAT_Helper_Widget::execute($w,$id);
                     }
                 }
             }

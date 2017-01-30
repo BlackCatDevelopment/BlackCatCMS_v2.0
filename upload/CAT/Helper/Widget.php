@@ -66,7 +66,7 @@ Array
          * @access public
          * @return
          **/
-        public static function execute($widget)
+        public static function execute($widget,$dashboard_id)
         {
             $path = CAT_ENGINE_PATH.'/modules/'.$widget['widget_module'];
 
@@ -84,7 +84,7 @@ Array
                     : $widget['widget_id']
                     ;
                 require_once $path.'/inc/'.$widget['widget_controller'].'.php';
-                return $widget['widget_controller']::view($id);
+                return $widget['widget_controller']::view($id,$dashboard_id);
             }
         }   // end function execute()
 
@@ -95,9 +95,8 @@ Array
          **/
         public static function exists($id)
         {
-            $self = self::getInstance();
             $field = ( is_numeric($id) ? 'widget_id' : 'widget_name' );
-            $sth  = $self->db()->query(
+            $sth  = self::db()->query(
                 'SELECT * FROM `:prefix:dashboard_widgets` WHERE `'.$field.'`=?',
                 array($id)
             );
@@ -113,16 +112,15 @@ Array
          **/
         public static function getAllowed($global=false,$alldata=false)
         {
-            $self  = self::getInstance();
             // all data or json data?
             if($alldata) $fields = '*';
             else         $fields = 't2.widget_id,widget_name,preferred_column,icon';
             // get query builder (save some typing)
-            $query = $self->db()->qb();
+            $query = self::db()->qb();
             // basics
             $query->select($fields)
-                  ->from($self->db()->prefix().'dashboard_widget_permissions','t1')
-                  ->rightJoin('t1',$self->db()->prefix().'dashboard_widgets','t2','t1.widget_id=t2.widget_id')
+                  ->from(self::db()->prefix().'dashboard_widget_permissions','t1')
+                  ->rightJoin('t1',self::db()->prefix().'dashboard_widgets','t2','t1.widget_id=t2.widget_id')
                   ;
 
             if($global)
@@ -132,10 +130,10 @@ Array
             }
 
             // root is allowed all
-            if(!$self->user()->is_root())
+            if(!self::user()->is_root())
             {
                 // get the user's groups
-                $groups = $self->user()->getGroups(1);
+                $groups = self::user()->getGroups(1);
                 $query->andWhere(
                     $query->expr()->orX(
                         'needed_group IS NULL',
@@ -214,8 +212,7 @@ Array
          **/
         public static function saveWidgetData($widget_id,$dash_id,$data)
         {
-            $self  = self::getInstance();
-            $sth   = $self->db()->query(
+            $sth   = self::db()->query(
                 'REPLACE INTO `:prefix:dashboard_widget_data` VALUES (?,?,?)',
                 array($widget_id,$dash_id,serialize($data))
             );
