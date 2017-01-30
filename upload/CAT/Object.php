@@ -809,7 +809,7 @@ echo "level now: ", $class::$loglevel, "<br />";
 		 * 
 		 * @return string[string] The HTTP header key/value pairs.
 		 **/
-		private function getallheaders()
+		private static function getallheaders()
 		{
 			$headers = array();
 			

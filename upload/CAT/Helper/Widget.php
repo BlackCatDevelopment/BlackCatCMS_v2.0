@@ -68,14 +68,22 @@ Array
          **/
         public static function execute($widget)
         {
-            $path = CAT_ENGINE_PATH.'/modules/'.$widget['widget_module'].'/inc';
-            if(file_exists($path.'/'.$widget['widget_controller'].'.php'))
+            $path = CAT_ENGINE_PATH.'/modules/'.$widget['widget_module'];
+
+            // load widget language file
+            $lang = strtoupper(self::lang()->getLang());
+            if(file_exists($path.'/languages/'.$lang.'.php'))
+            {
+                self::lang()->addFile($lang,$path.'/languages');
+            }
+
+            if(file_exists($path.'/inc/'.$widget['widget_controller'].'.php'))
             {
                 $id = isset($widget['id'])
                     ? $widget['id']
                     : $widget['widget_id']
                     ;
-                require_once $path.'/'.$widget['widget_controller'].'.php';
+                require_once $path.'/inc/'.$widget['widget_controller'].'.php';
                 return $widget['widget_controller']::view($id);
             }
         }   // end function execute()
@@ -193,7 +201,10 @@ Array
             $sth  = self::getInstance()->db()->query(
                  $sql, array($id)
             );
-            return $sth->fetch();
+            $data = $sth->fetch();
+            if(isset($data['data']) && strlen($data['data']))
+                $data['data'] = unserialize($data['data']);
+            return $data;
         }   // end function getWidget()
 
         /**
