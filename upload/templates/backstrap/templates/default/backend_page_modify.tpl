@@ -78,6 +78,9 @@
                       {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
                       <li><span class="fa fa-trash text-danger" data-title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
                       {/if}
+                      {if user_has_perm('pages_section_move') && user_has_module_perm($block.module)}
+                      <li><span class="fa fa-external-link" data-title="{translate('Move')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                      {/if}
                       {if block_has_revisions($block.section_id)}
                       <li><span class="fa fa-clone" data-title="{translate('View revisions')}"></span></li>
                       {/if}

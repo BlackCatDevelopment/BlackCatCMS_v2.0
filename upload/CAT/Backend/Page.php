@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -82,7 +82,7 @@ if (!class_exists('CAT_Backend_Page'))
             $sections = CAT_Sections::getSections($pageID,NULL,false);
 
             // addable addons
-            $addable  = CAT_Helper_Addons::getAddons(0,'module','page','name',true,false);
+            $addable  = CAT_Helper_Addons::getAddons('page','name',false);
 
             $tpl_data = array(
                 'page'    => CAT_Helper_Page::properties($pageID),
@@ -147,12 +147,11 @@ if (!class_exists('CAT_Backend_Page'))
          **/
         public static function headerfiles()
         {
-            $self    = self::getInstance();
             $pageID  = self::getPageID();
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
-            if(!$self->user()->hasPerm('pages_edit') || !$self->user()->hasPagePerm($pageID,'pages_edit'))
+            if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
             $headerfiles = CAT_Helper_Page::getExtraHeaderFiles($pageID);
@@ -329,14 +328,12 @@ echo "remove file $remove_file\n<br />";
          **/
         public static function list($as_array=false)
         {
-            $self = self::getInstance();
-
-            if(!$self->user()->hasPerm('pages_list'))
+            if(!self::user()->hasPerm('pages_list'))
                 CAT_Helper_JSON::printError('You are not allowed for the requested action!');
 
             $pages = CAT_Helper_Page::getPages(true);
 
-            $lang  = $self->router()->getRoutePart(-1);
+            $lang  = self::router()->getRoutePart(-1);
             if($lang && !in_array($lang,array('page','index','list')))
             {
                 $addon = CAT_Helper_Addons::getDetails($lang);
@@ -364,12 +361,11 @@ echo "remove file $remove_file\n<br />";
          **/
         public static function settings()
         {
-            $self    = self::getInstance();
             $pageID  = self::getPageID();
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
-            if(!$self->user()->hasPerm('pages_settings') || !$self->user()->hasPagePerm($pageID,'pages_settings'))
+            if(!self::user()->hasPerm('pages_settings') || !self::user()->hasPagePerm($pageID,'pages_settings'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
             // now, let's load the form(s)
@@ -381,7 +377,7 @@ echo "remove file $remove_file\n<br />";
             $page       = CAT_Helper_Page::properties($pageID);
             $languages  = array();
             $templates  = array();
-            $pages      = $self->lb()->sort(CAT_Helper_Page::getPages(1),0);
+            $pages      = self::lb()->sort(CAT_Helper_Page::getPages(1),0);
 
             // to fill the several page select fields (f.e. "parent")
             $pages_select = array();
@@ -400,7 +396,7 @@ echo "remove file $remove_file\n<br />";
             }
 
             // template select
-            if(is_array(($tpls=CAT_Helper_Addons::getAddons('template','template'))))
+            if(is_array(($tpls=CAT_Helper_Addons::getAddons('template'))))
             {
                 foreach(array_values($tpls) as $tpl)
                 {
@@ -411,7 +407,7 @@ echo "remove file $remove_file\n<br />";
             // page parent
             $form->getElement('parent')
                  ->setAttr('options',array_merge(
-                     array('0'=>'['.$self->lang()->t('none').']'),
+                     array('0'=>'['.self::lang()->t('none').']'),
                      $pages_select
                    ))
                  ->setValue($page['parent'])
@@ -459,13 +455,11 @@ echo "remove file $remove_file\n<br />";
          **/
         public static function tree()
         {
-            $self = self::getInstance();
-
-            if(!$self->user()->hasPerm('pages_list'))
+            if(!self::user()->hasPerm('pages_list'))
                 CAT_Helper_JSON::printError('You are not allowed for the requested action!');
 
             $pages = CAT_Helper_Page::getPages(true);
-            $pages = $self->lb()->buildRecursion($pages);
+            $pages = self::lb()->buildRecursion($pages);
 
             if(self::asJSON())
             {
@@ -487,20 +481,19 @@ echo "remove file $remove_file\n<br />";
          **/
         public static function unlink()
         {
-            $self     = self::getInstance();
             $pageID   = self::getPageID();
             $unlinkID = CAT_Helper_Validate::sanitizePost('unlink');
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
-            if(!$self->user()->hasPerm('pages_edit') || !$self->user()->hasPagePerm($pageID,'pages_edit'))
+            if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
             // check data
             if(!CAT_Helper_Page::exists($pageID) || !CAT_Helper_Page::exists($unlinkID))
                 CAT_Object::printFatalError('Invalid data!');
 
-            $self->db()->query(
+            self::db()->query(
                 'DELETE FROM `:prefix:pages_langs` WHERE `page_id`=? AND `link_page_id`=?',
                 array($pageID,$unlinkID)
             );
@@ -508,7 +501,7 @@ echo "remove file $remove_file\n<br />";
             if(self::asJSON())
             {
                 echo CAT_Object::json_result(
-                    ( $self->db()->isError() ? false : true ),
+                    ( self::db()->isError() ? false : true ),
                     ''
                 );
                 return;
@@ -524,10 +517,9 @@ echo "remove file $remove_file\n<br />";
          **/
         public static function visibility()
         {
-            $self = self::getInstance();
-            if(!$self->user()->hasPerm('pages_edit'))
+            if(!self::user()->hasPerm('pages_edit'))
                 CAT_Helper_JSON::printError('You are not allowed for the requested action!');
-            $params  = $self->router()->getParams();
+            $params  = self::router()->getParams();
             $page_id = $params[0];
             $newval  = $params[1];
             if(!is_numeric($page_id)) {
@@ -540,12 +532,12 @@ echo "remove file $remove_file\n<br />";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // MUSS ANGEPASST WERDEN! Neue Spalte vis_id (FK)
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            $self->db()->query(
+            self::db()->query(
                 'UPDATE `:prefix:pages` SET `visibility`=? WHERE `page_id`=?',
                 array($newval,$page_id)
             );
             echo CAT_Object::json_result(
-                $self->db()->isError(),
+                self::db()->isError(),
                 '',
                 true
             );

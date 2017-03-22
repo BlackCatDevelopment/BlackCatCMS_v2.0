@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -59,12 +59,12 @@ if (!class_exists('CAT_Backend_Settings'))
         {
             if(!self::$avail_settings)
             {
-                $self = self::getInstance();
-                $data = $self->db()->query(
+                $data = self::db()->query(
                     'SELECT * FROM `:prefix:settings` AS `t1` '
                     . 'JOIN `:prefix:forms_fieldtypes` AS `t2` '
                     . 'ON `t1`.`fieldtype`=`t2`.`id` '
-                    . 'WHERE `is_editable`=?',
+                    . 'WHERE `is_editable`=? '
+                    . 'ORDER BY `region`',
                     array('Y')
                 );
                 if($data)
@@ -83,118 +83,152 @@ if (!class_exists('CAT_Backend_Settings'))
         public static function index()
         {
             $settings = self::getSettings();
-            $self     = self::getInstance();
-            $region   = $self->router()->getParam();
+            if(!is_array($settings) || !count($settings))
+                self::printFatalError('missing settings!');
 
-            if(!$region) $region = $self->router()->getFunction();
-
-            $form = CAT_Backend::initForm();
-
-            $form->createForm('settings');
-            $form->setAttr('class','');
-
-            if(!self::$regions)
-            {
-                self::$regions = array('index');
-                $regions = CAT_Backend::getMainMenu(4);
-                foreach(array_values($regions) as $r)
-                    array_push(self::$regions,$r['name']);
-            }
-
-            if(!in_array($region,self::$regions)) // invalid call!
-                $region = 'index';
+            // there *may* be a region name
+            $region     = self::router()->getParam();
+            if(!$region)
+                $region = self::router()->getFunction();
 
             // filter settings by region
-            //$settings = CAT_Helper_Array::ArrayFilterByKey($settings, 'region', $region);
-            $settings = CAT_Helper_Array::filter($settings,'region',$region);
+            if($region && $region != 'index')
+                $settings = CAT_Helper_Array::filter($settings,'region',$region,'matching');
 
-            if(is_array($settings) && count($settings))
+            if(!self::asJSON())
             {
-                $lastlegend = '';
-                foreach($settings as $item)
+                $form = self::renderForm($settings);
+                CAT_Backend::print_header();
+                self::tpl()->output(
+                    'backend_settings',
+                    array(
+                        'form'   => $form->getForm(),
+                    )
+                );
+                CAT_Backend::print_footer();
+            }
+        }   // end function index()
+        
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function renderForm($settings)
+        {
+            $form = CAT_Backend::initForm();
+            $form->createForm('settings');
+            $form->setAttr('class','tabbed');
+
+            $lastlegend = '';
+            foreach($settings as $item)
+            {
+                if($item['region'] != $lastlegend)
                 {
-                    if($item['fieldset'] != $lastlegend)
-                    {
-                        $form->addElement(array(
-                            'type'  => 'legend',
-                            'label' => $self->lang()->translate(self::humanize($item['fieldset'])),
-                            'class' => '',
-                        ));
-                        $lastlegend = $item['fieldset'];
-                    }
-                    $element = array(
-                        'type'  => (
-                              strlen($item['fieldtype'])
-                            ? $item['fieldtype']
-                            : 'text'
-                        ),
-                        'name'  => $item['name'],
-                        'label' => (
-                              strlen($item['fieldlabel'])
-                            ? $item['fieldlabel']
-                            : $self->lang()->translate(self::humanize($item['name']))
-                        ),
-                        'default' => (
-                              strlen($item['default_value'])
-                            ? $item['default_value']
-                            : ''
-                        ),
-                    );
+                    $form->addElement(array(
+                        'type'  => 'legend',
+                        'label' => self::lang()->translate(self::humanize($item['region'])),
+                        'class' => '',
+                    ));
+                    $lastlegend = $item['region'];
+                }
+                $element = array(
+                    'type'  => (
+                          strlen($item['fieldtype'])
+                        ? $item['fieldtype']
+                        : 'text'
+                    ),
+                    'name'  => $item['name'],
+                    'label' => (
+                          strlen($item['fieldlabel'])
+                        ? $item['fieldlabel']
+                        : self::lang()->translate(self::humanize($item['name']))
+                    ),
+                    'default' => (
+                          strlen($item['default_value'])
+                        ? $item['default_value']
+                        : ''
+                    ),
+                    'after'   => (
+                          strlen($item['helptext'])
+                        ? $item['helptext']
+                        : ''
+                    ),
+                );
 
-                    switch($element['type'])
-                    {
-                        case 'radiogroup':
-                            $element['options'] = array('y'=>'yes','n'=>'no');
-                            break;
-                        case 'checkbox':
-                            break;
-                    }
+                switch($element['type'])
+                {
+                    case 'radiogroup':
+                        $element['options'] = array('y'=>'yes','n'=>'no');
+                        break;
+                    case 'checkbox':
+                        if(strlen($item['default_value']))
+                        {
+                            $element['value'] = $item['default_value'];
+                        }
+                        break;
+                }
 
-                    $elem = $form->addElement($element);
-                    if(strlen($item['fieldhandler']))
-                    {
-                        $handler = $item['fieldhandler'];
+                $elem = $form->addElement($element);
+                if(strlen($item['fieldhandler']))
+                {
+                    $handler = $item['fieldhandler'];
 //******************************************************************************
 // Funktioniert derzeit nur mit einem Parameter und loest keine Variablen auf!
 //******************************************************************************
-                        if(strlen($item['params']))
-                            $data = call_user_func_array($handler,array($item['params']));
-//******************************************************************************
-                        else
-                            $data = $handler();
+/*
+Array
+(
+    [0] => Array
+        (
+            [addon_id] => 27
+            [type] => module
+            [directory] => ckeditor4
+            [name] => CKEditor 4
+            [description] => CKEditor 4
+            [function] => wysiwyg
+            [version] =>
+            [guid] =>
+            [platform] =>
+            [author] =>
+            [license] =>
+            [installed] =>
+            [upgraded] =>
+            [removable] => Y
+            [bundled] => N
+        )
 
-                        if($elem instanceof wblib\wbFormsElementSelect)
-                        {
-                            $elem->setAttr('options',$data);
-                        }
+)
+*/
+                    if(strlen($item['params']))
+                    {
+                        $params = $item['params'];
+                        if(substr_count($params,','))
+                            $params = explode(',',$params);
                         else
-                        {
-                            $elem->setAttr('value',$data);
-                        }
+                            $params = array($params);
+                        $data = call_user_func_array($handler,$params);
                     }
+//******************************************************************************
+                    else
+                        $data = $handler();
 
+                    if($elem instanceof wblib\wbFormsElementSelect)
+                    {
+                        $elem->setAttr('options',$data);
+                    }
+                    else
+                    {
+                        $elem->setAttr('value',$data);
+                    }
                 }
-            }
-            else
-            {
-                $form->setError('no settings or invalid region!');
             }
 
             // set current data
             $form->setData(CAT_Object::loadSettings());
 
-            CAT_Backend::print_header();
-            $self->tpl()->output(
-                'backend_settings',
-                array(
-                    'region' => $self->lang()->t(ucfirst($region)),
-                    'form'   => $form->getForm(),
-                )
-            );
-            CAT_Backend::print_footer();
-        }   // end function mail()
+            return $form;
+        }   // end function renderForm()
         
-
-    } // class CAT_Helper_Settings
-
+    } // class CAT_Backend_Settings
 } // if class_exists()

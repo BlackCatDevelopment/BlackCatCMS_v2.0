@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -46,7 +46,7 @@ if (!class_exists('CAT_Backend_Addons'))
         public static function index()
         {
             $self = self::getInstance();
-            $data = CAT_Helper_Addons::getAddons(0,NULL,NULL,NULL,false,true);
+            $data = CAT_Helper_Addons::getAddons(); // all
             foreach($data as $i => $item)
             {
                 $data[$i]['install_date'] = CAT_Helper_DateTime::getDate($item['installed']);
@@ -74,7 +74,7 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             $catalog = self::get_catalog();
             // get installed
-            $modules = CAT_Helper_Addons::getAddons();
+            $modules = CAT_Helper_Addons::getAddons(); // all
             // map installed
             $installed = array();
             foreach($modules as $i => $m)

@@ -1,2 +1,2 @@
-<h2>{$region}</h2>
+{if $region}<h2>{$region}</h2>{/if}
 {$form}

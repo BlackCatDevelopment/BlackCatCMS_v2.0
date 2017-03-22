@@ -344,6 +344,53 @@ console.log(data);
         }
     });
 
+    // ----- move section ------------------------------------------------------
+    $('.fa-external-link').unbind('click').on('click', function(e) {
+        var dialog = $('#bsDialog').clone().detach();
+        var id     = $(this).data('id');
+        $(dialog).find('.modal-title').text(cattranslate('Move section to another page'));
+        $.ajax({
+            type    : 'POST',
+            url     : CAT_ADMIN_URL + '/page',
+            dataType: 'json',
+            success : function(data, status) {
+                var select = $('<select name="page" id="page">');
+                for(index in data.pages) {
+                    // skip current page
+                    if(data.pages[index].page_id != pageID) {
+                        select.append('<option value="'+data.pages[index].page_id+'">'+data.pages[index].menu_title+'</option>');
+                    }
+                }
+                select.appendTo($(dialog).find('.modal-body'));
+                $(dialog).modal('show');
+                $(dialog).find('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
+                    e.preventDefault();
+                    var to = $(dialog).find('.modal-content select :selected').val();
+                    $(dialog).modal('hide');
+                    $.ajax({
+                        type    : 'POST',
+                        url     : CAT_ADMIN_URL + '/section/move',
+                        dataType: 'json',
+                        data    : {
+                            page_id: pageID,
+                            section_id: id,
+                            to: to
+                        },
+                        success : function(data, status) {
+                            if(data.success) {
+                                if(data.message) {
+                                    BCGrowl(cattranslate(data.message));
+                                }
+                                window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                            }
+                        }
+                    });
+                });
+            }
+        });
+        
+    });
+
     // toggle visibility
     $('div.panel-heading span.toggle').on('click',function() {
         $(this).parentsUntil('li').next('.panel-body').toggle('slow');
@@ -368,7 +415,7 @@ console.log(data);
         });
     });
 
-    // attach publishing date/time dialog
+    // ----- attach publishing date/time dialog --------------------------------
     $('.fa-calendar').on('click',function(e) {
 
         var $this = $(this),

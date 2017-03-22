@@ -49,9 +49,9 @@
       <section id="subheader" role="navigation">
         <div id="contextual" class="pull-right"></div>
         <ol class="breadcrumb">
-          <li><a href="#">{translate('Home')}</a></li>
-          {if $meta.SECTION}<li><a href="#">{translate($meta.SECTION)}</a></li>{/if}
-          {if $meta.ACTION}<li><a href="#">{translate($meta.ACTION)}</a></li>{/if}
+          <li><a href="{$CAT_ADMIN_URL}">{translate('Home')}</a></li>
+          {if $meta.SECTION}<li><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}">{translate($meta.SECTION)}</a></li>{/if}
+          {if $meta.ACTION}<li><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}/{$meta.ACTION}">{translate($meta.ACTION)}</a></li>{/if}
         </ol>
       </section>
     </div>

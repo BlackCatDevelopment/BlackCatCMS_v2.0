@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -101,6 +101,7 @@ $LANG = array_merge($LANG,array(
     "If a section shall be visible between X and Y o'clock every day, put the start and end times here." => 'Wenn eine Sektion nur zwischen X und Y Uhr jeden Tag sichbar sein soll, hier Start- und Ende-Uhrzeit angeben.',
     'If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.' => 'Ist die Sichtbarkeit hier deaktiviert, wird diese Sektion <strong>nicht</strong> angezeigt. Alle anderen Einstellungen - z.B. eine Zeitspanne - werden ignoriert.',
     'Menu appearance' => 'Menüzugehörigkeit',
+    'Move section to another page' => 'Sektion auf eine andere Seite verschieben',
     'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
     'Please enter max. 55 characters' => 'Bitte maximal 55 Zeichen',
     'Please note that there is a bunch of files that is loaded automatically, so there\'s no need to add them here.' => 'Bitte beachten, dass es eine Reihe von Dateien gibt, die automatisch geladen werden und daher hier nicht verwaltet werden können und müssen.',
@@ -231,9 +232,14 @@ $LANG = array_merge($LANG,array(
     'Default template'  => 'Standard-Template',
     'Default theme'     => 'Standard-Template',
     'Media directory'   => 'Medien-Verzeichnis',
+    'Network'           => 'Netzwerk',
+    'Trash enabled'     => 'Seitemülleimer eingeschaltet',
     'Website title'     => 'Seitentitel',
     'Wysiwyg editor'    => 'WYSIWYG Editor',
     'Default template variant' => 'Variante',
     'Default theme variant' => 'Variante',
-    'Trash enabled'     => 'Seitemülleimer eingeschaltet',
+    'If enabled, deleted pages and sections can be recovered.'
+        => 'Eingeschaltet: Seiten und Sektionen können wiederhergestellt werden',
+    "If your server is placed behind a proxy (i.e. if you're using BC for an Intranet), set the name here."
+        => 'Wenn sich der Server hinter einem Proxy befindet (z.B. wenn BC für ein Intranet verwendet wird), hier den Namen eintragen.',
 ));

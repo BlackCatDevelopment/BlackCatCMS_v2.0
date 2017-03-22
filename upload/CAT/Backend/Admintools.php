@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -50,7 +50,7 @@ if (!class_exists('CAT_Backend_Admintools'))
             // no configuration yet
             if(!isset($d['widgets']) || !is_array($d['widgets']) || !count($d['widgets']))
             {
-                $tools = CAT_Helper_Addons::getAddons(0,'module','tool');
+                $tools = CAT_Helper_Addons::getAddons('tool');
                 $col          = 1; // init column
                 $d['columns'] = ( isset($d['columns']) ? $d['columns'] : 2 ); // init col number
                 if(count($tools))

@@ -79,6 +79,9 @@ $(function() {
         $(this).tab('show');
     });
 
+    // convert fieldsets to tabs
+    $('form.tabbed').fieldset_to_tabs();
+
     // add X-Editable to elements with 'editable' class
     $('.editable').editable();
 

@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -83,6 +83,37 @@ if (!class_exists('CAT_Backend_Section'))
                 return;
             }
         }   // end function delete()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function move()
+        {
+            // the user needs perms on current page...
+            $pageID = self::getPageID();
+            self::checkPerm($pageID,'pages_section_move');
+            // ...and on target page...
+            $toID = CAT_Helper_Validate::sanitizePost('to');
+            self::checkPerm($toID,'pages_section_move');
+            // get the section ID
+            $sectionID = self::getSectionID();
+            if(!CAT_Sections::exists($sectionID))
+                CAT_Object::printFatalError('Invalid data! (Section does not exist)');
+            self::db()->query(
+                'UPDATE `:prefix:pages_sections` SET `page_id`=? WHERE `section_id`=?',
+                array($toID,$sectionID)
+            );
+            if(self::asJSON())
+            {
+                echo CAT_Helper_JSON::printResult(
+                    (self::db()->isError() ? false : true),
+                    ''
+                );
+                return;
+            }
+        }   // end function move()
 
         /**
          *
