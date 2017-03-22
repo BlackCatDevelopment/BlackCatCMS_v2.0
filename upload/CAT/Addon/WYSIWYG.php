@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
+   @copyright       2017 Black Cat Development
    @link            http://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -83,10 +83,45 @@ echo "<div style=\"display:none;\"></div>";
     	/**
     	 * @inheritDoc
     	 */
-    	public static function save()
+    	public static function save($section_id)
     	{
-    		// TODO: implement here
-    	}
+            $field   = CAT_Helper_Validate::sanitizePost('content_id');
+    		$content = CAT_Helper_Validate::sanitizePost($field);
+            $olddata = self::view($section_id);
+
+            if(!self::user()->is_root() && CAT_Helper_Addons::isModuleInstalled('lib_htmlpurifier'))
+            {
+                // check if if HTMLPurifier is enabled...
+                $r = self::db()->get_one(
+                    'SELECT * FROM `:prefix:mod_wysiwyg_settings` WHERE `option`="enable_htmlpurifier" AND `value`="true"'
+                );
+                if($r)
+                {
+                    require_once CAT_ENGINE_PATH.'/modules/lib_htmlpurifier/inc/class.Purifier.php';
+                    $content = Purifier::purify($content,array('Core.CollectErrors'=>true));
+                }
+            }
+
+            // check for changes
+            if(sha1($content)!==sha1($olddata['content']))
+            {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: per Checkbox steuern (wie beim Wiki)
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                self::db()->query(
+                    'INSERT INTO `:prefix:mod_wysiwyg_revisions` VALUES (?,?,?,?,?);',
+                    array($section_id,date('Y-m-d-H-i-s'),time(),$olddata['content'],$olddata['text'])
+                );
+                $query  = "REPLACE INTO `:prefix:mod_wysiwyg` VALUES (?,?,?);";
+                self::db()->query($query,array($section_id, $content, strip_tags($content)));
+                $result = self::db()->isError() ? false : true;
+            }
+            else
+            {
+                $result = true;
+            }
+            return $result;
+    	}   // end function save()
 
         /**
     	 * @inheritDoc
@@ -105,13 +140,13 @@ echo "<div style=\"display:none;\"></div>";
         {
             $result = self::db()
                     ->query(
-                        "SELECT `content` FROM `:prefix:mod_wysiwyg` WHERE `section_id`=?",
+                        "SELECT `content`, `text` FROM `:prefix:mod_wysiwyg` WHERE `section_id`=?",
                         array($section_id)
                       );
             if($result)
             {
                 $fetch = $result->fetch(\PDO::FETCH_ASSOC);
-                return $fetch['content'];
+                return $fetch;
             }
         }   // end function view()
         

@@ -114,6 +114,14 @@ $(function() {
     $('body').on('hidden.bs.modal', '.modal', function() {
         $(this).removeData('bs.modal');
     });
+
+    // close any modals before opening a new one
+    $('body').on('show.bs.modal', function(e) {
+        if($('.modal:visible').length) {
+            $('.modal').modal('hide');
+        }
+    });
+
     // trigger primary button on enter
     $("body").on("shown.bs.modal", ".modal", function() {
         $(this).keypress(function(e) {

@@ -50,13 +50,13 @@ if (!class_exists('CAT_Backend_Admintools'))
             // no configuration yet
             if(!isset($d['widgets']) || !is_array($d['widgets']) || !count($d['widgets']))
             {
-                $tools = CAT_Helper_Addons::get_addons(0,'module','tool');
+                $tools = CAT_Helper_Addons::getAddons(0,'module','tool');
                 $col          = 1; // init column
                 $d['columns'] = ( isset($d['columns']) ? $d['columns'] : 2 ); // init col number
                 if(count($tools))
                 {
                     // order tools by name
-                    $tools = CAT_Helper_Array::ArraySort($tools,'name','asc',true);
+                    $tools = CAT_Helper_Array::sort($tools,'name','asc',true);
                     $count = count($tools);
                     foreach($tools as $tool)
                     {

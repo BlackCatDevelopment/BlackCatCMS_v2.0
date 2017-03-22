@@ -140,10 +140,11 @@ if (!class_exists('CAT_Page', false))
                     self::$helper->printFatalError('You are not allowed to view this page!');
                 }
             }
+
             // get active sections
+            $sections = CAT_Sections::getSections($page_id,$block,true);
 
-            $sections = CAT_Sections::getSections($page_id,$block);
-
+            // in fact, this should never happen, als isActive() does the same
             if(!count($sections)) // no content for this block
                 return false;
 
@@ -160,7 +161,7 @@ if (!class_exists('CAT_Page', false))
                     // special case
                     if($module=='wysiwyg')
                     {
-                        $output[] = CAT_Addon_WYSIWYG::view($section_id);
+                        $output[] = CAT_Addon_WYSIWYG::view($section_id)['content'];
                     }
                     else
                     {

@@ -18,7 +18,6 @@
         var minutes = "0" + date.getMinutes();
         // Seconds part from the timestamp
         var seconds = "0" + date.getSeconds();
-
         // Will display time in 10:30:23 format
         var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
@@ -28,6 +27,10 @@
         var datepicker = $.fn.datepicker.noConflict();
         $.fn.bootstrapDP = datepicker;
     }
+
+    // get the time period settings template
+    var bsPublishingTemplate = $('#publishing').detach();
+    var bsModalTemplate      = $('#bsDialog').clone().detach();
 
     // load tab content on activation
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -210,7 +213,6 @@ console.log(data);
         });
     });
 
-
     // unlink page
     $('.fa-chain-broken').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
@@ -263,31 +265,38 @@ console.log(data);
         });
     });
 
-    // delete section
+    // ----- delete section ----------------------------------------------------
     $('.fa-trash').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
-        $('.modal-body').html(
-            cattranslate('Do you really want to <strong>delete</strong> this section?') +
+        $('#bsDialog .modal-body').html(
+            cattranslate('Do you really want to delete this section?',undefined,undefined,'BE') +
             '<br />' +
-            cattranslate('ID') + ': ' + id + ' | ' + cattranslate('Module') + ': ' + $(this).data('module')
+            cattranslate('ID') + ': ' + id + ' | ' + cattranslate('Module',undefined,undefined,'BE') + ': ' + $(this).data('module')
         );
-        $('.modal-title').html('<i class="fa fa-fw fa-warning text-danger"></i> '+cattranslate('Delete section'));
-        $('#modal_dialog').modal('show');
-        $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
+        $('#bsDialog .modal-title').html('<i class="fa fa-fw fa-warning text-danger"></i> '+cattranslate('Delete section'));
+        $('#bsDialog ').modal('show');
+        $('#bsDialog .modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
             $.ajax({
                 type    : 'POST',
-                url     : CAT_ADMIN_URL + '/section/delete/' + id,
+                url     : CAT_ADMIN_URL + '/section/delete',
                 dataType: 'json',
+                data    : {
+                    page_id   : pageID,
+                    section_id: id
+                },
                 success : function(data, status) {
-                    window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    BCGrowl(cattranslate(data.message));
+                    if(data.success) {
+                        window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    }
                 }
             });
             $('#modal_dialog').modal('hide');
         });
     });
 
-    // recover section
+    // ----- recover section ---------------------------------------------------
     $('.fa-life-saver').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
         $('.modal-body').html(
@@ -302,28 +311,37 @@ console.log(data);
                 url     : CAT_ADMIN_URL + '/section/recover/' + id,
                 dataType: 'json',
                 success : function(data, status) {
-                    window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    BCGrowl(cattranslate(data.message));
+                    if(data.success) {
+                        window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    }
                 }
             });
             $('#modal_dialog').modal('hide');
         });
     });
 
-    // add section
+    // ----- add section -------------------------------------------------------
     $('button#bsAddonAdd').unbind('click').on('click', function(e) {
-        var module = $('select#module option:selected').val();
-        $.ajax({
-            type    : 'POST',
-            url     : CAT_ADMIN_URL + '/section/add',
-            dataType: 'json',
-            data    : {
-                module: module,
-                block : 1,
-                page  : pageID
-            },
-            success : function(data, status) {
-            }
-        });
+        var addon = $('select#module option:selected').val();
+        if(addon.length) {
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL + '/section/add',
+                dataType: 'json',
+                data    : {
+                    addon  : addon,
+                    block  : 1,
+                    page_id: pageID
+                },
+                success : function(data, status) {
+                    BCGrowl(cattranslate(data.message));
+                    if(data.success) {
+                        window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    }
+                }
+            });
+        }
     });
 
     // toggle visibility
@@ -335,97 +353,142 @@ console.log(data);
         $(this).next('.panel-body').toggle('slow');
         $(this).find('span.toggle').toggleClass('fa-chevron-down').toggleClass('fa-chevron-right');
     });
+    $('button#bsCollapseAll').on('click',function(e) {
+        e.preventDefault();
+        $('ul.draggable-panel li.panel').each(function() {
+            $(this).find('.panel-body').hide();
+            $(this).find('span.toggle').toggleClass('fa-chevron-down').toggleClass('fa-chevron-right');
+        });
+    });
+    $('button#bsExpandAll').on('click',function(e) {
+        e.preventDefault();
+        $('ul.draggable-panel li.panel').each(function() {
+            $(this).find('.panel-body').show();
+            $(this).find('span.toggle').toggleClass('fa-chevron-down').toggleClass('fa-chevron-right');
+        });
+    });
 
-    // attach publishing date dialog
+    // attach publishing date/time dialog
     $('.fa-calendar').on('click',function(e) {
+
         var $this = $(this),
             id    = $this.data('id'),
-            clone = $('#publishing').clone().detach()
+            clone = bsPublishingTemplate.clone().detach(),
+            modal = bsModalTemplate.clone()
             ;
 
-        $('.modal-body').html(clone.html());
-        $('.modal-title').text(cattranslate('Set publishing period',undefined,undefined,'backstrap'));
+        $(modal).find('.modal-body').html(clone.html());
+        $(modal).find('.modal-title').text(cattranslate('Set publishing period',undefined,undefined,'backstrap'));
 
         //$.datetimepicker.setLocale('de');
-        $('.modal-body input.datepicker').datetimepicker({
+        $(modal).find('.modal-body input.datepicker').datetimepicker({
             defaultTime: '00:00',
             onShow:function(ct,target){
-                if($(target).prop('id')=='date_from'){
+                if($(target).prop('id')=='publ_start'){
                     this.setOptions({
-                        maxDate: $('input#date_until').val() ? $('input#date_until').val() : false
+                        maxDate: $('input#publ_end').val() ? $('input#publ_end').val() : false
                     });
                 } else {
                     this.setOptions({
-                        minDate: $('input#date_from').val() ? $('input#date_from').val() : false
+                        minDate: $('input#publ_start').val() ? $('input#publ_start').val() : false
                     });
                 }
             }
         });
 
-        $('.modal-body input.timepicker').datetimepicker({
-            datepicker:false,
-            mask: true,
-            format:'H:i'
+        $(modal).find('.modal-body input.timepicker').datetimepicker({
+            datepicker: false,
+            mask      : true,
+            format    :'H:i'
         });
 
         // set values
-        var dateformat = $('.modal-body input.datepicker').datetimepicker('getFormat');
-        if($this.data('pubstart') != 0) {
-            var date = new Date($this.data('pubstart')*1000);
-            $('.modal-body input#date_from').val($('.modal-body input#date_from').datetimepicker('formatDateTime',date));
+        var dateformat = $(modal).find('.modal-body input.datepicker').datetimepicker('getFormat');
+        if($this.attr('data-pubstart') != 0) {
+            var date = new Date($this.attr('data-pubstart')*1000);
+            $(modal)
+                .find('.modal-body input#publ_start')
+                .val($(modal).find('.modal-body input#publ_start').datetimepicker('formatDateTime',date));
         }
-        if($this.data('pubend') != 0) {
-            var date = new Date($this.data('pubend')*1000);
-            $('.modal-body input#date_until').val($('.modal-body input#date_until').datetimepicker('formatDateTime',date));
+        if($this.attr('data-pubend') != 0) {
+            var date = new Date($this.attr('data-pubend')*1000);
+            $(modal)
+                .find('.modal-body input#publ_end')
+                .val($(modal).find('.modal-body input#publ_end').datetimepicker('formatDateTime',date));
         }
-        if($this.data('timestart') != 0) {
-            var date = new Date($this.data('timestart')*1000);
-            $('.modal-body input#time_from').val($('.modal-body input#time_from').datetimepicker('formatTime',date));
+        if($this.attr('data-timestart') != 0) {
+            var date = new Date($this.attr('data-timestart')*1000);
+            $(modal)
+                .find('.modal-body input#publ_by_time_start')
+                .val($(modal).find('.modal-body input#publ_by_time_start').datetimepicker('formatTime',date));
         }
-        if($this.data('timeend') != 0) {
-            var date = new Date($this.data('timeend')*1000);
-            $('.modal-body input#time_until').val($('.modal-body input#time_until').datetimepicker('formatTime',date));
+        if($this.attr('data-timeend') != 0) {
+            var date = new Date($this.attr('data-timeend')*1000);
+            $(modal)
+                .find('.modal-body input#publ_by_time_end')
+                .val($(modal).find('.modal-body input#publ_by_time_end').datetimepicker('formatTime',date));
         }
 
-        $('#modal_dialog').modal('show');
+        $(modal).find('.fa-trash').unbind('click').on('click',function() {
+            $(this).prev('input').val('');
+        });
+
+        $(modal).modal('show');
 
         // note: the unbind() is necessary to prevent multiple execution!
-        $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
+        $(modal).find('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
-            var date_from = 0,
-                date_until = 0,
-                time_from = 0,
-                time_until = 0;
-            
-            if($('.modal-content input#date_from').val() != '') {
-                date_from = $('.modal-content input#date_from').val();
+            var publ_start = 0,
+                publ_end = 0,
+                publ_by_time_start = 0,
+                publ_by_time_end = 0;
+
+            // start end end date
+            if($(modal).find('.modal-content input#publ_start').val() != '') {
+                publ_start = $('.modal-content input#publ_start').val();
             }
-            if($('.modal-content input#time_from').val() != '') {
-                time_from = $(".modal-content input#time_from").val();
+            if($(modal).find('.modal-content input#publ_end').val() != '') {
+                publ_end = $(".modal-content input#publ_end").val();
             }
-            if($('.modal-content input#date_until').val() != '') {
-                date_until = $(".modal-content input#date_until").val();
+
+            // start and end time (per day)
+            if(
+                   $(modal).find('.modal-content input#publ_by_time_start').val() != ''
+                && $(modal).find('.modal-content input#publ_by_time_start').val() != '__:__'
+            ) {
+                publ_by_time_start = $(".modal-content input#publ_by_time_start").val();
             }
-            if($('.modal-content input#time_until').val() != '') {
-                time_until = $(".modal-content input#time_until").val();
+            if(
+                   $(modal).find('.modal-content input#publ_by_time_end').val() != ''
+                && $(modal).find('.modal-content input#publ_by_time_end').val() != '__:__'
+            ) {
+                publ_by_time_end = $(".modal-content input#publ_by_time_end").val();
             }
 
             var dates = {
-                date_from : date_from,
-                time_from : time_from,
-                date_until: date_until,
-                time_until: time_until,
+                publ_start        : publ_start,
+                publ_by_time_start: publ_by_time_start,
+                publ_end          : publ_end,
+                publ_by_time_end  : publ_by_time_end
             };
 
-            $('#modal_dialog').modal('hide');
+            $(modal).modal('hide');
+            $('.xdsoft_datetimepicker').remove();
+
             if(dates) {
-                dates.id = id;
+                dates.section_id = id;
                 $.ajax({
                     type    : 'POST',
                     url     : CAT_ADMIN_URL + '/section/publish/' + id,
                     dataType: 'json',
                     data    : dates,
                     success : function(data, status) {
+                        $('span.fa-calendar[data-id="'+id+'"]')
+                            .attr('data-pubstart',data.publ_start)
+                            .attr('data-pubend',data.publ_end)
+                            .attr('data-timestart',data.publ_by_time_start)
+                            .attr('data-timeend',data.publ_by_time_end);
+                        BCGrowl(cattranslate('Successfully saved'));
                     }
                 });
             }

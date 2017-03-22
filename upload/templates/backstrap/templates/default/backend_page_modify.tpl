@@ -2,18 +2,6 @@
 
 <div class="row flex">
   <div class="col-md-12">
-    {if $addons}
-    <span id="bsAddonSelect" class="pull-right">
-      <label for="module">{translate('Add section')}</label>
-      <select name="module" id="module">
-        {foreach $addons addon}
-        <option value="{$addon.addon_id}">{$addon.name}</option>
-        {/foreach}
-      </select>
-      <button class="btn btn-primary" id="bsAddonAdd" data-page="{$page.page_id}" data-block="1">{translate('Submit')}</button>
-    </span>
-    {/if}
-
     <ul class="nav nav-tabs" role="tablist">{* Tabs *}
       <li role="presentation" class="active">
         <a href="#contents" aria-controls="contents" role="tab" data-toggle="tab">{translate('Content')}</a>
@@ -39,54 +27,86 @@
 
 {* -------------------- START #contents tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane active" id="contents">
+        <div class="row">
+          <div class="col-md-6">
+            <button id="bsCollapseAll" class="btn btn-default btn-xs"><span class="fa fa-chevron-up"></span> {translate('Collapse all')}</button>
+            <button id="bsExpandAll" class="btn btn-default btn-xs"><span class="fa fa-chevron-down"></span> {translate('Expand all')}</button>
+          </div>
+          <div class="col-md-6">
+{if $addable}
+            <span id="bsAddonSelect" class="pull-right">
+              <label for="module">{translate('Add section')}</label>
+              <select name="module" id="module">
+                <option value="">{translate('[Please select]')}</option>
+                {foreach $addable addon}
+                <option value="{$addon.addon_id}">{$addon.name}</option>
+                {/foreach}
+              </select>
+              <button class="btn btn-primary" id="bsAddonAdd" data-page="{$page.page_id}" data-block="1">{translate('Submit')}</button>
+            </span>
+{/if}
+          </div>
+        </div>{* class=row *}
+
 {if $blocks}
-        <ul class="draggable-panel">
+      <div class="row">
+        <div class="col-md-12">
+          <ul class="draggable-panel">
 {foreach $blocks as block}
-          <li class="panel panel-primary" data-id="{$block.section_id}" id="section_{$block.section_id}">
-            <div class="panel-heading">
-              <table style="width:100%;">
-                <tr>
+            <li class="panel panel-primary" data-id="{$block.section_id}" id="section_{$block.section_id}">
+              <div class="panel-heading">
+                <table style="width:100%;">
+                  <tr>
                     <td><span class="fa fa-fw fa-arrows"></span></td>
                     <td><strong>{translate('Block')}:</strong> {$block.name} ({translate('Block number')}: {$block.block})</td>
                     <td><strong>{translate('Name')}:</strong> <span class="editable" data-name="name" data-type="text" data-pk="{$block.section_id}" data-url="{$CAT_ADMIN_URL}/sections/edit">{if !$block.name}<i>{translate('no name')}</i>{else}{$block.name}{/if}</span></td>
                     <td><strong>{translate('Module')}:</strong> {$block.module}</td>
                     <td><strong>{translate('Section ID')}:</strong> {$block.section_id}</td>
                     <td><span class="pull-right toggle fa fa-fw fa-chevron-down"></span></td>
-                </tr>
-              </table>
-            </div>
-            <div class="panel-body pos-r">
-              <div class="panel-icon-wrapper bg-white">
-                {if user_has_perm('pages_edit')}
-                <ul class="nav nav-left">
+                  </tr>
+                </table>
+              </div>
+              <div class="panel-body pos-r">
+                <div class="panel-icon-wrapper bg-white">
+                  {if user_has_perm('pages_edit')}
+                  <ul class="nav nav-left">
                     {if $block.state_id==2}
-                    <li><span class="fa fa-life-saver" data-title="{translate('Recover')}" data-id="{$block.section_id}"></span></li>
+                      <li><span class="fa fa-life-saver" data-title="{translate('Recover')}" data-id="{$block.section_id}"></span></li>
                     {else}
-                    <li><span class="fa fa-eye" data-title="{translate('If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.')}" data-id="{$block.section_id}"></span></li>
-                    <li><span class="fa fa-calendar" data-title="{translate('Set publishing period')}" data-id="{$block.section_id}" data-pubstart="{$block.publ_start}" data-pubend="{$block.publ_end}" data-timestart="{$block.publ_by_time_start}" data-timeend="{$block.publ_by_time_end}"></span></li>
-                    {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
-                    <li><span class="fa fa-trash text-danger" data-title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                      <li><span class="fa fa-eye" data-title="{translate('If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.')}" data-id="{$block.section_id}"></span></li>
+                      <li><span class="fa fa-calendar" data-title="{translate('Set publishing period')}" data-id="{$block.section_id}" data-pubstart="{$block.publ_start}" data-pubend="{$block.publ_end}" data-timestart="{$block.publ_by_time_start}" data-timeend="{$block.publ_by_time_end}"></span></li>
+                      {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
+                      <li><span class="fa fa-trash text-danger" data-title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                      {/if}
+                      {if block_has_revisions($block.section_id)}
+                      <li><span class="fa fa-clone" data-title="{translate('View revisions')}"></span></li>
+                      {/if}
                     {/if}
-                    {/if}
-                </ul>
-                {/if}
+                  </ul>
+                  {/if}
+                </div>
+                <div class="panel-content">
+                  {if $block.state_id!=2}
+                  {$block.content}
+                  {else}
+                  <i><small>{translate('This section is marked as deleted.')}{if user_has_perm('pages_section_recover')} {translate('You may recover it by clicking on the recover icon.')} <i class="fa fa-life-saver"></i>{/if}</small></i>
+                  {/if}
+                </div>
               </div>
-              <div class="panel-content">
-                {if $block.state_id!=2}
-                {$block.content}
-                {else}
-                <i><small>{translate('This section is marked as deleted.')}{if user_has_perm('pages_section_recover')} {translate('You may recover it by clicking on the recover icon.')} <i class="fa fa-life-saver"></i>{/if}</small></i>
-                {/if}
-              </div>
-            </div>
-          </li>
+            </li>
 {/foreach}
-        </ul>
-{else}
-        <div class="alert alert-info alert-dismissible" role="alert">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          {translate('No sections were found for this page')}
+          </ul>
         </div>
+      </div>
+{else}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="alert alert-info alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            {translate('No sections were found for this page')}
+          </div>
+        </div>
+      </div>
 {/if}
       </div>{* END #contents tab-pane *}
 
@@ -163,39 +183,39 @@
   </div>{* END col *}
 </div>{* END row *}
 
-{include(file='backend_modal.tpl' modal_id='modal_dialog' modal_title='', modal_text='', modal_savebtn='1')}
-
 <div class="hidden" id="publishing">
-        <p>{translate('You can set a date and time period in which this content section will be visible.')}
-        {translate('Expired sections will not be deleted, but they will no longer appear in the Frontend.')}</p>
-    <ul class="nav nav-tabs" role="tablist">{* Tabs *}
-      <li role="presentation" class="active">
-        <a href="#period" aria-controls="period" role="tab" data-toggle="tab">{translate('Period of time')}</a>
-      </li>
-      <li role="presentation">
-        <a href="#time" aria-controls="time" role="tab" data-toggle="tab">{translate('Time of day')}</a>
-      </li>
-    </ul>
-    <div class="tab-content">{* Tab panes *}
-        <div role="tabpanel" class="tab-pane active" id="period">
-            <p>{translate("If a section shall be visible between two dates, put the start and end date here.")}</p>
-            <div class="input-group">
-                <span class="input-group-addon col-3" style="width:33%">{translate('Date from')}</span>
-                <input type="text" class="form-control datepicker col-3" name="date_from" id="date_from" />
-            </div><br />
-            <div class="input-group">
-                <span class="input-group-addon col-3" style="width:33%">{translate('Date until')}</span>
-                <input type="text" class="form-control datepicker col-3" name="date_until" id="date_until" />
-            </div><br />
-        </div>
-        <div role="tabpanel" class="tab-pane" id="time">
-            <p>{translate("If a section shall be visible between X and Y o'clock every day, put the start and end times here.")}</p>
-            <div class="input-group">
-                <span class="input-group-addon col-3">{translate('Time from')}</span>
-                <input type="text" class="form-control timepicker col-3" name="time_from" id="time_from" />
-                <span class="input-group-addon col-3">{translate('Time until')}</span>
-                <input type="text" class="form-control timepicker col-3" name="time_until" id="time_until" />
-            </div>
-        </div>
+  <p>{translate('You can set a date and time period in which this content section will be visible.')}
+     {translate('Expired sections will not be deleted, but they will no longer appear in the Frontend.')}</p>
+  <ul class="nav nav-tabs" role="tablist">{* Tabs *}
+    <li role="presentation" class="active">
+      <a href="#bsModalPeriodTab" aria-controls="bsModalPeriodTab" role="tab" data-toggle="tab">{translate('Period of time')}</a>
+    </li>
+    <li role="presentation">
+      <a href="#bsModalTimeTab" aria-controls="bsModalTimeTab" role="tab" data-toggle="tab">{translate('Time of day')}</a>
+    </li>
+  </ul>
+  <div class="tab-content">{* Tab panes *}
+    <div role="tabpanel" class="tab-pane active" id="bsModalPeriodTab">
+      <p>{translate("If a section shall be visible between two dates, put the start and end date here.")}</p>
+      <div class="input-group">
+        <span class="input-group-addon col-3" style="width:33%">{translate('Date from')}</span>
+        <input type="text" class="form-control datepicker col-3" name="publ_start" id="publ_start" />
+        <span class="input-group-addon col-3 fa fa-trash"></span>
+      </div><br />
+      <div class="input-group">
+        <span class="input-group-addon col-3" style="width:33%">{translate('Date until')}</span>
+        <input type="text" class="form-control datepicker col-3" name="publ_end" id="publ_end" />
+        <span class="input-group-addon col-3 fa fa-trash"></span>
+      </div><br />
     </div>
-</div>
+    <div role="tabpanel" class="tab-pane" id="bsModalTimeTab">
+      <p>{translate("If a section shall be visible between X and Y o'clock every day, put the start and end times here.")}</p>
+      <div class="input-group">
+        <span class="input-group-addon col-3">{translate('Time from')}</span>
+        <input type="text" class="form-control timepicker col-3" name="publ_by_time_start" id="publ_by_time_start" />
+        <span class="input-group-addon col-3">{translate('Time until')}</span>
+        <input type="text" class="form-control timepicker col-3" name="publ_by_time_end" id="publ_by_time_end" />
+      </div>
+    </div>{* end #bsModalTimeTab tab *}
+  </div>{* end class tab-content *}
+</div>{* end hidden div *}

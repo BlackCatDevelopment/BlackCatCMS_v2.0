@@ -16,6 +16,8 @@
 */
 
 $LANG = array(
+    'Add files...'      => 'Dateien hinzufügen...',
+    'Cancel upload'     => 'Upload abbrechen',
     'Context menu'      => 'Kontextmenü',
     'Delete item'       => 'Element löschen',
     'Filter by type'    => 'Nach Typ filtern',
@@ -25,6 +27,7 @@ $LANG = array(
     'Remove plugin'     => 'Plugin entfernen',
     'Select folder'     => 'Verzeichnis wählen',
     'Show catalog'      => 'Zeige Katalog',
+    'Start upload'      => 'Upload starten',
     'Submit changes'    => 'Änderungen speichern',
     'Toggle navigation' => 'Navigation umschalten',
 

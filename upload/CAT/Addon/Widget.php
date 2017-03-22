@@ -26,7 +26,7 @@ class CAT_Addon_Widget extends CAT_Addon_Module
 	/**
 	 * @inheritDoc
 	 */
-	public static function save()
+	public static function save($section_id)
 	{
 		// TODO: implement here
 	}

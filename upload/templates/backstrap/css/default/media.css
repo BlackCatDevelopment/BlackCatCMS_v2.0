@@ -8,9 +8,12 @@ table.datatable.compact.dataTable tbody span.dtlabel{text-align:right;}
 div#list img.thumb{width:80px;padding:5px;}
 
 /* grid view */
-div#grid li.gridder-expander{display:inline-block;border:1px solid gray;border-radius:5px;width:200px;height:150px;margin:5px;vertical-align:middle;text-align:center;}
+div#grid li.gridder-expander{display:inline-block;border:1px solid gray;border-radius:5px;width:200px;height:150px;line-height:150px;margin:5px;vertical-align:middle;text-align:center;}
 div#grid li.gridder-expander img.thumb{width:150px;padding:5px;}
 div.fa-file-movie-o{width:80px;height:80px;font-size:80px;}
-div.actions{width:25px;height:100%;float:left;}
+div.actions{width:25px;height:100%;float:left;border-right:1px solid #ccc;}
 
 .dataTables_filter span{margin-left:5px;}
+
+/* upload tab */
+#bsUploadFiles > thead{display:none;}

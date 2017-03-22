@@ -27,10 +27,10 @@ $mod_headers = array(
             array( 'name' => 'description', 'content' => 'BlackCat CMS - '.$pg->lang()->translate('Administration') ),
         ),
         'css' => array(
+            array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
             array('file'=>$bootstrapcss,),
             array('file'=>'modules/lib_bootstrap/vendor/css/default/bootstrap-editable.css',),
             array('file'=>'modules/lib_bootstrap/vendor/css/fuelux.min.css',),
-            array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
             array('file'=>'modules/lib_jquery/plugins/jquery.qtip/jquery.qtip.min.css',),
             array('file'=>'modules/lib_jquery/jquery-ui/themes/base/jquery-ui.css',),
             array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),

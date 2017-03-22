@@ -461,23 +461,23 @@ if(!class_exists('CAT_Helper_Directory', false))
             return $string;
         }   // end function sanitizeFilename()
 
-		/**
-		 * fixes a path by removing //, /../ and other things
-		 *
-		 * @access public
-		 * @param  string  $path - path to fix
-		 * @return string
-		 **/
-		public static function sanitizePath($path,$as_array=false)
-		{
+        /**
+         * fixes a path by removing //, /../ and other things
+         *
+         * @access public
+         * @param  string  $path - path to fix
+         * @return string
+         **/
+        public static function sanitizePath($path,$as_array=false)
+        {
             $self       = self::getInstance();
             $self->log()->addDebug('> sanitizePath [{path}]',array('path'=>$path));
-		    // remove / at end of string; this will make sanitizePath fail otherwise!
-		    $path       = preg_replace( '~/{1,}$~', '', $path );
-		    // make all slashes forward
-			$path       = str_replace( '\\', '/', $path );
-	        // bla/./bloo ==> bla/bloo
-	        $path       = preg_replace('~/\./~', '/', $path);
+            // remove / at end of string; this will make sanitizePath fail otherwise!
+            $path       = preg_replace( '~/{1,}$~', '', $path );
+            // make all slashes forward
+            $path       = str_replace( '\\', '/', $path );
+            // bla/./bloo ==> bla/bloo
+            $path       = preg_replace('~/\./~', '/', $path);
 
             // relative path
             if(strlen($path)>2 && !substr_compare($path,'..',0,2))
@@ -486,36 +486,36 @@ if(!class_exists('CAT_Helper_Directory', false))
                     $path = substr_replace($path, CAT_ENGINE_PATH, 1, 2);
             }
 
-	        // resolve /../
-	        // loop through all the parts, popping whenever there's a .., pushing otherwise.
-	        $parts      = array();
-	        foreach ( explode('/', preg_replace('~/+~', '/', $path)) as $part )
-	        {
-	            if ($part === ".." || $part == '')
-	            {
-	                array_pop($parts);
-	            }
-	            elseif ($part!="")
-	            {
+            // resolve /../
+            // loop through all the parts, popping whenever there's a .., pushing otherwise.
+            $parts      = array();
+            foreach ( explode('/', preg_replace('~/+~', '/', $path)) as $part )
+            {
+                if ($part === ".." || $part == '')
+                {
+                    array_pop($parts);
+                }
+                elseif ($part!="")
+                {
                     #$self->log()->addDebug('checking part -'.$part."- encoding -", mb_detect_encoding($part,'UTF-8',true));
                     $part = ( self::$is_win && mb_detect_encoding($part,'UTF-8',true) )
                           ? utf8_decode($part)
                           : $part;
-	                $parts[] = $part;
-	            }
-	        }
+                    $parts[] = $part;
+                }
+            }
 
             if($as_array) return $parts;
 
-	        $new_path = implode("/", $parts);
-	        // windows
-	        if ( ! preg_match( '/^[a-z]\:/i', $new_path ) ) {
-				$new_path = '/' . $new_path;
-			}
+            $new_path = implode("/", $parts);
+            // windows
+            if ( ! preg_match( '/^[a-z]\:/i', $new_path ) ) {
+                $new_path = '/' . $new_path;
+            }
             $self->log()->addDebug('< returning path [{path}]',array('path'=>$new_path),array(__METHOD__,__LINE__));
-	        return $new_path;
-		
-		}   // end function sanitizePath()
+            return $new_path;
+        
+        }   // end function sanitizePath()
 		
 		/**
 		 * scans a directory
@@ -592,13 +592,15 @@ if(!class_exists('CAT_Helper_Directory', false))
                 if(substr($remove_orig,-1,1)=='/') $remove_prefix .= '/';
             }
 
-            if ( self::$current_depth > self::$max_recursion_depth ) { return array(); }
+            if(self::$current_depth > self::$max_recursion_depth) { return array(); }
 
             $self->log()->addDebug('$dir before sanitizePath: '.$dir);
             $dir = self::sanitizePath($dir);
             $self->log()->addDebug('$dir after sanitizePath: '.$dir);
 
-			if (false !== ($dh = dir($dir))) {
+            if(!is_dir($dir)) return array();
+
+			if(false !== ($dh = dir($dir))) {
                 while( false !== ($file = $dh->read())) {
                     $self->log()->addDebug('current directory entry: '.$file);
                     if ( ! self::$show_hidden && substr($file,0,1) == '.' ) continue;

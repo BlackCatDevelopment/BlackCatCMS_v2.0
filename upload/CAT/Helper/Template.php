@@ -118,7 +118,7 @@ if (!class_exists('CAT_Helper_Template'))
 // TODO: Rechte beruecksichtigen!
 //******************************************************************************
             $templates = array();
-            $addons = CAT_Helper_Addons::get_addons(
+            $addons = CAT_Helper_Addons::getAddons(
                 NULL,
                 'template',
                 ( ($for=='backend') ? 'theme' : 'template')
@@ -154,21 +154,20 @@ if (!class_exists('CAT_Helper_Template'))
             else
                 $tpl_path = CAT_ENGINE_PATH.'/templates/'.$for.'/templates/';
 
-            $info  = CAT_Helper_Addons::checkInfo($tpl_path);
+            //$info  = CAT_Helper_Addons::checkInfo($tpl_path);
             $paths = CAT_Helper_Directory::getInstance()
                    ->setRecursion(false)
                    ->getDirectories(
                        $tpl_path,$tpl_path
                    );
 
-            if(isset($info['module_variants']) && is_array($info['module_variants']) && count($info['module_variants'])) {
-                $variants = $info['module_variants'];
-                array_unshift($variants,'');
-            }
+            //if(isset($info['module_variants']) && is_array($info['module_variants']) && count($info['module_variants'])) {
+            //    $variants = $info['module_variants'];
+            //    array_unshift($variants,'');
+            //}
 
             if(count($paths))
                 $variants = array_merge($variants,$paths);
-
             return $variants;
         }   // end function getVariants()
         

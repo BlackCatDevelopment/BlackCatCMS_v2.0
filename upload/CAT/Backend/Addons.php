@@ -46,7 +46,7 @@ if (!class_exists('CAT_Backend_Addons'))
         public static function index()
         {
             $self = self::getInstance();
-            $data = CAT_Helper_Addons::get_addons(0,NULL,NULL,NULL,false,true);
+            $data = CAT_Helper_Addons::getAddons(0,NULL,NULL,NULL,false,true);
             foreach($data as $i => $item)
             {
                 $data[$i]['install_date'] = CAT_Helper_DateTime::getDate($item['installed']);
@@ -74,7 +74,7 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             $catalog = self::get_catalog();
             // get installed
-            $modules = CAT_Helper_Addons::get_addons();
+            $modules = CAT_Helper_Addons::getAddons();
             // map installed
             $installed = array();
             foreach($modules as $i => $m)

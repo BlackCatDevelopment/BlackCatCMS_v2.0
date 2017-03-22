@@ -68,6 +68,7 @@ $LANG = array(
     'Parent'          => 'Übergeordnet',
     'Please note'     => 'Hinweis',
     '[Please select]' => '[Bitte wählen]',
+    'Progress'        => 'Fortschritt',
     'Remove'          => 'Entfernen',
     'Row'             => 'Zeile',
     'Save changes'    => 'Speichern',
@@ -78,6 +79,7 @@ $LANG = array(
     'Type'            => 'Typ',
     'View'            => 'Ansicht',
     'Welcome'         => 'Willkommen',
+    'Successfully saved' => 'Erfolgreich gespeichert',
 
     // --------------- Login page ---------------
     'Login'           => 'Anmelden',

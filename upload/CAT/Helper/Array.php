@@ -26,8 +26,6 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
 	{
 
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
-        private   static $Needle    = NULL;
-        private   static $Key       = NULL;
         private   static $instance  = NULL;
 
         public function __call($method, $args)
@@ -45,110 +43,55 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
             return self::$instance;
         }   // end function getInstance()
 
-        private static function filter_callback($v)
-        {
-            return !isset($v[self::$Key]) || $v[self::$Key] !== self::$Needle;
-        }   // end function filter_callback()
-
         /**
-         * allows to reorder the $_FILES array if the 'multiple' attribute
-         * was set on the file upload field; see
-         * http://de1.php.net/manual/de/reserved.variables.files.php#109958
-         * for details
+         * filter array
          *
-         * @access public
-         * @param  array  $vector
-         * @return array
-         **/
-        public static function ArrayDiverse($vector) {
-            $result = array();
-            foreach($vector as $key1 => $value1)
-                foreach($value1 as $key2 => $value2)
-                    $result[$key2][$key1] = $value2;
-            return $result;
-        }   // end function ArrayDiverse()
-
-        /**
-         * encode all entries of an multidimensional array into utf8
-         * http://de1.php.net/manual/de/function.json-encode.php#100492
+         * Examples:
+         *    Filter by key-value-pair
+         *        $filtered = filter($array,array($key=>$value));
          *
-         * @access public
-         * @param  array  $dat
-         * @return array
+         * @access  public
+         * @param   array    input array
+         * @param   mixed    filter options
          **/
-        public static function ArrayEncodeUTF8($dat) // -- It returns $dat encoded to UTF8
+        public static function filter()
         {
-            if (is_string($dat)) return utf8_encode($dat);
-            if (!is_array($dat)) return $dat;
-            $ret = array();
-            foreach($dat as $i=>$d) $ret[$i] = self::ArrayEncodeUTF8($d);
-            return $ret;
-        }   // end function ArrayEncodeUTF8()
+            $arguments = func_get_args();
+            $array     = array_shift($arguments); // first arg must be the input array
 
-        /**
-         * filters an multidimensional array by given key, returns the filtered
-         * elements
-         *
-         * This means, all elements that have a key $key with value $value will
-         * be removed from &$array and returned as result
-         *
-         * @access public
-         * @param  array  $array (reference!)
-         * @param  string $key
-         * @param  string $value
-         * @return array
-         **/
-        public static function ArrayFilterByKey(&$array, $key, $value)
-        {
-            if(!is_array($array)) return false;
-            $result = array();
-            foreach ($array as $k => $elem) {
-                if (isset($elem[$key]) && $elem[$key] == $value) {
-                    $result[] = $array[$k];
-                    unset($array[$k]);
-                }
-            }
-            return $result;
-        }   // end function ArrayFilterByKey()
+            if(!is_array($array) || !count($array)) return array();
 
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function ArrayKeyExists($key,&$array)
-        {
-            if(!is_array($array))   return false;
-            if(isset($array[$key])) return true;
-            foreach($array as $elem)
+            $filterby = array_shift($arguments);
+            $result   = new stdClass();
+
+            // filter by key/value
+            if(!is_callable($filterby) && is_scalar($filterby))
             {
-                if(is_array($elem))
+                $key = $filterby;
+                $val = array_shift($arguments);
+                foreach($array as $k => $v)
                 {
-                    return self::ArrayKeyExists($elem,$key);
+                    if(is_array($v))
+                    {
+                        if(array_key_exists($key,$v)) {
+                            if($v[$key] !== $val) {
+                                $result->{$k} = $v;
+                            }
+                        } else {
+                            $result->{$k} = self::filter($v,$key,$val);
+                        }
+                    }
+                    else
+                    {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: not implemented yet
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        $result->{$k} = '?';
+                    }
                 }
             }
-            return false;
-        }   // end function ArrayKeyExists()
-        
-
-        /**
-         * removes an element from an array
-         *
-         * @access public
-         * @param  string $Needle
-         * @param  array  $Haystack
-         * @param  mixed  $NeedleKey
-         **/
-        public static function ArrayRemove( $Needle, &$Haystack, $NeedleKey="" )
-        {
-            if( ! is_array( $Haystack ) ) {
-                return false;
-            }
-            reset($Haystack);
-            self::$Needle = $Needle;
-            self::$Key    = $NeedleKey;
-            $Haystack     = array_filter($Haystack, 'self::filter_callback');
-        }   // end function ArrayRemove()
+            return json_decode(json_encode($result), true);
+        }   // end function filter()
 
         /**
          * sort an array
@@ -161,28 +104,28 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
          * @param  boolean $case_sensitive - sort case sensitive; default: false
          *
          **/
-        public static function ArraySort ( $array, $index, $order='asc', $natsort=FALSE, $case_sensitive=FALSE )
+        public static function sort($array,$index,$order='asc',$natsort=false,$case_sensitive=false)
         {
-            if( is_array($array) && count($array)>0 )
+            if(is_array($array) && count($array))
             {
                  foreach(array_keys($array) as $key)
-                     $temp[$key]=$array[$key][$index];
+                     $temp[$key] = $array[$key][$index];
                  if(!$natsort)
                  {
-                     ($order=='asc')? asort($temp) : arsort($temp);
+                     ($order=='asc') ? asort($temp) : arsort($temp);
                  }
                  else
                  {
-                     ($case_sensitive)? natsort($temp) : natcasesort($temp);
-                     if($order!='asc')
-                         $temp=array_reverse($temp,TRUE);
+                     ($case_sensitive) ? natsort($temp) : natcasesort($temp);
+                     if($order != 'asc')
+                         $temp = array_reverse($temp,TRUE);
                  }
                  foreach(array_keys($temp) as $key)
-                     (is_numeric($key))? $sorted[]=$array[$key] : $sorted[$key]=$array[$key];
+                     (is_numeric($key)) ? $sorted[]=$array[$key] : $sorted[$key]=$array[$key];
                  return $sorted;
             }
             return $array;
-        }   // end function ArraySort()
+        }   // end function sort()
 
         /**
          * search multidimensional array for $Needle
@@ -222,34 +165,6 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
             }
             return false;
         }   // end function ArraySearchRecursive()
-        
-        /**
-         * make multidimensional array unique
-         *
-         * @access public
-         * @param  array
-         * @return array
-         **/
-        public static function ArrayUniqueRecursive($array) {
-    		$set = array();
-    		$out = array();
-    		foreach ( $array as $key => $val )
-            {
-                if ( is_array($val) )
-                {
-                    $out[$key] = self::ArrayUniqueRecursive($val);
-                }
-                elseif ( ! isset( $set[$val] ) )
-                {
-                    $out[$key] = $val;
-                    $set[$val] = true;
-                }
-                else
-                {
-                    $out[$key] = $val;
-                }
-    		}
-    		return $out;
-   		}   // end function ArrayUniqueRecursive()
-	}   // ----- end class CAT_Helper_Array -----
+
+    }
 }

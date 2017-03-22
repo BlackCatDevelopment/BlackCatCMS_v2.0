@@ -74,6 +74,7 @@ $LANG = array_merge($LANG,array(
     'hidden'            => 'versteckt',
     'Linked page'       => 'Verknüpfte Seite',
     'Menu title'        => 'Menütitel',
+    'Module'            => 'Erweiterung',
     'no name'           => 'kein Name',
     'none'              => 'keine',
     'Page title'        => 'Seitentitel',
@@ -93,9 +94,11 @@ $LANG = array_merge($LANG,array(
     'Add explicit CSS file' => 'Eine bestimmte CSS Datei hinzufügen',
     'Change visibility' => 'Sichtbarkeit ändern',
     'Currently, no extra files are defined for this page.' => 'Zur Zeit sind keine zusätzlichen Dateien für diese Seite konfiguriert.',
-    'Do you really want to <strong>delete</strong> this section?' => 'Soll dieser Abschnitt wirklich <strong>gelöscht</strong> werden?',
+    'Do you really want to delete this section?' => 'Soll dieser Abschnitt wirklich <strong>gelöscht</strong> werden?',
     'Do you really want to unlink the selected page?' => 'Soll diese Seitenbeziehung wirklich entfernt werden?',
     'Icon explanation' => 'Symbolerklärung',
+    'If a section shall be visible between two dates, put the start and end date here.' => 'Wenn eine Sektion während einer gewissen Datumsspanne sichtbar sein soll, hier das Start- und Endedatum angeben.',
+    "If a section shall be visible between X and Y o'clock every day, put the start and end times here." => 'Wenn eine Sektion nur zwischen X und Y Uhr jeden Tag sichbar sein soll, hier Start- und Ende-Uhrzeit angeben.',
     'If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.' => 'Ist die Sichtbarkeit hier deaktiviert, wird diese Sektion <strong>nicht</strong> angezeigt. Alle anderen Einstellungen - z.B. eine Zeitspanne - werden ignoriert.',
     'Menu appearance' => 'Menüzugehörigkeit',
     'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
@@ -221,14 +224,16 @@ $LANG = array_merge($LANG,array(
     'See defined permissions' => 'Vorhandene Rechte auflisten',
     'User can edit his profile' => 'Benutzer kann eigenes Profil bearbeiten',
 
-// ---------- Settings region ----------
+    // --------------- Backend -> Settings ----------
     'Common'            => 'Allgemein',
     'Default charset'   => 'Standard Encoding / Charset',
     'Default language'  => 'Standard-Sprache',
     'Default template'  => 'Standard-Template',
     'Default theme'     => 'Standard-Template',
     'Media directory'   => 'Medien-Verzeichnis',
+    'Website title'     => 'Seitentitel',
     'Wysiwyg editor'    => 'WYSIWYG Editor',
     'Default template variant' => 'Variante',
     'Default theme variant' => 'Variante',
+    'Trash enabled'     => 'Seitemülleimer eingeschaltet',
 ));

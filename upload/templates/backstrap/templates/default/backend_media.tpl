@@ -59,6 +59,7 @@
         {include file="backend_media_listtab.tpl"}
       </div>{* END #config tab-pane *}
 
+{* -------------------- START #grid tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane" id="grid">
         {* the content will be loaded via AJAX *}
         <div class="fa fa-fw fa-3x text-center" style="width:100%"></div><span class="sr-only">Loading...</span>
@@ -68,10 +69,10 @@
         {include file="backend_media_gridtab.tpl"}
       </div>{* END #grid tab-pane *}
 
+{* -------------------- START #upload tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane" id="upload">
         {include file="backend_media_uploadtab.tpl"}
       </div>{* END #grid tab-pane *}
-
 
 </div>{* Tab panes End *}
 

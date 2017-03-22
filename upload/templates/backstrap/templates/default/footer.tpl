@@ -7,7 +7,7 @@
       </div>
     </div>
   </footer>
-  {include(file='backend_modal.tpl' modal_id='bsDialog' modal_title='', modal_text='')}
+  {include(file='backend_modal.tpl' modal_id='bsDialog' modal_title='', modal_text='', modal_savebtn='1')}
 
   {* Session timeout dialog *}
   <div class="modal fade dark" id="bsSessionTimedOutDialog" tabindex="-1" role="dialog" aria-labelledby="bsSessionTimedOutDialogLabel" data-keyboard="false" data-backdrop="static">

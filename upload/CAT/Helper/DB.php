@@ -102,14 +102,6 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
          **/
         public static function qb()
         {
-/*
-            // old code does not allow to use more than one query in parallel
-            if(!is_object(self::$qb))
-                self::$qb = self::$conn->createQueryBuilder();
-            // reset
-            self::$qb->resetQueryParts();
-            return self::$qb;
-*/
             return self::$conn->createQueryBuilder();
         }   // end function qb()
 
@@ -485,6 +477,27 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         {
             $this->lasterror = NULL;
         }   // end function resetError()
+
+        /**
+         * Check if a table exists in the current database.
+         *
+         * @param PDO $pdo PDO instance connected to a database.
+         * @param string $table Table to search for.
+         * @return bool TRUE if table exists, FALSE if no table found.
+         */
+        public function tableExists($table)
+        {
+            // Try a select statement against the table
+            // Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
+            try {
+                $result = $this->query("SELECT 1 FROM `:prefix:$table` LIMIT 1");
+            } catch (\PDO\PDOException $e) { // We got an exception == table not found
+                return false;
+            }
+
+            // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
+            return $result !== false;
+        }   // end function tableExists()
 
         /**
          * set error message

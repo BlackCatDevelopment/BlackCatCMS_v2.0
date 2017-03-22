@@ -86,6 +86,8 @@ if (!class_exists('CAT_Backend_Settings'))
             $self     = self::getInstance();
             $region   = $self->router()->getParam();
 
+            if(!$region) $region = $self->router()->getFunction();
+
             $form = CAT_Backend::initForm();
 
             $form->createForm('settings');
@@ -93,7 +95,7 @@ if (!class_exists('CAT_Backend_Settings'))
 
             if(!self::$regions)
             {
-                self::$regions  = array('index');
+                self::$regions = array('index');
                 $regions = CAT_Backend::getMainMenu(4);
                 foreach(array_values($regions) as $r)
                     array_push(self::$regions,$r['name']);
@@ -103,7 +105,8 @@ if (!class_exists('CAT_Backend_Settings'))
                 $region = 'index';
 
             // filter settings by region
-            $settings = CAT_Helper_Array::ArrayFilterByKey($settings, 'region', $region);
+            //$settings = CAT_Helper_Array::ArrayFilterByKey($settings, 'region', $region);
+            $settings = CAT_Helper_Array::filter($settings,'region',$region);
 
             if(is_array($settings) && count($settings))
             {
@@ -137,6 +140,16 @@ if (!class_exists('CAT_Backend_Settings'))
                             : ''
                         ),
                     );
+
+                    switch($element['type'])
+                    {
+                        case 'radiogroup':
+                            $element['options'] = array('y'=>'yes','n'=>'no');
+                            break;
+                        case 'checkbox':
+                            break;
+                    }
+
                     $elem = $form->addElement($element);
                     if(strlen($item['fieldhandler']))
                     {

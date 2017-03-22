@@ -21,7 +21,7 @@ if (!class_exists('CAT_Addon_Module', false))
 	if (!interface_exists('CAT_Addon_Module_Int', false))
 	{
 		interface CAT_Addon_Module_Int {
-			public static function save();
+			public static function save($section_id);
 			public static function modify($section_id);
 			public static function install();
 			public static function uninstall();
@@ -92,7 +92,7 @@ if (!class_exists('CAT_Addon_Module', false))
 		/**
 		 *
 		 */
-		public abstract static function save();
+		public abstract static function save($section_id);
 
 		/**
 		 * Default modify routine

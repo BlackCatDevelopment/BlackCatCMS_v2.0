@@ -395,7 +395,7 @@ if(!class_exists('CAT_Object',false))
          *
          * if $langs_only is true (default), only the list of available langs
          * will be returned; if set to false, the complete result of
-         * CAT_Helper_Addons::get_addons will be returned
+         * CAT_Helper_Addons::getAddons will be returned
          *
          * @access public
          * @param  boolean  $langs_only
@@ -403,7 +403,7 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function getLanguages($langs_only=true)
         {
-            $addons = CAT_Helper_Addons::get_addons('language','language');
+            $addons = CAT_Helper_Addons::getAddons('language','language');
             if($langs_only)
             {
                 $result = array();

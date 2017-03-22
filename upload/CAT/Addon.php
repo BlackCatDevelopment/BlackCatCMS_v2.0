@@ -159,17 +159,20 @@ if (!class_exists('CAT_Addon', false))
 				return parse_ini_file( $default, true);
 		} // end getHeader()
 	
-		/**
-		 * gets the details of an addons; uses the directory name to find the
-		 * addon in the DB
-		 * @access public
-		 * @param  string  $temp_addon_file
-		 * @param void $value
-		 */
-		public static function getInfo($value)
-		{
-			return static::$$value;
-		}
+        /**
+         * gets the details of an addon
+         *
+         * @access public
+         * @param  string  $value - required info item
+         * @return string
+         */
+        public static function getInfo($value=NULL)
+        {
+            if($value)
+                return static::$$value;
+            // get 'em all
+
+        }
 	
 		/**
 		 * load info during install() or upgrade() to DB

@@ -247,7 +247,7 @@ if (!class_exists('CAT_Backend', false))
             if($parent)
             {
                 $menu = self::$menu;
-                $menu = CAT_Helper_Array::ArrayFilterByKey($menu,'parent',$parent);
+                $menu = CAT_Helper_Array::filter($menu,'parent',$parent);
                 return $menu;
             }
 

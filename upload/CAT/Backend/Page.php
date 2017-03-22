@@ -80,10 +80,15 @@ if (!class_exists('CAT_Backend_Page'))
 
             // get sections; format: $sections[array_of_blocks[array_of_sections]]
             $sections = CAT_Sections::getSections($pageID,NULL,false);
+
+            // addable addons
+            $addable  = CAT_Helper_Addons::getAddons(0,'module','page','name',true,false);
+
             $tpl_data = array(
-                'page'   => CAT_Helper_Page::properties($pageID),
-                'linked' => CAT_Helper_Page::getLinkedByLanguage($pageID),
-                'blocks' => NULL,
+                'page'    => CAT_Helper_Page::properties($pageID),
+                'linked'  => CAT_Helper_Page::getLinkedByLanguage($pageID),
+                'blocks'  => NULL,
+                'addable' => $addable,
             );
 
             if(count($sections))
@@ -395,7 +400,7 @@ echo "remove file $remove_file\n<br />";
             }
 
             // template select
-            if(is_array(($tpls=CAT_Helper_Addons::get_addons('template','template'))))
+            if(is_array(($tpls=CAT_Helper_Addons::getAddons('template','template'))))
             {
                 foreach(array_values($tpls) as $tpl)
                 {

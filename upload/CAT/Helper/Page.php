@@ -374,7 +374,7 @@ if (!class_exists('CAT_Helper_Page'))
             // for all pages with level 0...
             $root    = array();
             $now     = time();
-            $ordered = CAT_Helper_Array::ArraySort(self::$pages,'position');
+            $ordered = CAT_Helper_Array::sort(self::$pages,'position');
             foreach( $ordered as $page )
             {
                 if (
@@ -675,7 +675,6 @@ if (!class_exists('CAT_Helper_Page'))
             return self::$visibilities;
         }   // end function getVisibilities()
         
-
         /**
          * checks if page is active (=has active sections and is between
          * publ_start and publ_end)
@@ -686,9 +685,9 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         public static function isActive($page_id)
         {
-            $sections = CAT_Sections::getSections($page_id);
             if(self::isDeleted($page_id))
                 return false;
+            $sections = CAT_Sections::getSections($page_id,null,true);
             if(count($sections))
                 return true;
             return false;

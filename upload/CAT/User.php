@@ -27,6 +27,9 @@ if (!class_exists('CAT_User'))
         // log level
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
         #protected static $loglevel  = \Monolog\Logger::DEBUG;
+        /**
+         * instances
+         **/
         protected static $instances = array();
         /**
          * array to hold the user data
@@ -472,7 +475,6 @@ if (!class_exists('CAT_User'))
             if(!isset(self::$users[$id]))
             {
                 $this->log()->addDebug(sprintf('init user with id: [%d]',$id));
-
                 // read user from DB
                 $get_user = CAT_Helper_DB::getInstance()->query(
                     'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_enabled`, `tfa_secret` '.

@@ -2,30 +2,53 @@ $(function() {
 
     "use strict";
 
+    function bsUpload(data, $this) {
+        var folder = $('select#root_folder option:selected').val();
+        if(data && folder) {
+            data.formData = {folder: folder};
+        }
+        $this
+            .off('click')
+            .text('Abort')
+            .on('click', function () {
+                $this.remove();
+                data.abort();
+            });
+        if(data) {
+            data.submit();
+        }
+    }
+
+    // load the content of a tab
     var loadPane = function(target,tpl,appendto,data) {
-        $.each(data.files, function(index,file) {
-            var item = $(tpl).clone();
+        if(!data.files || !data.files.length) {
+            $(target).html('<div class="alert alert-info">No files</div>');
+        } else {
+            $.each(data.files, function(index,file) {
+                var item = $(tpl).clone();
 
-            $(item).attr("data-gridder-url",file.media_id);
-            $(item).attr("data-title",file.filename);
+                $(item).attr("data-gridder-url",file.media_id);
+                $(item).attr("data-title",file.filename);
 
-            $(item).find('a.delete').attr('data-id',file.media_id);
-            $(item).find('[data-field="filename"]').text(file.filename);
-            $(item).find('[data-field="hfilesize"]').text(file.hfilesize);
-            $(item).find('[data-field="moddate"]').text(file.moddate);
+                $(item).find('a.delete').attr('data-id',file.media_id);
+                $(item).find('[data-field="filename"]').text(file.filename);
+                $(item).find('[data-field="hfilesize"]').text(file.hfilesize);
+                $(item).find('[data-field="moddate"]').text(file.moddate);
 
-            if(file.mime_type) {
-                // show preview
-                if(file.mime_type.indexOf('image/') == 0) {
-                    var src = $(item).find('[data-field="preview"]');
-                    src.attr('src',src.attr('src')+file.url);
-                    src.removeClass('hidden');
+                if(file.mime_type) {
+                    // show preview
+                    if(file.mime_type.indexOf('image/') == 0) {
+                        var src = $(item).find('[data-field="preview"]');
+                        src.attr('src',src.attr('src')+file.url);
+                        src.removeClass('hidden');
+                    }
+                    // show mime type
+                    $(item).find('[data-field="mime_type"]').text(file.mime_type);
                 }
-                // show mime type
-                $(item).find('[data-field="mime_type"]').text(file.mime_type);
-            }
-            $(item).appendTo(appendto);
-        });
+                $(item).appendTo(appendto);
+            });
+            //$(target).find(':hidden').show();
+        }
     };
 
     var loadTabContent = function(pane) {
@@ -66,6 +89,7 @@ $(function() {
     });
     loadTabContent($('ul[role="tablist"] li.active > a'));
 
+    // load gridder
     if(typeof $.fn.Gridder != 'undefined') {
         $('.gridder-table').Gridder({
             expander: "tr.gridder-expander > td",
@@ -89,27 +113,21 @@ $(function() {
         });
     }
 
+    // file uploads
     var url          = CAT_ADMIN_URL + '/media/upload',
         uploadButton = $('<button/>')
-                     .addClass('btn btn-primary')
-                     .prop('disabled', true)
+                     .addClass('btn btn-primary start')
                      .text(cattranslate('Processing...'))
-                     .on('click', function () {
+                     .on('click', function() {
                          var $this = $(this),
-                              data = $this.data(),
-                            folder = $('select#root_folder option:selected').val();
-                         data.formData = {folder: folder};
-                         $this
-                             .off('click')
-                             .text('Abort')
-                             .on('click', function () {
-                                 $this.remove();
-                                 data.abort();
-                             });
-                         data.submit().always(function () {
-                             $this.remove();
-                         });
+                              data = $this.data();
+                         bsUpload(data, $this);
+                         $(this).remove();
                      });
+
+    $('button.start').unbind('click').on('click', function() {
+        $('tbody.files').find('.start').trigger('click');
+    });
 
     $('#fileupload').fileupload({
         url: url,
@@ -134,6 +152,10 @@ $(function() {
             $('<td/>').text(file.type).appendTo(data.context);
             $('<td/>').html(uploadButton.clone(true).data(data)).appendTo(data.context);
         });
+        $('button.start').removeClass('disabled');
+        $('button.delete').removeClass('disabled');
+        $('div#progress').removeClass('hidden');
+        $('#bsUploadFiles > thead').show();
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file  = data.files[index],
@@ -162,24 +184,26 @@ $(function() {
         data.result.files = new Array();
         // we get 'ok' and 'errors' arrays as result, so we have to prepare the
         // result for the file upload jQuery plugin
-        $.each(data.result.success, function(index,filename) {
-            data.result.files.push({name: filename, size: : data.result.success[index]});
+        // {"success":{"br_1.jpg":84967},"errors":[]}
+        $.each(data.result.success, function(filename,size) {
+            data.result.files.push({name: filename, size: size, success: true}); //, size: : data.result.success[index]
         });
         $.each(data.result.errors, function(index,filename) {
             data.result.files.push({name: filename, error: data.result.errors[index]});
         });
         $.each(data.result.files, function (index, file) {
-            if (file.url) {
-                var link = $('<a>')
-                    .attr('target', '_blank')
-                    .prop('href', file.url);
-                $(data.context.children()[index])
-                    .wrap(link);
-            } else if (file.error) {
+            if (file.error) {
                 var error = $('<span class="text-danger"/>').text(file.error);
                 $(data.context.children()[index])
                     .append('<br>')
                     .append(error);
+            }
+            else if (file.success) {
+                $(data.context.children()[index])
+                    .append('<br>')
+                    .append($('<span class="alert alert-info"/>').text(
+                        cattranslate('Success, file size: '+file.size)
+                    ));
             }
         });
     }).on('fileuploadfail', function (e, data) {
