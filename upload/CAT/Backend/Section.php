@@ -53,7 +53,7 @@ if (!class_exists('CAT_Backend_Section'))
             if(!CAT_Helper_Addons::exists($addon))
                 self::printFatalError('Invalid data!');
             else
-                $module = CAT_Helper_Addons::getAddonDetails($addon,'directory');
+                $module = CAT_Helper_Addons::getDetails($addon,'directory');
             $blockID = CAT_Helper_Validate::sanitizePost('block','numeric',1);
             $result  = CAT_Sections::addSection($pageID,$module,$blockID);
             if(self::asJSON())

@@ -196,7 +196,7 @@ if(!class_exists('wysiwyg_editor_base',false))
                 $class  = get_called_class();
                 $i      = new $class();
                 $config = array('width'=>$i->default_width,'height'=>$i->default_height);
-                $id     = CAT_Helper_Addons::getAddonDetails($editor,'addon_id');
+                $id     = CAT_Helper_Addons::getDetails($editor,'addon_id');
                 $result = CAT_Object::db()->query(
                     "SELECT * from `:prefix:mod_wysiwyg_settings` where `editor_id`=:name",
                     array('name'=>$id)

@@ -332,7 +332,7 @@ if (!class_exists('CAT_User'))
             if($this->is_root()) return true;
             if(!is_numeric($module))
             {
-                $module_data = CAT_Helper_Addons::getAddonDetails($module);
+                $module_data = CAT_Helper_Addons::getDetails($module);
                 $module      = $module_data['addon_id'];
             }
             return isset($this->modules[$module]);

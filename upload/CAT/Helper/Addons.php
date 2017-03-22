@@ -60,38 +60,10 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          **/
         public static function exists($addon)
         {
-            $name = self::getAddonDetails($addon,'name');
+            $name = self::getDetails($addon,'name');
             return ($name && strlen($name)) ? true : false;
         }   // end function exists()
         
-        /**
-         * gets the details of an addon
-         *
-         * @access public
-         * @param  string  ID or directory name
-         * @return mixed   array on success, NULL otherwise
-         **/
-        public static function getAddonDetails($addon,$field='*')
-        {
-            // sanitize column name
-            if(!in_array($field,array('*','addon_id','type','directory','name','description','function','version','guid','platform','author','license','installed','upgraded','removable','bundled')))
-                return NULL; // silently fail
-            $q = 'SELECT `%s` FROM `:prefix:addons` WHERE ';
-            if(is_numeric($addon)) $q .= '`addon_id`=:val';
-            else                   $q .= '`directory`=:val';
-            $addon = self::db()->query(
-                sprintf($q,$field),
-                array('val'=>$addon)
-            );
-            if($addon->rowCount())
-            {
-                $data = $addon->fetch(\PDO::FETCH_ASSOC);
-                if($field!='*') return $data[$field];
-                else            return $data;
-            }
-            return NULL;
-        } // end function getAddonDetails()
-
         /**
          * Function to get installed addons
          *
@@ -164,7 +136,33 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             return $data;
         } // end function getAddons()
 
-
+        /**
+         * gets the details of an addon
+         *
+         * @access public
+         * @param  string  ID or directory name
+         * @return mixed   array on success, NULL otherwise
+         **/
+        public static function getDetails($addon,$field='*')
+        {
+            // sanitize column name
+            if(!in_array($field,array('*','addon_id','type','directory','name','description','function','version','guid','platform','author','license','installed','upgraded','removable','bundled')))
+                return NULL; // silently fail
+            $q = 'SELECT `%s` FROM `:prefix:addons` WHERE ';
+            if(is_numeric($addon)) $q .= '`addon_id`=:val';
+            else                   $q .= '`directory`=:val';
+            $addon = self::db()->query(
+                sprintf($q,$field),
+                array('val'=>$addon)
+            );
+            if($addon->rowCount())
+            {
+                $data = $addon->fetch(\PDO::FETCH_ASSOC);
+                if($field!='*') return $data[$field];
+                else            return $data;
+            }
+            return NULL;
+        } // end function getDetails()
 
     } // class CAT_Helper_Addons
 

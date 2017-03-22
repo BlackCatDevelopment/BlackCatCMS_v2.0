@@ -321,7 +321,7 @@ if(!class_exists('CAT_Helper_Directory', false))
 
                     if($parent_name)
                     {
-                        $path   = CAT_Helper_Array::ArraySearchRecursive($parent_name,$temp,'title');
+                        $path   = CAT_Helper_Array::search($parent_name,$temp,'title');
                         if(isset($path) && is_array($path) && count($path))
                             $parent = $temp[$path[0]]['id'];
                     }

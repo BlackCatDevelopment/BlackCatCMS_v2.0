@@ -200,7 +200,7 @@ if (!class_exists('CAT_Backend', false))
                         $parents = explode('/',$item['trail']);
                         foreach(array_values($parents) as $pid)
                         {
-                            $path = CAT_Helper_Array::ArraySearchRecursive($pid,self::$menu,'id');
+                            $path = CAT_Helper_Array::search($pid,self::$menu,'id');
                             self::$menu[$path[0]]['is_in_trail'] = 1;
                         }
                     }
@@ -224,7 +224,7 @@ if (!class_exists('CAT_Backend', false))
                 // get available settings categories / regions
                 $r       = $self->db()->query('SELECT `region` FROM `:prefix:settings` GROUP BY `region`');
                 $regions = $r->fetchAll();
-                $path    = CAT_Helper_Array::ArraySearchRecursive('settings',self::$menu,'name');
+                $path    = CAT_Helper_Array::search('settings',self::$menu,'name');
                 $id      = 1000;
                 $set_parent = self::$menu[$path[0]];
                 foreach($regions as $region)

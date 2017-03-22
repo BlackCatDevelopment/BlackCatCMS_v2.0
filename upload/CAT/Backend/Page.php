@@ -339,7 +339,7 @@ echo "remove file $remove_file\n<br />";
             $lang  = $self->router()->getRoutePart(-1);
             if($lang && !in_array($lang,array('page','index','list')))
             {
-                $addon = CAT_Helper_Addons::getAddonDetails($lang);
+                $addon = CAT_Helper_Addons::getDetails($lang);
                 if(!$addon || !is_array($addon) || !isset($addon['type']) || !$addon['type'] == 'language')
                 {
                     self::printFatalError('Invalid data! (CAT_Backend_Page::list()');
@@ -394,7 +394,7 @@ echo "remove file $remove_file\n<br />";
             {
                 foreach(array_values($langs) as $lang)
                 {
-                    $data        = CAT_Helper_Addons::getAddonDetails($lang);
+                    $data        = CAT_Helper_Addons::getDetails($lang);
                     $languages[] = $data;
                 }
             }

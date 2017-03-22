@@ -44,6 +44,41 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
         }   // end function getInstance()
 
         /**
+         * allows to reorder the $_FILES array if the 'multiple' attribute
+         * was set on the file upload field; see
+         * http://de1.php.net/manual/de/reserved.variables.files.php#109958
+         * for details
+         *
+         * @access public
+         * @param  array  $vector
+         * @return array
+         **/
+        public static function diverse($vector) {
+            $result = array();
+            foreach($vector as $key1 => $value1)
+                foreach($value1 as $key2 => $value2)
+                    $result[$key2][$key1] = $value2;
+            return $result;
+        }   // end function diverse()
+
+        /**
+         * encode all entries of an multidimensional array into utf8
+         * http://de1.php.net/manual/de/function.json-encode.php#100492
+         *
+         * @access public
+         * @param  array  $dat
+         * @return array
+         **/
+        public static function encodeUTF8($dat)
+        {
+            if (is_string($dat)) return utf8_encode($dat);
+            if (!is_array($dat)) return $dat;
+            $ret = array();
+            foreach($dat as $i=>$d) $ret[$i] = self::encodeUTF8($d);
+            return $ret;
+        }   // end function encodeUTF8()
+
+        /**
          * filter array
          *
          * Examples:
@@ -94,6 +129,66 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
         }   // end function filter()
 
         /**
+         * recursive function to check if a given array key exists
+         *
+         * @access public
+         * @param  string    $key
+         * @param  reference $array
+         * @return boolean
+         **/
+        public static function keyExists($key,&$array)
+        {
+            if(!is_array($array))   return false;
+            if(isset($array[$key])) return true;
+            foreach($array as $elem)
+            {
+                if(is_array($elem))
+                {
+                    return self::keyExists($elem,$key);
+                }
+            }
+            return false;
+        }   // end function keyExists()
+
+        /**
+         * search multidimensional array for $Needle
+         *
+         * @access public
+         * @param  string  $Needle
+         * @param  array   $Haystack
+         * @param  string  $NeedleKey - optional
+         * @param  boolean $Strict    - optional, default: false
+         * @param  array   $Path      - needed for recursion
+         * @return mixed   array (path) or false (not found)
+         **/
+        public static function search($Needle, $Haystack, $NeedleKey="", $Strict=false, $Path=array())
+        {
+            if(!is_array($Haystack)) {
+                return false;
+            }
+            reset($Haystack);
+            foreach($Haystack as $Key => $Val) {
+                if (
+                    is_array($Val)
+                    &&
+                    $SubPath = self::search($Needle,$Val,$NeedleKey,$Strict,$Path)
+                ) {
+                    $Path = array_merge($Path,Array($Key),$SubPath);
+                    return $Path;
+                }
+                elseif (
+                    (!$Strict && $Val  == $Needle && $Key == (strlen($NeedleKey) > 0 ? $NeedleKey : $Key))
+                    ||
+                    ( $Strict && $Val === $Needle && $Key == (strlen($NeedleKey) > 0 ? $NeedleKey : $Key))
+                ) {
+                    $Path[]=$Key;
+                    return $Path;
+                }
+            }
+            return false;
+        }   // end function search()
+
+        /**
          * sort an array
          *
          * @access public
@@ -128,43 +223,33 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
         }   // end function sort()
 
         /**
-         * search multidimensional array for $Needle
+         * make multidimensional array unique
          *
          * @access public
-         * @param  string  $Needle
-         * @param  array   $Haystack
-         * @param  string  $NeedleKey - optional
-         * @param  boolean $Strict    - optional, default: false
-         * @param  array   $Path      - needed for recursion
-         * @return mixed   array (path) or false (not found)
+         * @param  array
+         * @return array
          **/
-        public static function ArraySearchRecursive( $Needle, $Haystack, $NeedleKey="", $Strict=false, $Path=array() )
+        public static function unique($array)
         {
-
-            if( ! is_array( $Haystack ) ) {
-                return false;
-            }
-            reset($Haystack);
-            foreach ( $Haystack as $Key => $Val ) {
-                if (
-                    is_array( $Val )
-                    &&
-                    $SubPath = self::ArraySearchRecursive($Needle,$Val,$NeedleKey,$Strict,$Path)
-                ) {
-                    $Path = array_merge($Path,Array($Key),$SubPath);
-                    return $Path;
+    		$set = array();
+    		$out = array();
+    		foreach($array as $key => $val)
+            {
+                if(is_array($val))
+                {
+                    $out[$key] = self::unique($val);
                 }
-                elseif (
-                    ( ! $Strict && $Val  == $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
-                    ||
-                    (   $Strict && $Val === $Needle && $Key == ( strlen($NeedleKey) > 0 ? $NeedleKey : $Key ) )
-                ) {
-                    $Path[]=$Key;
-                    return $Path;
+                elseif(!isset($set[$val]))
+                {
+                    $out[$key] = $val;
+                    $set[$val] = true;
                 }
-            }
-            return false;
-        }   // end function ArraySearchRecursive()
-
+                else
+                {
+                    $out[$key] = $val;
+                }
+    		}
+    		return $out;
+   		}   // end function unique()
     }
 }
