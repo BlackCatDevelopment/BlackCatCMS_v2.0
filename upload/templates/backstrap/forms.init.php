@@ -22,4 +22,14 @@
       </div>
     </div>'
 );
+\wblib\wbFormsElementCheckbox::setTemplate(
+    '<div class="form-group">
+      %label%
+      <div class="col-sm-8">
+        <input%type%%name%%id%%class%%checked%%style%%title%%value%%required%%aria-required%%pattern%%tabindex%%accesskey%%disabled%%readonly%%onblur%%onchange%%onclick%%onfocus%%onselect% />
+        <span class="help-block">%after%</span>
+      </div>
+    </div>'
+);
+
 \wblib\wbFormsElementButton::setClass('btn btn-primary');

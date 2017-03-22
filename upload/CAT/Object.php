@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -403,17 +403,9 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function getLanguages($langs_only=true)
         {
-            $addons = CAT_Helper_Addons::getAddons('language','language');
             if($langs_only)
-            {
-                $result = array();
-                foreach($addons as $item)
-                {
-                    $result[] = $item['directory'];
-                }
-                return $result;
-            }
-            return $addons;
+                return CAT_Helper_Addons::getAddons('language');
+            return CAT_Helper_Addons::getAddons('language','name',false,true);
         }   // end function getLanguages()
 
         /**

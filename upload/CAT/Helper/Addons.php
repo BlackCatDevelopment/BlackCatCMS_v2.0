@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -67,15 +67,24 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
         /**
          * Function to get installed addons
          *
+         * Default: All addons of all types, sorted by type and name, flat array
+         * with a list of
+         *    <directory> => <name>
+         *
+         * Please note that $names_only and $find_icon exclude each other
+         * (no place for an icon in the flat array, see above)
+         * So (example)
+         *     getAddons('tool','name',true,true)
+         * will never work!!!
+         *
          * @access public
-         * @param  int     $selected    (default: 1)      - name or directory of the the addon to be selected in a dropdown
-         * @param  string  $type        (default: '')     - type of addon - can be an array
-         * @param  string  $function    (default: '')     - function of addon- can be an array
-         * @param  string  $order       (default: 'name') - value to handle "ORDER BY" for database request of addons
-         * @param  boolean $check_permission (default: false) - wether to check module permissions (BE call) or not
+         * @param  string  $type       (default: '')     - type of addon - can be an array
+         * @param  string  $order      (default: 'name') - value to handle "ORDER BY" for database request of addons
+         * @param  boolean $names_only (default: true)   - get only a flat list of names or a complete data array
+         * @param  boolean $find_icon  (default: false)  - wether to search for an icon
          * @return array
          */
-        public static function getAddons($selected=1, $type=NULL, $function=NULL, $order='name', $check_permission=false, $find_icon=false )
+        public static function getAddons($type=NULL,$order='name',$names_only=true,$find_icon=false)
         {
             // create query builder
             $q = CAT_Helper_DB::qb()
@@ -93,24 +102,15 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 }
             }
 
-            // filter by module function
-            if($function) {
-                if(is_array($function)) {
-                    foreach($function as $item) {
-                        $q->andWhere('function = '.$q->createNamedParameter($item));
-                    }
-                } else {
-                    $q->andWhere('function = '.$q->createNamedParameter($function));
-                }
-            }
-
+            // always order by type
             $q->orderBy('type', 'ASC'); // default order
             if($order && $order != 'name')
-                $q->addOrderBy($order, 'ASC NULLS FIRST');
+                $q->addOrderBy($order, 'ASC');
 
             // get the data
             $data = $q->execute()->fetchAll();
 
+            // remove addons the user is not allowed for
             for($i=(count($data)-1);$i>=0;$i--)
             {
                 $addon = $data[$i];
@@ -118,7 +118,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 {
                     unset($data[$i]); // not allowed
                 }
-                if($find_icon)
+                if(!$names_only && $find_icon)
                 {
                     $icon = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
                     $data[$i]['icon'] = '';
@@ -133,6 +133,10 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     }
                 }
             }
+
+            if($names_only)
+                $data = CAT_Helper_Array::extract($data,'name','directory');
+
             return $data;
         } // end function getAddons()
 

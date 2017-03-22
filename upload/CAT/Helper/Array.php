@@ -7,8 +7,8 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2016 Black Cat Development
-   @link            http://blackcat-cms.org
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
@@ -79,7 +79,35 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
         }   // end function encodeUTF8()
 
         /**
-         * filter array
+         * extracts the values of a given key from an array, returning just a
+         * list of values
+         *
+         * @access public
+         * @param  array   $array
+         * @param  string  $key
+         * @return array
+         **/
+        public static function extract($array,$key,$index_by=null)
+        {
+            if(!is_array($array) || !count($array)) return array();
+            $result = array();
+            foreach($array as $i => $item)
+            {
+                if(is_array($item[$key]))
+                    $result[] = self::extract($item[$key],$key);
+                if(array_key_exists($key,$item))
+                    if($index_by && array_key_exists($index_by,$item))
+                        $result[$item[$index_by]] = $item[$key];
+                    else
+                        $result[] = $item[$key];
+
+            }
+            return $result;
+        }   // end function extract()
+
+        /**
+         * filter array; this means the items that match the filter are
+         * removed
          *
          * Examples:
          *    Filter by key-value-pair
@@ -88,6 +116,7 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
          * @access  public
          * @param   array    input array
          * @param   mixed    filter options
+         * @param   array    filtered array (items that do not match)
          **/
         public static function filter()
         {
@@ -102,15 +131,26 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
             // filter by key/value
             if(!is_callable($filterby) && is_scalar($filterby))
             {
-                $key = $filterby;
-                $val = array_shift($arguments);
+                $key  = $filterby;
+                $cond = null;
+                $val  = array_shift($arguments);
+                if(count($arguments)) $cond = array_shift($arguments);
                 foreach($array as $k => $v)
                 {
                     if(is_array($v))
                     {
                         if(array_key_exists($key,$v)) {
-                            if($v[$key] !== $val) {
-                                $result->{$k} = $v;
+                            switch($cond) {
+                                case 'matching':
+                                    if($v[$key] == $val) {
+                                        $result->{$k} = $v;
+                                    }
+                                    break;
+                                default:
+                                    if($v[$key] !== $val) {
+                                        $result->{$k} = $v;
+                                    }
+                                    break;
                             }
                         } else {
                             $result->{$k} = self::filter($v,$key,$val);
@@ -118,6 +158,7 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
                     }
                     else
                     {
+echo "not an array<br />";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: not implemented yet
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
