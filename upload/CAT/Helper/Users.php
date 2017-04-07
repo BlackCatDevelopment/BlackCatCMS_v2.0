@@ -45,12 +45,11 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
          **/
         public static function deleteUser($user_id)
         {
-            $self = self::getInstance();
-       		$self->db()->query(
+       		self::db()->query(
                 "DELETE FROM `:prefix:rbac_users` WHERE `user_id`=:id",
                 array('id'=>$user_id)
             );
-            return ( $self->db()->isError() ? $self->db()->getError() : true );
+            return ( self::db()->isError() ? self::db()->getError() : true );
         }   // end function deleteUser()
 
         /**
@@ -58,10 +57,25 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
          * @access public
          * @return
          **/
-        public static function getUsers($opt=NULL)
+        public static function getDetails($user_id)
         {
-            $self = self::getInstance();
-            $q    = 'SELECT * FROM `:prefix:rbac_users` AS `t1` ';
+            $data = self::getUsers(array('user_id'=>$user_id),true);
+            if($data && is_array($data) && count($data))
+                return $data[0];
+            return array();
+        }   // end function getDetails()
+        
+        /**
+         * get users from DB; has several options to define what is requested
+         *
+         * @access public
+         * @param  array    $opt
+         * @param  boolean  $extended (default: false)
+         * @return array
+         **/
+        public static function getUsers($opt=NULL,$extended=false)
+        {
+            $q    = 'SELECT `t1`.* FROM `:prefix:rbac_users` AS `t1` ';
             $p    = array();
             if(is_array($opt))
             {
@@ -86,9 +100,31 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
                         $q .= '))';
                     }
                 }
+                if(isset($opt['user_id']))
+                {
+                    $q .= ' WHERE `t1`.`user_id`=:uid';
+                    $p['uid'] = $opt['user_id'];
+                }
             }
-            $sth  = CAT_Helper_DB::getInstance()->query($q,$p);
-            return $sth->fetchAll(\PDO::FETCH_ASSOC);
+            $sth  = self::db()->query($q,$p);
+            $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
+            foreach($data as $i => $user) {
+                if(strlen($user['wysiwyg'])) { // resolve wysiwyg editor
+                    $data[$i]['wysiwyg'] = CAT_Helper_Addons::getDetails($user['wysiwyg'],'name');
+                }
+                if($extended) {
+                    $sth = self::db()->query(
+                        'SELECT * FROM `:prefix:rbac_user_extend` WHERE `user_id`=?',
+                        array($user['user_id'])
+                    );
+                    $ext = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                    $data[$i]['extended'] = array();
+                    foreach($ext as $item) {
+                        $data[$i]['extended'][$item['option']] = $item['value'];
+                    }
+                }
+            }
+            return $data;
         }   // end function getUsers()
 
         /**

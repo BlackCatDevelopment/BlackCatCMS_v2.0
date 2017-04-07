@@ -80,8 +80,13 @@ if(!CAT_Registry::exists('LANGUAGE') && CAT_Registry::exists('DEFAULT_LANGUAGE')
 //******************************************************************************
 // Set theme
 //******************************************************************************
-CAT_Registry::register('CAT_THEME_PATH'  ,CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME'), true);
+CAT_Registry::register('CAT_THEME_PATH'  ,CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME')   , true);
 CAT_Registry::register('CAT_TEMPLATE_DIR',CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE'), true);
+
+//******************************************************************************
+// Set as constants for simpler use
+//******************************************************************************
+CAT_Registry::register('CAT_VERSION'     ,CAT_Registry::get('CAT_VERSION')                                   , true);
 
 //******************************************************************************
 // Start a session

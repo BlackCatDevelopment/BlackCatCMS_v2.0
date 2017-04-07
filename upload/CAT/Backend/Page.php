@@ -135,7 +135,7 @@ if (!class_exists('CAT_Backend_Page'))
             }
 
             CAT_Backend::print_header();
-            self::tpl()->output('backend_page_modify', $tpl_data);
+            self::tpl()->output('backend_admintool', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function edit()
 

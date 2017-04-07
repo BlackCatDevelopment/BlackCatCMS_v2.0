@@ -153,10 +153,16 @@ $LANG = array_merge($LANG,array(
 
     // --------------- Backend -> Users ---------------
     'Add users'         => 'Benutzer hinzufügen',
+    'active'            => 'aktiv',
     'Built in'          => 'Standard (mitgeliefert)',
+    'Contact'           => 'Kontaktdaten',
     'Delete user'       => 'Benutzer löschen',
     'Display name'      => 'Anzeigename',
+    'Edit user'         => 'Benutzer ändern',
+    'eMail address'     => 'eMail Adresse',
+    'Home folder'       => 'Homeverzeichnis',
     'Login name'        => 'Loginname',
+    'Tfa enabled'       => 'Zwei-Faktor-Authentifizierung aktiviert',
     'User ID'           => 'Benutzer ID',
     'Choose the users you wish to add and click [Save]' => 'Die gewünschten Benutzer auswählen und [Speichern] anklicken',
     'Do you really want to delete this user?' => 'Soll dieser Benutzer wirklich gelöscht werden?',

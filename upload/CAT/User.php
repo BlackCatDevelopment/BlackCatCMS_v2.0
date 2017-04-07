@@ -134,19 +134,25 @@ if (!class_exists('CAT_User'))
         }   // end function getGroups()
 
         /**
+         * get the user's home folder (subfolder of /media)
          *
          * @access public
+         * @param  boolean  $relative (default:false) - do not prepend CAT_PATH
          * @return
          **/
-        public function getHomeFolder()
+        public function getHomeFolder($relative=false)
         {
             $default = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.self::getSetting('media_directory'));
             if($this->is_root())
-                return $default;
+                return ($relative ? self::getSetting('media_directory') : $default);
             $home = $this->get('home_folder');
             if(strlen($home))
-                return CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$home);
-            return $default;
+                return (
+                      $relative
+                    ? $home
+                    : CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$home)
+                );
+            return ($relative ? self::getSetting('media_directory') : $default);
         }   // end function getHomeFolder()
 
         /**

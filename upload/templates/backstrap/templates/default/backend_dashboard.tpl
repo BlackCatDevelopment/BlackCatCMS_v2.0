@@ -6,12 +6,12 @@
     <ul class="columnize">
     {foreach $dashboard.widgets widget}
         <li data-row="{$widget.position}" data-col="{$widget.column}">
-            <div class="panel" data-id="{$widget.widget_id}">
+            <div class="panel"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}>
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         {if $widget.icon}<span class="fa fa-fw {$widget.icon}"></span>{/if}
-                        {translate($widget.widget_name)}
-                        <span class="pull-right remove fa fa-fw fa-trash" data-id="{$widget.widget_id}"></span>
+                        {if $widget.widget_name}{translate($widget.widget_name)}{/if}
+                        <span class="pull-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
                         <span class="pull-right toggle{if $widget.open != 'Y'} panel-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
                     </div>
                     <div class="panel-body"{if $widget.open != 'Y'} style="display:none;"{/if}>

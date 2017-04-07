@@ -42,6 +42,10 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         private   static $css_tpl             = '<link rel="stylesheet" href="%%file%%" media="%%media%%" />';
         /**
+         *
+         **/
+        private   static $css_folders         = array('','css','css/default');
+        /**
          * output template for external javascripts
          **/
         private   static $js_tpl              = '%%condition_open%%<script type="text/javascript" src="%%file%%">%%code%%</script>%%condition_close%%';
@@ -259,8 +263,7 @@ if (!class_exists('CAT_Helper_Page'))
                     // admin tool
                     if($self->router()->match('~\/tool\/~i'))
                     {
-                        $route   = $self->router()->getRoute();
-                        $tool    = (explode('/',$route))[-1];
+                        $tool = CAT_Backend_Admintools::getTool();
                         array_push(self::$scan_paths,CAT_ENGINE_PATH.'/modules/'.$tool);
                     }
                 }
@@ -310,14 +313,17 @@ if (!class_exists('CAT_Helper_Page'))
                 {
                     if($position=='header')
                     {
-                        $cssfile = CAT_Helper_Directory::sanitizePath($path.'/css/default/backend.css');
-                        if(file_exists($cssfile))
+                        foreach(self::$css_folders as $folder)
                         {
-                            self::log()->addDebug(sprintf(
-                                'adding CSS file: [%s]',
-                                $cssfile
-                            ));
-                            self::addCSS(self::checkPath(CAT_Helper_Validate::path2uri($cssfile)));
+                            $cssfile = CAT_Helper_Directory::sanitizePath($path.'/'.$folder.'/backend.css');
+                            if(file_exists($cssfile))
+                            {
+                                self::log()->addDebug(sprintf(
+                                    'adding CSS file: [%s]',
+                                    $cssfile
+                                ));
+                                self::addCSS(self::checkPath(CAT_Helper_Validate::path2uri($cssfile)));
+                            }
                         }
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

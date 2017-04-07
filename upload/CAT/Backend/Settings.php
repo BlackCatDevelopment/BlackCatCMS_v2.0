@@ -116,118 +116,12 @@ if (!class_exists('CAT_Backend_Settings'))
          **/
         protected static function renderForm($settings)
         {
-            $form = CAT_Backend::initForm();
-            $form->createForm('settings');
-            $form->setAttr('class','tabbed');
-
-            $lastlegend = '';
-            foreach($settings as $item)
-            {
-                if($item['region'] != $lastlegend)
-                {
-                    $form->addElement(array(
-                        'type'  => 'legend',
-                        'label' => self::lang()->translate(self::humanize($item['region'])),
-                        'class' => '',
-                    ));
-                    $lastlegend = $item['region'];
-                }
-                $element = array(
-                    'type'  => (
-                          strlen($item['fieldtype'])
-                        ? $item['fieldtype']
-                        : 'text'
-                    ),
-                    'name'  => $item['name'],
-                    'label' => (
-                          strlen($item['fieldlabel'])
-                        ? $item['fieldlabel']
-                        : self::lang()->translate(self::humanize($item['name']))
-                    ),
-                    'default' => (
-                          strlen($item['default_value'])
-                        ? $item['default_value']
-                        : ''
-                    ),
-                    'after'   => (
-                          strlen($item['helptext'])
-                        ? $item['helptext']
-                        : ''
-                    ),
-                );
-
-                switch($element['type'])
-                {
-                    case 'radiogroup':
-                        $element['options'] = array('y'=>'yes','n'=>'no');
-                        break;
-                    case 'checkbox':
-                        if(strlen($item['default_value']))
-                        {
-                            $element['value'] = $item['default_value'];
-                        }
-                        break;
-                }
-
-                $elem = $form->addElement($element);
-                if(strlen($item['fieldhandler']))
-                {
-                    $handler = $item['fieldhandler'];
-//******************************************************************************
-// Funktioniert derzeit nur mit einem Parameter und loest keine Variablen auf!
-//******************************************************************************
-/*
-Array
-(
-    [0] => Array
-        (
-            [addon_id] => 27
-            [type] => module
-            [directory] => ckeditor4
-            [name] => CKEditor 4
-            [description] => CKEditor 4
-            [function] => wysiwyg
-            [version] =>
-            [guid] =>
-            [platform] =>
-            [author] =>
-            [license] =>
-            [installed] =>
-            [upgraded] =>
-            [removable] => Y
-            [bundled] => N
-        )
-
-)
-*/
-                    if(strlen($item['params']))
-                    {
-                        $params = $item['params'];
-                        if(substr_count($params,','))
-                            $params = explode(',',$params);
-                        else
-                            $params = array($params);
-                        $data = call_user_func_array($handler,$params);
-                    }
-//******************************************************************************
-                    else
-                        $data = $handler();
-
-                    if($elem instanceof wblib\wbFormsElementSelect)
-                    {
-                        $elem->setAttr('options',$data);
-                    }
-                    else
-                    {
-                        $elem->setAttr('value',$data);
-                    }
-                }
-            }
-
-            // set current data
-            $form->setData(CAT_Object::loadSettings());
-
-            return $form;
+            return CAT_Helper_FormBuilder::generate(
+                'settings',
+                $settings,
+                'region',
+                CAT_Object::loadSettings()
+            );
         }   // end function renderForm()
         
     } // class CAT_Backend_Settings

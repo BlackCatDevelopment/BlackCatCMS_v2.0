@@ -353,6 +353,28 @@ if(!class_exists('CAT_Object',false))
          * @access public
          * @return
          **/
+        public static function getEncodings($with_labels=false)
+        {
+            $result = array();
+            $sth = self::db()->query(
+                'SELECT ' . ($with_labels?'*':'`name`').' FROM `:prefix:charsets` ORDER BY `name` ASC'
+            );
+            $data = $sth->fetchAll();
+            foreach($data as $item) {
+                if($with_labels) {
+                    $result[$item['name']] = $item['labels'];
+                } else {
+                    $result[] = $item['name'];
+                }
+            }
+            return $result;
+        }   // end function getEncodings()
+        
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function getJQueryFiles($type=NULL,$plugin=NULL)
         {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

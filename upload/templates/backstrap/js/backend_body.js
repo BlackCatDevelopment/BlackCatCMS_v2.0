@@ -119,7 +119,7 @@ $(function() {
     });
 
     // close any modals before opening a new one
-    $('body').on('show.bs.modal', function(e) {
+    $('body').on('show.bs.modal', ".modal", function(e) {
         if($('.modal:visible').length) {
             $('.modal').modal('hide');
         }

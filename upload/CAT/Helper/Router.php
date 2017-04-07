@@ -106,10 +106,10 @@ if(!class_exists('CAT_Helper_Router',false))
             // check if controller exists
             if(!class_exists($controller) || !is_callable(array($controller,$function)))
             {
-                $this->log()->addError(
-                    'Routing error: No such controller [{controller}] or function not callable [{func}]',
-                    array('controller'=>$controller,'func'=>$function)
-                );
+                $this->log()->addError(sprintf(
+                    'Routing error: No such controller [%s] (%s) or function not callable [%s] (%s)',
+                    $controller, class_exists($controller), $function, is_callable(array($controller,$function))
+                ));
                 CAT_Object::printFatalError('Access denied');
             }
 

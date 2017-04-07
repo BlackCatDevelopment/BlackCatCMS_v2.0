@@ -1,4 +1,13 @@
 $(function() {
+    var dtable = $('table.dtable').DataTable({
+        mark: true,
+        stateSave: true,
+        orderClasses: false,
+        language: {
+            url: CAT_ASSET_URL
+        }
+    });
+
     $("a.delete").unbind("click").on("click",function(e) {
         e.preventDefault();
         var id = $(this).data("id");
@@ -22,4 +31,27 @@ $(function() {
             });
         });
     });
-})(jQuery);
+
+    $("a.bsedit").unbind("click").on("click",function(e) {
+        e.preventDefault();
+        var id = $(this).data("id");
+        $.ajax({
+                type    : "POST",
+                url     : CAT_ADMIN_URL+"/users/edit",
+                dataType: "json",
+                data    : {
+                    user_id: id
+                },
+                success : function(data, status) {
+                    $(".modal-title").text(cattranslate("Edit user",undefined,undefined,"BE"));
+                    $(".modal-body").html(data.form);
+                    $('form').fieldset_to_tabs();
+                    $('div.fbbuttonline').remove();
+                    $('div.form-group').addClass('row');
+                    $('form').find('br').remove();
+                    $("#modal_dialog").modal("show");
+                    //BCGrowl(data.message,data.success);
+                }
+            });
+    });
+});

@@ -1,4 +1,4 @@
-<table class="table datatable">
+<table class="table dtable">
     <thead>
         <tr>
             <th>{* icons column *}</th>
@@ -7,6 +7,7 @@
             <th>{translate('Display name')}</th>
             <th>{translate('eMail')}</th>
             <th>{translate('Groups')}</th>
+            <th>{translate('WYSIWYG-Editor')}</th>
         </tr>
     </thead>
     <tbody>
@@ -14,7 +15,12 @@
         <tr>
             <td>
                 <span class="fa fa-fw{if $user.protected == 'Y'} fa-anchor{/if}"></span>
-                {if user_has_perm('users_edit')}<a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}dis{else}en{/if}abled"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                {if user_has_perm('users_edit')}
+                    <a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}dis{else}en{/if}abled"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>
+                    <a href="#" class="bsedit" data-url="{$CAT_ADMIN_URL}/users/edit" data-id="{$user.user_id}"><span class="fa fa-fw fa-pencil"></span></a>
+                {else}
+                    <span class="fa fa-fw"></span><span class="fa fa-fw"></span>
+                {/if}
                 {if $user.protected != 'Y'}
                 {if user_has_perm('users_delete')}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                 {/if}
@@ -39,6 +45,7 @@
                     {foreach $user.groups group implode=", "}{$group.group_title}{/foreach}
                 {/if}
             </td>
+            <td>{$user.wysiwyg}</td>
         </tr>
     {/foreach}
     </tbody>
@@ -49,13 +56,18 @@
 <span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}
 <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
+{* hidden user form *}
+<div class="hidden">
+    {$userform}
+</div>
+
 {include(file='backend_modal.tpl' modal_id='modal_dialog' modal_title='', modal_text='', modal_savebtn='1')}
 
 {$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
 <script type="text/javascript">
 //<![CDATA[
     $(function() {
-        var CAT_ASSET_URL = "{cat_asset_url($file,'js')}";
+        CAT_ASSET_URL = "{cat_asset_url($file,'js')}";
     });
 //]]>
 </script>

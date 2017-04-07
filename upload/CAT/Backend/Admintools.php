@@ -50,7 +50,7 @@ if (!class_exists('CAT_Backend_Admintools'))
             // no configuration yet
             if(!isset($d['widgets']) || !is_array($d['widgets']) || !count($d['widgets']))
             {
-                $tools = CAT_Helper_Addons::getAddons('tool');
+                $tools = CAT_Helper_Addons::getAddons('tool','name',false);
                 $col          = 1; // init column
                 $d['columns'] = ( isset($d['columns']) ? $d['columns'] : 2 ); // init col number
                 if(count($tools))
@@ -97,8 +97,82 @@ if (!class_exists('CAT_Backend_Admintools'))
             $self->tpl()->output('backend_dashboard',array('id'=>0,'dashboard'=>$d));
             CAT_Backend::print_footer();
 
-        }   // end function Admintools()
+        }   // end function index()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function tool()
+        {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: tool perm
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(!self::user()->hasPerm('tools_list'))
+                self::printFatalError('You are not allowed for the requested action!');
+            $tool    = self::getTool();
+            $name    = CAT_Helper_Addons::getDetails($tool,'name');
+            $handler = NULL;
+            foreach(array_values(array(str_replace(' ','',$name),$tool)) as $classname) {
+                $filename = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$tool.'/inc/class.'.$classname.'.php');
+                if(file_exists($filename)) {
+                     $handler = $filename;
+                }
+            }
+
+            $tpl_data = array();
+            if ($handler)
+            {
+                self::log()->addDebug(sprintf('found class file [%s]',$handler));
+                CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$tool.'/languages/');
+                self::setTemplatePaths($tool);
+                include_once $handler;
+                #$classname::initialize();
+                $tpl_data['content'] = $classname::tool();
+            }
+
+            if(self::asJSON())
+            {
+                echo json_encode($tpl_data,1);
+                exit;
+            }
+
+            CAT_Backend::print_header();
+            self::tpl()->output('backend_admintool', $tpl_data);
+            CAT_Backend::print_footer();
+        }   // end function tool()
         
+        /**
+         * tries to retrieve 'tool' by checking (in this order):
+         *
+         *    - $_POST['tool']
+         *    - $_GET['tool']
+         *    - Route param
+         *
+         * also checks for numeric value
+         *
+         * @access private
+         * @return integer
+         **/
+        public static function getTool()
+        {
+            $tool  = CAT_Helper_Validate::sanitizePost('tool','scalar',NULL);
+
+            if(!$tool)
+                $tool  = CAT_Helper_Validate::sanitizeGet('tool','scalar',NULL);
+
+            if(!$tool)
+                $tool = self::router()->getParam(-1);
+
+            if(!$tool || !is_scalar($tool))
+                CAT_Object::printFatalError('Invalid data');
+
+            if(!CAT_Helper_Addons::exists($tool))
+                self::printFatalError('No such tool');
+
+            return $tool;
+        }   // end function getTool()
 
     } // class CAT_Helper_Admintools
 
