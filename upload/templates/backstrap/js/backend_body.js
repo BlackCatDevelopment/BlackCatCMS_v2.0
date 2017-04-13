@@ -134,6 +134,9 @@ $(function() {
         });
     });
 
+    // style file upload form fields
+    $(":file").filestyle({buttonName:"btn-primary"});
+
     // add session timer
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());
     CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');

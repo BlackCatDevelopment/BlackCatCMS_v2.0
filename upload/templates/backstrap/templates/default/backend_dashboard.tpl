@@ -11,6 +11,7 @@
                     <div class="panel-heading">
                         {if $widget.icon}<span class="fa fa-fw {$widget.icon}"></span>{/if}
                         {if $widget.widget_name}{translate($widget.widget_name)}{/if}
+                        {if $widget.link}{$widget.link}{/if}
                         <span class="pull-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
                         <span class="pull-right toggle{if $widget.open != 'Y'} panel-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
                     </div>

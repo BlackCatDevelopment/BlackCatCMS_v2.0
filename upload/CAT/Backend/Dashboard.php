@@ -25,8 +25,8 @@ if (!class_exists('CAT_Backend_Dashboard'))
     class CAT_Backend_Dashboard extends CAT_Object
     {
         protected static $instance = NULL;
-        //protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        protected static $loglevel = \Monolog\Logger::DEBUG;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        //protected static $loglevel = \Monolog\Logger::DEBUG;
 
         /**
          *

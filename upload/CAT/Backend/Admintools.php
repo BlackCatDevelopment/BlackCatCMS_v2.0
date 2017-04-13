@@ -26,6 +26,8 @@ if (!class_exists('CAT_Backend_Admintools'))
     {
         // array to store config options
         protected static $instance = NULL;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        //protected static $loglevel = \Monolog\Logger::DEBUG;
 
         /**
          *
@@ -80,8 +82,9 @@ if (!class_exists('CAT_Backend_Admintools'))
                         // init widget
                         $d['widgets'][] = array(
                             'column'        => $col,
-                            'widget_title'  => '<a href="">'.$tool['name'].'</a>',
+                            'widget_name '  => $tool['name'],
                             'content'       => $tool['description'],
+                            'link'          => '<a href="'.CAT_ADMIN_URL.'/admintools/tool/'.$tool['name'].'">'.$tool['name'].'</a>',
                             'position'      => 1,
                             'open'          => true,
                         );
@@ -128,6 +131,15 @@ if (!class_exists('CAT_Backend_Admintools'))
                 CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$tool.'/languages/');
                 self::setTemplatePaths($tool);
                 include_once $handler;
+                // init forms
+                $init = CAT_Helper_Directory::sanitizePath(
+                    CAT_ENGINE_PATH.'/modules/'.$tool.'/forms.init.php'
+                );
+                if(file_exists($init))
+                {
+                    CAT_Backend::initForm();
+                    require $init;
+                }
                 #$classname::initialize();
                 $tpl_data['content'] = $classname::tool();
             }

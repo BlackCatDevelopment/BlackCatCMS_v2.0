@@ -7,7 +7,7 @@
 \wblib\wbFormsElementButton::setClass('btn btn-secondary');
 \wblib\wbFormsElementLabel::setTemplate('<label class="col-sm-4 control-label"%for%%style%>%label%</label>');
 \wblib\wbFormsElement::setTemplate(
-    '<div class="form-group row">
+    '<div class="form-group">
       %label%
       <div class="col-sm-1">%is_required%</div>
       <div class="col-sm-7">

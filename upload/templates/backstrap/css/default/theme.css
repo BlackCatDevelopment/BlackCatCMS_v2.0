@@ -72,6 +72,10 @@ ul[role="tablist"]{margin-bottom:15px;}
 .dropdown-submenu.pull-left{float:none;}
 .dropdown-submenu.pull-left>.dropdown-menu{left:-100%;margin-left:10px;-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;border-radius:6px 0 6px 6px;}
 
+/* forms */
+.fbrequired{}
+span.buttonText{margin-left:3px} /* filestyle plugin */
+
 /* color change for session timeout counter */
 div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite alternate;}
 @-webkit-keyframes colorchange {
