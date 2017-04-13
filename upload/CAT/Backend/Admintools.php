@@ -84,7 +84,7 @@ if (!class_exists('CAT_Backend_Admintools'))
                             'column'        => $col,
                             'widget_name '  => $tool['name'],
                             'content'       => $tool['description'],
-                            'link'          => '<a href="'.CAT_ADMIN_URL.'/admintools/tool/'.$tool['name'].'">'.$tool['name'].'</a>',
+                            'link'          => '<a href="'.CAT_ADMIN_URL.'/admintools/tool/'.$tool['directory'].'">'.$tool['name'].'</a>',
                             'position'      => 1,
                             'open'          => true,
                         );

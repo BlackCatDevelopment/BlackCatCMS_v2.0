@@ -171,7 +171,15 @@ if (!class_exists('CAT_Addon', false))
             if($value)
                 return static::$$value;
             // get 'em all
-
+            $info = array();
+            foreach(array_values(array(
+                'name', 'directory', 'version', 'author', 'license', 'description', 'guid', 'home', 'platform', 'type'
+            )) as $key) {
+                if(isset(static::$$key) && strlen(static::$$key)) {
+                    $info[$key] = static::$$key;
+                }
+            }
+            return $info;
         }
 	
 		/**

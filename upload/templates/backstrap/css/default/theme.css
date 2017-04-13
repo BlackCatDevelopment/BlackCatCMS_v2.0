@@ -34,6 +34,11 @@ div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-lef
 .fa-headers:before{content:"\f0ac";}
 .fa-administration:before{content:"\f085";}
 .fa-language:before{content:"\f086";}
+.fa-library:before{content:"\f02d";}
+.fa-page:before{content:"\f12e"}
+.fa-theme:before{content:"\f26c"}
+.fa-tool:before{content:"\f0ad"}
+.fa-wysiwyg:before{content:"\f2c3"}
 
 /* dark backdrop for session timed out modal */
 .dark.fade.in ~ .modal-backdrop.fade.in {opacity:.9 !important;}

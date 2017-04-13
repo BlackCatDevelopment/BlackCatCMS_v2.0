@@ -73,3 +73,8 @@ if(CAT_Backend::getArea() == 'media')
     //$mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.gridder/js/gridder.js';
     $mod_headers['backend']['js'][]  = 'modules/lib_jquery/plugins/jquery.gridder/js/gridder.js';
 }
+
+if(CAT_Backend::getArea() == 'admintools')
+{
+    $mod_headers['backend']['js'][] = 'templates/backstrap/js/dashboard.js';
+}

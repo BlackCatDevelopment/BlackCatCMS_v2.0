@@ -46,7 +46,8 @@ if (!class_exists('CAT_Backend_Addons'))
         public static function index()
         {
             $self = self::getInstance();
-            $data = CAT_Helper_Addons::getAddons(); // all
+            $data = CAT_Helper_Addons::getAddons(NULL,'name',false,true); // all
+            $ftp  = CAT_Helper_Addons::getAddons(NULL,'name',false,true,true);
             foreach($data as $i => $item)
             {
                 $data[$i]['install_date'] = CAT_Helper_DateTime::getDate($item['installed']);
@@ -55,6 +56,8 @@ if (!class_exists('CAT_Backend_Addons'))
             $tpl_data = array(
                 'modules'      => $data,
                 'modules_json' => json_encode($data, JSON_NUMERIC_CHECK),
+                'notinstalled' => $ftp,
+                'notinstalled_json' => json_encode($ftp, JSON_NUMERIC_CHECK),
             );
             CAT_Backend::print_header();
             $self->tpl()->output('backend_addons', $tpl_data);

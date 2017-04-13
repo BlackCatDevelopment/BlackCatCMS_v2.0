@@ -82,9 +82,10 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          * @param  string  $order      (default: 'name') - value to handle "ORDER BY" for database request of addons
          * @param  boolean $names_only (default: true)   - get only a flat list of names or a complete data array
          * @param  boolean $find_icon  (default: false)  - wether to search for an icon
+         * @param  boolean $not_installed (default: false) - only retrieve modules that have no db entry (not installed)
          * @return array
          */
-        public static function getAddons($type=NULL,$order='name',$names_only=true,$find_icon=false)
+        public static function getAddons($type=NULL,$order='name',$names_only=true,$find_icon=false,$not_installed=false)
         {
             // create query builder
             $q = CAT_Helper_DB::qb()
@@ -134,6 +135,62 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 }
             }
 
+            if($not_installed)
+            {
+                $seen   = CAT_Helper_Array::extract($data,'directory');
+                $result = array();
+                // scan modules path for modules not seen yet
+                foreach(array('modules','templates') as $t)
+                {
+                    $subdirs = CAT_Helper_Directory::getInstance()
+                       ->maxRecursionDepth(0)
+                       ->setSkipDirs($seen)
+                       ->getDirectories(CAT_ENGINE_PATH.'/'.$t,CAT_ENGINE_PATH.'/'.$t.'/')
+                       ;
+
+                    if(count($subdirs))
+                    {
+                        foreach($subdirs as $dir)
+                        {
+                            // skip paths starting with __ (sometimes used for deactivating addons)
+                            if(substr($dir,0,2) == '__') continue;
+                            $info = self::getInfo($dir);
+                            if(is_array($info) && count($info))
+                                $result[] = $info;
+                        }
+                    }
+                }
+                return $result;
+            }
+
+
+/*
+        if ( count($new) )
+        {
+            foreach( $new as $dir )
+            {
+                // skip paths starting with __ (sometimes used for deactivating addons)
+                if(substr($dir,0,2) == '__') continue;
+                $info = $addon->checkInfo(CAT_PATH.'/'.$type.'/'.$dir);
+                if ( $info )
+                {
+                    $tpl_data['not_installed_addons'][$type][$counter] = array(
+                        'is_installed' => false,
+                        'type'         => $type,
+                        'INSTALL'      => file_exists(CAT_PATH.'/'.$type.'/'.$dir.'/install.php') ? true : false
+                    );
+                    foreach( $info as $key => $value )
+                    {
+                        $tpl_data['not_installed_addons'][$type][$counter][str_ireplace('module_','',$key)] = $value;
+                    }
+                    $counter++;
+                }
+            }
+            $tpl_data['not_installed_addons'][$type] = CAT_Helper_Array::ArraySort($tpl_data['not_installed_addons'][$type],'name','asc',true);
+        }
+
+*/
+
             if($names_only)
                 $data = CAT_Helper_Array::extract($data,'name','directory');
 
@@ -167,6 +224,36 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             }
             return NULL;
         } // end function getDetails()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getInfo($directory)
+        {
+            $info    = array(
+            );
+            $fulldir = CAT_ENGINE_PATH.'/modules/'.$directory.'/inc';
+            if(is_dir($fulldir))
+            {
+                // find class.<modulename>.php
+                $files = CAT_Helper_Directory::getInstance()
+                    ->maxRecursionDepth(0)
+                    ->findFiles('class\..+?\.php',$fulldir,$fulldir.'/');
+                if(count($files)==1)
+                {
+                    $classname = str_ireplace('class.','',pathinfo($files[0],PATHINFO_FILENAME));
+                    if(!class_exists($classname,false))
+                    {
+                        require_once $fulldir.'/'.$files[0];
+                    }
+                    $info = $classname::getInfo();
+                }
+            }
+            return $info;
+        }   // end function getInfo()
+        
 
     } // class CAT_Helper_Addons
 

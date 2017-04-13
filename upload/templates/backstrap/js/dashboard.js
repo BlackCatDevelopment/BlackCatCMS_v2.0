@@ -3,12 +3,9 @@ $(function() {
         columns      = $('div.dashboard').data('columns');
 
     // dashboard lanes
-    $('ul.columnize').columnize(
-        columns,
-        {
-            ul_classes:'bs_sortable'
-        }
-    );
+    $('ul.columnize').columnize(columns,{
+        ul_classes:'bs_sortable'
+    });
 
     // addable widgets
     $.ajax({

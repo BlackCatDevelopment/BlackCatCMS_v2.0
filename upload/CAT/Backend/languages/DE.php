@@ -137,6 +137,7 @@ $LANG = array_merge($LANG,array(
     'Languages'         => 'Sprachen',
     'Modules'           => 'Erweiterungen',
     'Upgraded'          => 'Aktualisiert',
+    'Not (yet) installed' => '(Noch) nicht installiert',
     'Type to filter by text...' => 'Zum Filtern tippen...',
 
 
