@@ -1,21 +1,3 @@
-{* will be cloned and added to list and grid view *}
-<span class="bsFilterSelect pull-right" style="display:none">
-    <label for="filter">{translate('Filter by type')}</label>
-    <select name="filter">
-        <option value="">{translate('All')}</option>
-        <option value="image">{translate('Images')}</option>
-        <option value="video">{translate('Videos')}</option>
-        <option value="audio">{translate('Audio')}</option>
-        <option value="other">{translate('Other')}</option>
-    </select>
-</span>
-
-{* template to fill the subdir select *}
-{template option data}{foreach $data item}
-    <option value="{$item.path}"{if $__.curr_folder == $item.path} selected="selected"{/if}>{$item.path}</option>
-    {if $item.children}{option $item.children}{/if}
-{/foreach}{/template}
-
 <ul class="nav nav-tabs" role="tablist">{* Tabs *}
     <li role="presentation">
         <a href="#list" aria-controls="list" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
@@ -37,14 +19,18 @@
         </a>
     </li>
     {/if}
+    {if count($dirs)}
     <li>
         <span class="fa fa-fw fa-folder"></span>
         <label for="media_folder">{translate('Select folder')}:</label>
         <select id="root_folder" name="root_folder">
             <option value="">[{translate('Root folder')}]</option>
-            {option $dirs}
+            {foreach $dirs item}
+            <option value="{$item}"{if $__.curr_folder == $item} selected="selected"{/if}>{$item}</option>
+            {/foreach}
         </select>
     </li>
+    {/if}
 </ul>
 
 <div class="tab-content">{* Tab panes *}
@@ -76,6 +62,17 @@
 
 </div>{* Tab panes End *}
 
+{* will be cloned and added to list and grid view *}
+<span class="bsFilterSelect pull-right" style="display:none">
+    <label for="filter">{translate('Filter by type')}</label>
+    <select name="filter">
+        <option value="">{translate('All')}</option>
+        <option value="image">{translate('Images')}</option>
+        <option value="video">{translate('Videos')}</option>
+        <option value="audio">{translate('Audio')}</option>
+        <option value="other">{translate('Other')}</option>
+    </select>
+</span>
 
 {* get the name of the language file; allows to check if it exists *}
 {$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}

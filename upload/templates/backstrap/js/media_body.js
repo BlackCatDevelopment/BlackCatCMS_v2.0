@@ -2,30 +2,32 @@ $(function() {
 
     "use strict";
 
-    function bsUpload(data, $this) {
-        var folder = $('select#root_folder option:selected').val();
-        if(data && folder) {
-            data.formData = {folder: folder};
-        }
-        $this
-            .off('click')
-            .text('Abort')
-            .on('click', function () {
-                $this.remove();
-                data.abort();
-            });
-        if(data) {
-            data.submit();
-        }
-    }
+    // extract the templates
+    var tablerow = $(this).find('tbody > tr').clone().detach().removeClass('hidden');
+    var listitem = $(this).find('li.gridder-expander').clone().detach().removeClass('hidden');
 
-    // load the content of a tab
-    var loadPane = function(target,tpl,appendto,data) {
+    var loadPane = function(target,data) {
+        var panelid = $(target).attr('id');
+        switch(panelid) {
+            case "list":
+                $(target).find('tbody > tr').not('.hidden').remove();
+                var appendto = $(target).find('tbody');
+                break;
+            case "grid":
+                $(target).find('li').not('.hidden').remove();
+                var appendto = $(target).find('ul.gridder');
+                break;
+        }
+
+        var tables = $('table.datatable').DataTable();
+        tables.table(0).clear().draw();
+
         if(!data.files || !data.files.length) {
-            $(target).html('<div class="alert alert-info">No files</div>');
+            //$(target).html('<div class="alert alert-info">No files</div>');
         } else {
+
             $.each(data.files, function(index,file) {
-                var item = $(tpl).clone();
+                var item = $(tablerow).clone();
 
                 $(item).attr("data-gridder-url",file.media_id);
                 $(item).attr("data-title",file.filename);
@@ -41,94 +43,120 @@ $(function() {
                         var src = $(item).find('[data-field="preview"]');
                         src.attr('src',src.attr('src')+file.url);
                         src.removeClass('hidden');
+                    } else {
+                        $(item).find('.fa-file-movie-o').removeClass('hidden');
                     }
                     // show mime type
                     $(item).find('[data-field="mime_type"]').text(file.mime_type);
                 }
-                $(item).appendTo(appendto);
-            });
-            //$(target).find(':hidden').show();
-        }
-    };
-
-    var loadTabContent = function(pane) {
-        var get_url = $(pane).attr("data-url");
-        if(get_url) {
-            var target = $(pane).attr('href');
-            switch(target) {
-                case "#list":
-                    $(target).find('tbody > tr').not('.hidden').remove();
-                    var tpl = $(target).find('tbody > tr').clone().detach().removeClass('hidden');
-                    var appendto = $(target).find('tbody');
-                    break;
-                case "#grid":
-                    $(target).find('li').not('.hidden').remove();
-                    var tpl = $(target).find('li').clone().detach().removeClass('hidden');
-                    var appendto = $(target).find('ul.gridder');
-                    break;
-            }
-
-        	// ajax load from data-url
-            $.ajax({
-                type    : 'POST',
-                url     : get_url,
-                dataType: 'json',
-                success : function(data, status) {
-                    // for debugging
-                    //console.log('data: ', data);
-                    loadPane(target,tpl,appendto,data);
-                }
+                tables.table(0).rows.add($(item)).draw();
             });
         }
     };
 
     // load tab content on activation
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        e.preventDefault();
-        loadTabContent($(this));
-    });
-    loadTabContent($('ul[role="tablist"] li.active > a'));
+        var get_url = $(this).attr("data-url");
+        if(get_url) {
+            e.preventDefault();
+          	var pane    = $(this);
+            var target  = this.hash;
+            var row     = false;
+            var parent  = false;
+            var count   = {
+                '#list': 0,
+                '#grid': 0
+            };
 
-    // load gridder
-    if(typeof $.fn.Gridder != 'undefined') {
-        $('.gridder-table').Gridder({
-            expander: "tr.gridder-expander > td",
-            rootUrl: CAT_ADMIN_URL+"/media/details",
-            gridderContent: "<tr class=\"gridder-show\"><td colspan=\"3\"></td></tr>",
-            nextText: "<span class=\"fa fa-fw fa-arrow-right\"></span>",
-            prevText: "<span class=\"fa fa-fw fa-arrow-left\"></span>",
-            closeText: "<span class=\"fa fa-fw fa-close\"></span>",
-            onContent: function(){
-                $('div.gridder-show').addClass('panel');
+            switch(target) {
+                case '#list':
+                    parent = $('table.table');
+                    row = $(tablerow).clone();
+                    count[target] = $('tbody').find('tr').length;
+                    break;
+                case '#grid':
+                    parent = $('ul.gridder');
+                    row = $(listitem).clone();
+                    count[target] = $(parent).find('li').length;
+                    break;
             }
-        });
-        $('.gridder').Gridder({
-            rootUrl: CAT_ADMIN_URL+"/media/details",
-            nextText: "<span class=\"fa fa-fw fa-arrow-right\"></span>",
-            prevText: "<span class=\"fa fa-fw fa-arrow-left\"></span>",
-            closeText: "<span class=\"fa fa-fw fa-close\"></span>",
-            onContent: function(){
-                $('div.gridder-show').addClass('panel');
+
+            // only on first load
+            if(count[target]<=1) {
+            	// ajax load from data-url
+                $.ajax({
+                    type    : 'POST',
+                    url     : get_url,
+                    dataType: 'json',
+                    success : function(data, status) {
+                        // console.log('data: ', data);
+                        // reset folder select
+                        var s = $('select#root_folder');
+                        s.find('option').each(function() {
+                            if($(this).val() != '') {
+                                $(this).remove();
+                            }
+                        });
+                        // fill the folder select
+                        if(data.dirs) {
+                            $.each(data.dirs, function(index,dir) {
+                                s.append('<option value="'+dir+'">'+dir+'</option>');
+                            });
+                        }
+                        if(data.files) {
+                            $.each(data.files, function(index,file) {
+                                row = $(row).clone();
+                                $('a.delete',row).attr("data-id",file.media_id);
+                                if(file.mime_type) {
+                                    // show preview
+                                    if(file.mime_type.indexOf('image/') == 0) {
+                                        $('img.thumb',row).attr("src",data.media_url + file.url).removeClass('hidden');
+                                    }
+                                }
+                                $('span.filename',row).text(file.filename);
+                                $('span.filetype',row).text(file.mime_type);
+                                $('span.hfilesize',row).text(file.hfilesize);
+                                $('span.moddate',row).text(file.moddate);
+                                $(row).appendTo($(parent));
+                            });
+                        }
+                        $('table').DataTable();
+                    }
+                });
             }
-        });
+        }
+    });
+
+    // select which tab to show (last viewed or default)
+    var lastTab = localStorage.getItem('lastTab');
+    if(!lastTab) {
+        lastTab = '#list';
     }
+    $('[href="' + lastTab + '"]').trigger('click');
 
-    // file uploads
-    var url          = CAT_ADMIN_URL + '/media/upload',
-        uploadButton = $('<button/>')
-                     .addClass('btn btn-primary start')
-                     .text(cattranslate('Processing...'))
-                     .on('click', function() {
-                         var $this = $(this),
-                              data = $this.data();
-                         bsUpload(data, $this);
-                         $(this).remove();
-                     });
 
-    $('button.start').unbind('click').on('click', function() {
-        $('tbody.files').find('.start').trigger('click');
+    // #########################################################################
+    // handle folder select
+    // #########################################################################
+    $('select#root_folder').on('change', function() {
+        if($('.nav-tabs li.active a').attr('aria-controls') !== 'upload') {
+            // get the files
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL+"/media/index/"+$(this).val(),
+                dataType: 'json',
+                success : function(data, status) {
+                    // for debugging
+                    //console.log('data: ', data);
+                    loadPane($('div.tab-pane.active'),data);
+                }
+            });
+        }
     });
 
+    // #########################################################################
+    // handle file upload
+    // #########################################################################
     $('#fileupload').fileupload({
         url: url,
         dataType: 'json',

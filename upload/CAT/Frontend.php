@@ -74,8 +74,8 @@ if (!class_exists('CAT_Frontend', false))
             $func  = substr($route,0,strpos($route,'/'));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// Sollte es zufällig eine Seite geben, die einer internen Route entspricht,
-// wird die nie aufgerufen. Ich weiss aber im Moment keine Lösung.
+// Sollte es zufÃ¤llig eine Seite geben, die einer internen Route entspricht,
+// wird die nie aufgerufen. Ich weiss aber im Moment keine LÃ¶sung.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(is_callable(array('self',$func)))
             {

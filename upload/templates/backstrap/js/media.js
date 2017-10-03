@@ -5,13 +5,6 @@ $(function() {
         localStorage.setItem('lastTab', $(this).attr('href'));
     });
 
-    // select which tab to show (last viewed or default)
-    var lastTab = localStorage.getItem('lastTab');
-    if(!lastTab) {
-        lastTab = 'list';
-    }
-    $('[href="' + lastTab + '"]').tab('show');
-
     var filtergrid = $('span.bsFilterSelect').clone().detach();
 
     $(filtergrid)
@@ -19,12 +12,6 @@ $(function() {
         .removeClass('bsFilterSelect')
         .insertBefore('ul.gridder')
         .show();
-
-    $('select#root_folder').on('change', function() {
-        if(!$('.nav-tabs .active').attr('id') == 'upload') {
-            window.location.href = CAT_ADMIN_URL + "/media/index/" + $(this).val().substr(1);
-        }
-    });
 
     var curr_path = $('select#root_folder :selected').val();
     if(curr_path.length) {

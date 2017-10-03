@@ -27,6 +27,7 @@ if (!class_exists('CAT_Backend_Users'))
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
         protected static $avail_settings = NULL;
+        protected static $debug    = false;
 
         /**
          * Singleton
@@ -233,7 +234,8 @@ if (!class_exists('CAT_Backend_Users'))
                 $userID = self::router()->getParam(-1);
 
             if(!$userID || !is_numeric($userID) || !CAT_Helper_Page::exists($userID))
-                CAT_Object::printFatalError('Invalid data');
+                CAT_Object::printFatalError('Invalid data')
+                . (self::$debug ? '(CAT_Backend_Users::getUserID())' : '');;
 
             return $userID;
         }   // end function getUserID()

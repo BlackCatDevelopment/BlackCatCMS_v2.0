@@ -15,10 +15,10 @@
 
 */
 
-if ( ! class_exists( 'CAT_Helper_Assets' ) )
+if(!class_exists('CAT_Helper_Assets'))
 {
 
-    if ( ! class_exists( 'CAT_Object', false ) ) {
+    if(!class_exists('CAT_Object',false)) {
 	    @include dirname(__FILE__).'/../Object.php';
 	}
 
@@ -53,10 +53,16 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
 
             if($type=='images')
             {
+                self::log()->addDebug('serving image');
                 foreach($files as $file)
                 {
                     if(file_exists(CAT_ENGINE_PATH.'/'.$file))
                     {
+                        self::log()->addDebug(sprintf(
+                            'copying file [%s] to path [%s]',
+                            CAT_ENGINE_PATH.'/'.$file,
+                            CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME)
+                        ));
                         copy(CAT_ENGINE_PATH.'/'.$file,CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
                         #header('Content-Type: '.self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]);
                         echo CAT_URL.'/assets/'.pathinfo($file,PATHINFO_BASENAME);
@@ -81,7 +87,7 @@ if ( ! class_exists( 'CAT_Helper_Assets' ) )
                 }
             }
 
-            self::getInstance()->log()->addDebug(sprintf('type [%s], number of files [%d]', $type, count($files)).print_r($files,1));
+            self::log()->addDebug(sprintf('type [%s], number of files [%d]', $type, count($files)).print_r($files,1));
 
             // add assets
             $assets  = $factory->createAsset(

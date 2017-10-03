@@ -21,6 +21,7 @@
 <div class="col-sm-3 col-md-2 sidebar-offcanvas" id="sidebar" role="navigation">
     <ul class="nav nav-sidebar">
         {pagetree $pages}
-    </ul>
+    </ul><br /><br />
+    <a href="{$_root.CAT_ADMIN_URL}/page/add" class="btn btn-primary">{translate('Add page')}</a>
 </div>
 

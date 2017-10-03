@@ -224,52 +224,36 @@ if (!class_exists('CAT_Helper_DateTime'))
         /**
          * returns the default time format:
          *   - checks $_SESSION['TIME_FORMAT'] first;
-         *   - checks DEFAULT_TIME_FORMAT constant as next;
-         *   - checks $language_time var set in current language file last
-         *   - returns 'H:i' by default if none of the above is available
+         *   - returns global default if not set
          **/
         public static function getDefaultTimeFormat()
         {
             global $language_time;
             // user defined format
-            if ( isset ($_SESSION['CAT_TIME_FORMAT']) ) return $_SESSION['CAT_TIME_FORMAT'];
-            // default format
-            if ( defined('CAT_DEFAULT_TIME_FORMAT') )   return CAT_DEFAULT_TIME_FORMAT;
-            // language file
-            if ( isset($language_time) )          return $language_time;
-            // global default
-            return '%H:%M';
+            if ( isset ($_SESSION['TIME_FORMAT']) ) return $_SESSION['TIME_FORMAT'];
+            return CAT_Registry::get('time_format');
         }   // end function getDefaultTimeFormat()
 
         /**
          * returns the default date format (short)
          *   - checks $_SESSION['DATE_FORMAT'] first;
-         *   - checks DEFAULT_DATE_FORMAT constant next;
-         *   - checks $language_date_short var set in current language file last
-         *   - returns 'D-M-Y' by default if none of the above is set
+         *   - returns global default if not set
          **/
         public static function getDefaultDateFormatShort()
         {
             global $language_date_short;
             // user defined format
-            if ( isset ($_SESSION['CAT_DATE_FORMAT']) )       return $_SESSION['CAT_DATE_FORMAT'];
-            // default format short
-            if ( defined('CAT_DEFAULT_DATE_FORMAT_SHORT') )   return CAT_DEFAULT_DATE_FORMAT_SHORT;
-            // language file
-            if ( isset($language_date_short) )            return $language_date_short;
-            // default format
-            if ( defined('CAT_DEFAULT_DATE_FORMAT') )         return CAT_DEFAULT_DATE_FORMAT;
-            // global default
-            return '%d-%m-%Y';
+            if(isset($_SESSION['DATE_FORMAT'])) return $_SESSION['DATE_FORMAT'];
+            return CAT_Registry::get('date_format');
         }   // end function getDefaultDateFormatShort()
 
+        /**
+         * combines DATE_FORMAT with TIME_FORMAT
+         **/
         public static function getDefaultDateFormatLong()
         {
             global $language_date_long;
-            $format = NULL;
-            if ( defined('CAT_DEFAULT_DATE_FORMAT') ) $format = CAT_DEFAULT_DATE_FORMAT;
-            elseif ( isset($language_date_long) ) $format = $language_date_long;
-            else                                  $format = '%x';
+            $format = CAT_Registry::get('date_format');
             $format .= ' ' . self::getDefaultTimeFormat();
             return $format;
         }   // end function getDefaultDateFormatLong()

@@ -49,6 +49,26 @@ if (!class_exists('CAT_Helper_Template'))
 
         /**
          *
+         * @access public
+         * @return
+         **/
+        public static function getBlocks($template=null)
+        {
+            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
+            // include info.php for template info
+			$template_location = ( $template != '' ) ?
+				CAT_ENGINE_PATH.'/templates/'.$template.'/info.php' :
+				CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php';
+			if(file_exists($template_location))
+            {
+				require $template_location;
+                return ( isset($block) ? $block : array('Main') );
+            }
+            return array('Main');
+        }   // end function getBlocks()
+
+        /**
+         *
          *
          *
          *
@@ -146,11 +166,7 @@ if (!class_exists('CAT_Helper_Template'))
                 $tpl_path = CAT_ENGINE_PATH.'/templates/'.$for.'/templates/';
 
             //$info  = CAT_Helper_Addons::checkInfo($tpl_path);
-            $paths = CAT_Helper_Directory::getInstance()
-                   ->setRecursion(false)
-                   ->getDirectories(
-                       $tpl_path,$tpl_path
-                   );
+            $paths = CAT_Helper_Directory::findDirectories($tpl_path,array('remove_prefix'=>true));
 
             //if(isset($info['module_variants']) && is_array($info['module_variants']) && count($info['module_variants'])) {
             //    $variants = $info['module_variants'];
@@ -168,7 +184,7 @@ if (!class_exists('CAT_Helper_Template'))
          * @access public
          * @return
          **/
-        public static function get_template_block_name($template = NULL, $selected = 1)
+        public static function get_template_block_name($template=NULL,$selected=1)
         {
             if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
             // include info.php for template info

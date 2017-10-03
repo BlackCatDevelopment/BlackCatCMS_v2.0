@@ -1,6 +1,8 @@
 <?php
 
 \wblib\wbFormsJQuery::set('load_ui_theme',false);
+\wblib\wbForms::set('add_breaks',false);
+\wblib\wbForms::set('add_buttons',false);
 \wblib\wbFormsElementForm::setClass('form-horizontal');
 \wblib\wbFormsElement::setClass('form-control');
 \wblib\wbFormsElementSubmit::setClass('btn btn-primary');
@@ -33,6 +35,15 @@
       <div class="col-sm-7">
         <input%type%%name%%id%%class%%checked%%style%%title%%value%%required%%aria-required%%pattern%%tabindex%%accesskey%%disabled%%readonly%%onblur%%onchange%%onclick%%onfocus%%onselect% />
         <span class="help-block">%after%</span>
+      </div>
+    </div>'
+);
+\wblib\wbFormsElementLabeledButton::setTemplate(
+    '<div class="form-group">
+      <label class="col-sm-4 control-label">%label%</label>
+      <div class="col-sm-1"></div>
+      <div class="col-sm-7">
+        <button%name%%id%%value%%tabindex%%accesskey%%class%%style%%disabled%%readonly%%onblur%%onchange%%onclick%%onfocus%%onselect%%title%>%text%</button>
       </div>
     </div>'
 );

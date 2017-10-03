@@ -77,17 +77,25 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             $catalog = self::get_catalog();
             // get installed
-            $modules = CAT_Helper_Addons::getAddons(); // all
+            $modules = CAT_Helper_Addons::getAddons(NULL,'name',false); // all
             // map installed
             $installed = array();
             foreach($modules as $i => $m)
-                $installed[$m['directory']] = $i;
+                $installed[$m['directory']] = $m['version'];
             // find installed in catalog
-            foreach( $catalog['modules'] as $i => $m)
+            foreach($catalog['modules'] as $i => $m)
             {
+                $catalog['modules'][$i]['upgradable']   = false;
+                $catalog['modules'][$i]['is_installed'] = false;
+
                 if(isset($installed[$m['directory']]))
                 {
                     $catalog['modules'][$i]['is_installed']   = true;
+                    $catalog['modules'][$i]['installed_version'] = $installed[$m['directory']];
+                    if(version_compare($m['version'],$installed[$m['directory']],'>'))
+                    {
+                        $catalog['modules'][$i]['upgradable'] = true;
+                    }
                 }
                 if(!isset($catalog['modules'][$i]['type']))
                 {

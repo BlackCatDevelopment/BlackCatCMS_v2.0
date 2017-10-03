@@ -67,14 +67,17 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	    /**
          *
          * @access public
+         * @param  integer  $pageID
+         * @param  integer  $module
+         * @param  integer  $block
          * @return
          **/
-        public static function addSection($pageID,$module,$block)
+        public static function addSection($pageID,$module,$block=1)
         {
         	self::db()->query(
                   'INSERT INTO `:prefix:sections` SET '
                 . '`site_id`=:site, '
-                . '`module`=:module, '
+                . '`module_id`=:module, '
                 . '`modified_when`=NOW(), '
                 . '`modified_by`=:user',
                 array('site'=>CAT_SITE_ID,'module'=>$module,'user'=>self::user()->getID())
@@ -198,11 +201,11 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
             if($details)
             {
                 $q = 'SELECT '
-                   . '    `t1`.`section_id`, `t1`.`module`, `t1`.`modified_when`, `t1`.`modified_by`, '
+                   . '    `t1`.`section_id`, `t1`.`modified_when`, `t1`.`modified_by`, '
                    . '    `t2`.`page_id`, `t2`.`position`, `t2`.`block`, '
                    . '    `t2`.`publ_start`, `t2`.`publ_end`, '
                    . '    `t2`.`publ_by_time_start`, `t2`.`publ_by_time_end`, '
-                   . '    `t2`.`name`, `t4`.`state_id` '
+                   . '    `t2`.`name`, `t4`.`state_id`, `t5`.`directory` as `module` '
                    . 'FROM `:prefix:sections` AS `t1` '
                    . 'JOIN `:prefix:pages_sections` AS `t2` '
                    . 'ON `t1`.`section_id`=`t2`.`section_id` '
@@ -210,6 +213,8 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                    . 'ON `t2`.`page_id`=`t3`.`page_id` '
                    . 'JOIN `:prefix:item_states` AS `t4` '
                    . 'ON `t1`.`state_id`=`t4`.`state_id` '
+                   . 'JOIN `:prefix:addons` AS `t5` '
+                   . 'ON `t1`.`module_id`=`t5`.`addon_id` '
                    . 'WHERE `t1`.`section_id`=:id ';
             }
         	$sec = $self->db()->query(
@@ -243,11 +248,11 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	        if (!self::$sections)
 	        {
                 $q = 'SELECT '
-                   . '    `t1`.`section_id`, `t1`.`module`, `t1`.`modified_when`, `t1`.`modified_by`, '
+                   . '    `t1`.`section_id`, `t1`.`modified_when`, `t1`.`modified_by`, '
                    . '    `t2`.`page_id`, `t2`.`position`, `t2`.`block`, '
                    . '    `t2`.`publ_start`, `t2`.`publ_end`, '
                    . '    `t2`.`publ_by_time_start`, `t2`.`publ_by_time_end`, '
-                   . '    `t2`.`name`, `t4`.`state_id` '
+                   . '    `t2`.`name`, `t4`.`state_id`, `t5`.`directory` as `module` '
                    . 'FROM `:prefix:sections` AS `t1` '
                    . 'JOIN `:prefix:pages_sections` AS `t2` '
                    . 'ON `t1`.`section_id`=`t2`.`section_id` '
@@ -255,6 +260,8 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                    . 'ON `t2`.`page_id`=`t3`.`page_id` '
                    . 'JOIN `:prefix:item_states` AS `t4` '
                    . 'ON `t1`.`state_id`=`t4`.`state_id` '
+                   . 'JOIN `:prefix:addons` AS `t5` '
+                   . 'ON `t1`.`module_id`=`t5`.`addon_id` '
                    . 'WHERE `t1`.`site_id`=? '
                    . 'ORDER BY `block`, `t2`.`position`';
 
@@ -262,6 +269,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
 	            if($sec->rowCount() == 0) return NULL;
 
                 $data = $sec->fetchAll();
+
                 foreach($data as $i => $section)
                 {
                     self::$sections[$section['page_id']][$section['block']][] = $section;
@@ -401,6 +409,9 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         /**
          * gets the page_id for a given section
          *
+         * NOTE: If a section is assigned to several pages, only the first page
+         *       will be returned!
+         *
          * @access public
          * @param  integer $section_id
          * @return integer
@@ -408,7 +419,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         public static function getPageForSection($section_id)
         {
             $sec = self::getInstance()->db()->query(
-                'SELECT `page_id` FROM `:prefix:sections` WHERE `section_id`=:id',
+                'SELECT `page_id` FROM `:prefix:pages_sections` WHERE `section_id`=:id',
                 array('id'=>$section_id)
             );
             if($sec->rowCount())

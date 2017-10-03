@@ -59,6 +59,7 @@ $LANG = array_merge($LANG,array(
     'You can add widgets to your dashboard by clicking on the [Add widget] button' => 'Um diesem Dashboard Widgets hinzuzufügen, bitte die [Widget hinzufügen] Schaltfläche verwenden.',
 
     // --------------- Backend -> Pages ---------------
+    'Add page'          => 'Neue Seite',
     'Add section'       => 'Sektion hinzufügen',
     'Actions'           => 'Aktionen',
     'Block number'      => 'Blocknr.',
@@ -76,6 +77,7 @@ $LANG = array_merge($LANG,array(
     'Menu title'        => 'Menütitel',
     'Module'            => 'Erweiterung',
     'no name'           => 'kein Name',
+    'No pages yet'      => 'Noch keine Seiten',
     'none'              => 'keine',
     'Page title'        => 'Seitentitel',
     'Parent page'       => 'Übergeordnete Seite',
@@ -105,6 +107,7 @@ $LANG = array_merge($LANG,array(
     'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
     'Please enter max. 55 characters' => 'Bitte maximal 55 Zeichen',
     'Please note that there is a bunch of files that is loaded automatically, so there\'s no need to add them here.' => 'Bitte beachten, dass es eine Reihe von Dateien gibt, die automatisch geladen werden und daher hier nicht verwaltet werden können und müssen.',
+    'public - visible for all visitors; registered - visible for configurable groups of visitors; ...' => 'öffentlich - für alle Besucher sichtbar; registriert - für eine einstellbare Gruppe von Besuchern sichtbar; ...',
     'Remove relation' => 'Beziehung entfernen',
     'See this page in the frontend; opens a new tab or browser window' => 'Diese Seite im Frontend ansehen; öffnet einen neuen Browser-Tab oder ein neues Fenster',
     'Select the menu the page belongs to. The menu select depends on the chosen template.' => 'Das Menü wählen, zu dem die Seite gehört. Die Auswahl ist abhängig vom eingestellten Template.',
@@ -113,6 +116,7 @@ $LANG = array_merge($LANG,array(
     'Template variant' => 'Template-Variante',
     'The description should be a nice &quot;human readable&quot; text having 70 up to 156 characters.' => 'Die Beschreibung sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 70 und bis zu 156 Zeichen sein.',
     'The (main) language of the page contents.' => 'Die (hauptsächliche) Sprache der Seiteninhalte.',
+    'The (main) type (section) for the page contents.' => 'Haupttyp (Sektion) des Seiteninhalts',
     'The menu title is used for the navigation menu. Hint: Use short but descriptive titles.' => 'Der Menütitel wird für das Navigationsmenü verwendet. Tipp: Kurze aber aussagekräftige Titel verwenden.',
     'The page is accessible for all visitors and shows up in the navigation by default' => 'Die Seite ist für alle Besucher sichtbar und erscheint üblicherweise auch im Menü',
     'The page is accessible for visitors who know the exact address and can be found by the keyword search, but does not show up in the navigation by default' => 'Die Seite ist sichtbar, wenn man die Adresse kennt, und wird von der Suchfunktion gefunden, erscheint aber nicht im Menü',
@@ -194,6 +198,7 @@ $LANG = array_merge($LANG,array(
     'Resolution X'      => 'Breite in Pixel',
     'Resolution Y'      => 'Höhe in Pixel',
     'Size'              => 'Größe',
+    'Unzip'             => 'Entpacken',
 
     // --------------- Backend -> Permissions ---------------
     'Access to groups'  => 'Zugang zur Gruppenverwaltung',
@@ -238,9 +243,11 @@ $LANG = array_merge($LANG,array(
     'Default language'  => 'Standard-Sprache',
     'Default template'  => 'Standard-Template',
     'Default theme'     => 'Standard-Template',
+    'Favicon tilecolor' => 'Hintergrundfarbe Kachel',
+    'Manage Favicon'    => 'Favicons verwalten',
     'Media directory'   => 'Medien-Verzeichnis',
     'Network'           => 'Netzwerk',
-    'Trash enabled'     => 'Seitemülleimer eingeschaltet',
+    'Trash enabled'     => 'Seitenmülleimer eingeschaltet',
     'Website title'     => 'Seitentitel',
     'Wysiwyg editor'    => 'WYSIWYG Editor',
     'Default template variant' => 'Variante',
@@ -249,4 +256,18 @@ $LANG = array_merge($LANG,array(
         => 'Eingeschaltet: Seiten und Sektionen können wiederhergestellt werden',
     "If your server is placed behind a proxy (i.e. if you're using BC for an Intranet), set the name here."
         => 'Wenn sich der Server hinter einem Proxy befindet (z.B. wenn BC für ein Intranet verwendet wird), hier den Namen eintragen.',
+
+    // ---------- Backend -> Settings -> Favicons ----------
+    'android'           => 'Android',
+    'apple'             => 'Apple',
+    'desktop'           => 'PCs',
+    'webapp'            => 'Web Applikationen',
+    'windows'           => 'Windows (ab Version 8.0)',
+    'Below you can see which Favicon files BlackCat CMS is looking for to populate the page header. A checkmark shows if the file is available.'
+        => 'BlackCat CMS sucht nach den unten aufgeführten Dateien, um damit den Seitenkopf zu befüllen. Gefundene Dateien sind anhgehakt.',
+    'The CMS will also look for a &quot;browserconfig.xml&quot; file (for Internet Explorer >= 11) and manifest.json (for Web Apps).'
+        => 'Das CMS schaut außerdem nach einer &quot;browserconfig.xml&quot; (für Internet Explorer >= 11) und manifest.json (für Web Apps).',
+    'While there are several different sizes (for older devices in most cases), we only look for the files with the highest possible pixel rate, as these will still look good when sized down by the device.'
+        => 'Obwohl eine Vielzahl unterschiedlicher Größen möglich ist (oft für ältere Geräte), sucht BlackCat CMS nur nach den Dateien mit der jeweils höchsten Auflösung, da diese auch dann gut aussehen, wenn sie vom Gerät herunterskaliert werden.',
+
 ));

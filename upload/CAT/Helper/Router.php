@@ -21,7 +21,7 @@ if(!class_exists('CAT_Helper_Router',false))
     {
         // log level
         public    static $loglevel   = \Monolog\Logger::EMERGENCY;
-        //public    static $loglevel   = \Monolog\Logger::DEBUG;
+        #public    static $loglevel   = \Monolog\Logger::DEBUG;
         // instance
         private   static $instance   = NULL;
         // full route

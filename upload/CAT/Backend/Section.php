@@ -26,6 +26,7 @@ if (!class_exists('CAT_Backend_Section'))
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
+        protected static $debug    = false;
 
         /**
          * create an instance (singleton)
@@ -51,9 +52,10 @@ if (!class_exists('CAT_Backend_Section'))
             self::checkPerm($pageID,'pages_section_add');
             $addon  = CAT_Helper_Validate::sanitizePost('addon','numeric');
             if(!CAT_Helper_Addons::exists($addon))
-                self::printFatalError('Invalid data!');
+                self::printFatalError('Invalid data!')
+                . (self::$debug ? '(CAT_Backend_Section::add())' : '');
             else
-                $module = CAT_Helper_Addons::getDetails($addon,'directory');
+                $module = CAT_Helper_Addons::getDetails($addon,'addon_id');
             $blockID = CAT_Helper_Validate::sanitizePost('block','numeric',1);
             $result  = CAT_Sections::addSection($pageID,$module,$blockID);
             if(self::asJSON())
@@ -75,7 +77,8 @@ if (!class_exists('CAT_Backend_Section'))
             self::checkPerm($pageID,'pages_section_delete');
             $sectionID = self::getSectionID();
             if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data!');
+                CAT_Object::printFatalError('Invalid data!')
+                . (self::$debug ? '(CAT_Backend_Section::delete())' : '');
             $result = CAT_Sections::deleteSection($sectionID);
             if(self::asJSON())
             {
@@ -196,7 +199,8 @@ if (!class_exists('CAT_Backend_Section'))
             self::checkPerm($pageID,'pages_section_recover');
             $sectionID = self::router()->getParam();
             if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data!');
+                CAT_Object::printFatalError('Invalid data!')
+                . (self::$debug ? '(CAT_Backend_Section::recover())' : '');
             $result = CAT_Sections::recoverSection($sectionID);
             if(self::asJSON())
             {
@@ -293,7 +297,8 @@ if (!class_exists('CAT_Backend_Section'))
                 $pageID = CAT_Sections::getPageForSection(self::getSectionID());
 
             if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
-                CAT_Object::printFatalError('Invalid data');
+                CAT_Object::printFatalError('Invalid data')
+                . (self::$debug ? '(CAT_Backend_Section::getPageID())' : '');
 
             return $pageID;
         }   // end function getPageID()
@@ -315,7 +320,8 @@ if (!class_exists('CAT_Backend_Section'))
                 $sectID = $self->router()->getParam(-1);
 
             if(!$sectID || !is_numeric($sectID) || !CAT_Sections::exists($sectID))
-                CAT_Object::printFatalError('Invalid data');
+                CAT_Object::printFatalError('Invalid data')
+                . (self::$debug ? '(CAT_Backend_Section::getSectionID())' : '');
 
             return $sectID;
         }   // end function getSectionID()

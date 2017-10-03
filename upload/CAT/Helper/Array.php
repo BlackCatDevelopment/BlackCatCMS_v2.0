@@ -113,6 +113,9 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
          *    Filter by key-value-pair
          *        $filtered = filter($array,array($key=>$value));
          *
+         *    Filter by value
+         *        $filtered = filter($array,null,<Value to find>);
+         *
          * @access  public
          * @param   array    input array
          * @param   mixed    filter options
@@ -127,6 +130,28 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
 
             $filterby = array_shift($arguments);
             $result   = new stdClass();
+
+            if(!$filterby)
+            {
+                $byvalue = array_shift($arguments);
+                foreach($array as $k => $v)
+                {
+                    if(is_array($v))
+                    {
+                        $subresult = self::filter($v,null,$byvalue);
+                        if(count($subresult)) {
+                            $result->{$k} = $subresult;
+                        }
+                    }
+                    else
+                    {
+                        if($v===$byvalue) {
+                            $result->{$k} = $v;
+                        }
+                    }
+                }
+                return json_decode(json_encode($result), true);
+            }
 
             // filter by key/value
             if(!is_callable($filterby) && is_scalar($filterby))

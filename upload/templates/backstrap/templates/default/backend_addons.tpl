@@ -13,7 +13,7 @@
 
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="active"><a href="#installed" aria-controls="installed" role="tab" data-toggle="tab">{translate('Installed')}</a></li>
-    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab">{translate('Catalog')}</a></li>
+    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/addons/catalog">{translate('Catalog')}</a></li>
     <li role="presentation"><a href="#notinstalled" aria-controls="notinstalled" role="tab" data-toggle="tab">{translate('Not (yet) installed')}</a></li>
   </ul>
 
@@ -25,10 +25,12 @@
     </div>
     {* Catalog *}
     <div role="tabpanel" class="tab-pane" id="catalog">
-      <table class="table">
+      <table class="table" id="bsCatalog">
         <thead>
           <tr>
             <th>{translate('Type')}</th>
+            <th>{translate('Installed')}</th>
+            <th>{translate('Version')}</th>
             <th>{translate('Name')}</th>
             <th>{translate('Description')}</th>
             <th></th>
@@ -48,12 +50,15 @@
 
     <div style="display:none;" id="bsAddonTemplate">
         <table>
-          <tr class="type_%%type%%">
+          <tr class="type_%%type%%" role="row">
             <td class="bs-module-type" data-search="%%type%%s"><span class="fa fa-fw fa-%%type%%" title="%%type%%"></span></td>
+            <td class="bs-module-installed"><span class="fa fa-fw"></span></td>
+            <td class="bs-module-installed-version">%%installedversion%%</td>
             <td class="bs-module-name">
               <p><strong>%%name%%</strong></p>
               <span class="small">
                 <a href="#" class="btn btn-xs btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
+                <a href="#" class="btn btn-xs btn-info"><span class="fa fa-level-up"></span> {translate('Upgrade')}</a>
               </span>
             </td>
             <td class="bs-module-desc">

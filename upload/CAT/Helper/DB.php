@@ -136,8 +136,8 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                     $xdebug_state = xdebug_is_enabled();
                 else
                     $xdebug_state = false;
-                if(function_exists('xdebug_disable'))
-                    xdebug_disable();
+                #if(function_exists('xdebug_disable'))
+                #    xdebug_disable();
                 try
                 {
                     self::$conn = \Doctrine\DBAL\DriverManager::getConnection($connectionParams, $config);
@@ -351,7 +351,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         {
             // find file
             // note: .bc.php as suffix filter does not work!
-            $configfiles = CAT_Helper_Directory::scanDirectory(dirname(__FILE__).'/DB',true,true,NULL,array('php'));
+            $configfiles = CAT_Helper_Directory::findFiles(dirname(__FILE__).'/DB',array('extension'=>'.php'));
 
             if(!is_array($configfiles) || !count($configfiles))
                 CAT_Object::printFatalError('Missing database configuration');
@@ -487,11 +487,20 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
          */
         public function tableExists($table)
         {
+            if(function_exists('xdebug_is_enabled'))
+                $xdebug_state = xdebug_is_enabled();
+            else
+                $xdebug_state = false;
+            if(function_exists('xdebug_disable'))
+                xdebug_disable();
+
             // Try a select statement against the table
             // Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
             try {
                 $result = $this->query("SELECT 1 FROM `:prefix:$table` LIMIT 1");
             } catch (\PDO\PDOException $e) { // We got an exception == table not found
+                return false;
+            } catch (\Exception $e) {        // We got an exception == table not found
                 return false;
             }
 

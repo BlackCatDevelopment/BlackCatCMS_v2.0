@@ -43,7 +43,7 @@ if (!class_exists('CAT_Backend', false))
             if (!self::$instance)
             {
                 self::$instance = new self();
-                self::$instance->tpl()->setGlobals(array(
+                self::tpl()->setGlobals(array(
                     'LANGUAGE'      => strtolower(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang())),
                     'CHARSET'       => CAT_Registry::exists('default_charset') ? CAT_Registry::get('default_charset') : "utf-8",
                     'CAT_ADMIN_URL' => CAT_ADMIN_URL,
@@ -52,7 +52,7 @@ if (!class_exists('CAT_Backend', false))
                 if(self::$instance->user()->is_authenticated())
                 {
                     // for re-login dialog
-                    self::$instance->tpl()->setGlobals(array(
+                    self::tpl()->setGlobals(array(
                         'PASSWORD_FIELDNAME' => CAT_Helper_Validate::createFieldname('password_'),
                         'USERNAME_FIELDNAME' => CAT_Helper_Validate::createFieldname('user_'),
                     ));
@@ -106,6 +106,10 @@ if (!class_exists('CAT_Backend', false))
             // not logged in
             if($router->isProtected() && !$self->user()->is_authenticated())
             {
+echo "user auth error:<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r( $self->user() );
+echo "</textarea>";
+exit;
                 header('Location: '.CAT_ADMIN_URL.'/login');
             }
             else
@@ -137,10 +141,18 @@ if (!class_exists('CAT_Backend', false))
                         );
                     }
 
+                    // set the page title
+                    $controller = explode('_',$router->getController());
+                    CAT_Helper_Page::setTitle(sprintf(
+                        'BlackCat CMS Backend / %s',
+                        self::lang()->translate($controller[count($controller)-1])
+                    ));
+
                     // pages list
                     if($self->user()->hasPerm('pages_list'))
                     {
                         $self->tpl()->setGlobals('pages',CAT_Backend_Page::tree());
+                        $self->tpl()->setGlobals('pagelist',CAT_Helper_Page::getPages(1));
                         $self->tpl()->setGlobals('sections',CAT_Sections::getSections());
                     }
                 }
@@ -433,6 +445,7 @@ if (!class_exists('CAT_Backend', false))
          */
         public static function print_header()
         {
+
             $tpl_data = array();
             $menu     = self::getMainMenu();
 
@@ -442,8 +455,8 @@ if (!class_exists('CAT_Backend', false))
             // the original list, ordered by parent -> children (if the
             // templates renders the HTML output)
             $lb = CAT_Object::lb();
-            $lb->set('__id_key','id');
-            $lb->set('__title_key','title');
+            $lb->set('id','id');
+            $lb->set('title','title');
 
             $tpl_data['MAIN_MENU'] = $lb->sort($menu,0);
 
@@ -460,6 +473,10 @@ if (!class_exists('CAT_Backend', false))
 
             self::log()->addDebug('printing header');
             self::tpl()->output('header', $tpl_data);
+
+            // reset listbuilder
+            $lb->set('id','page_id');
+            $lb->set('title','menu_title');
         }   // end function print_header()
 
         /**

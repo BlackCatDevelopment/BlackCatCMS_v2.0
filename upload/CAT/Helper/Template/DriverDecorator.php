@@ -1,32 +1,31 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
- *   @link            http://www.blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
-if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
+   @author          Black Cat Development
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
+
+if (!class_exists('CAT_Helper_Template_DriverDecorator'))
 {
+    if (!class_exists('CAT_Object', false))
+    {
+        @include dirname(__FILE__) . '/../Object.php';
+    }
+
     class CAT_Helper_Template_DriverDecorator extends CAT_Helper_Template
     {
+        protected static $loglevel     = \Monolog\Logger::EMERGENCY;
+
         public    $template_block;
         protected $last         = NULL;
         private   $te           = NULL;
@@ -114,7 +113,7 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
          * @return boolean
          *
          **/
-         public function setPath ( $path, $context = 'frontend' )
+         public function setPath($path,$context='frontend')
          {
             if(CAT_Backend::isBackend()) $context = 'backend';
             $path = CAT_Helper_Directory::sanitizePath($path);
@@ -146,7 +145,7 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
          * @return boolean
          *
          **/
-        public function setFallbackPath ( $path, $context = 'frontend' )
+        public function setFallbackPath($path,$context='frontend')
         {
             $path = CAT_Helper_Directory::sanitizePath($path);
             $this->log()->logDebug(sprintf('context [%s] fallback path [%s]', $context, $path ));
@@ -254,12 +253,9 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
                     $paths[] = $value;
             // remove doubles
             $paths = array_unique($paths);
-            $this->log()->logDebug('template search paths:',$paths);
+            self::log()->logDebug('template search paths:',$paths);
 
-            // (re-)set suffix filter
-            $this->dirh->setSuffixFilter(array('tpl','htt','lte'));
-
-            foreach ( $paths as $dir )
+            foreach($paths as $dir)
             {
                 if($has_suffix && file_exists($dir.'/'.$_tpl))
                 {
@@ -267,7 +263,7 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
                 }
                 else
                 {
-                    $file = $this->dirh->findFile($_tpl,$dir,true);
+                    $file = $this->dirh->findFiles($dir,array('filename'=>$_tpl,'extensions'=>array('tpl','htt')));
                 }
                 if ( $file )
                 {
@@ -275,11 +271,11 @@ if ( ! class_exists('CAT_Helper_Template_DriverDecorator',false) )
                     return $file;
                 }
             }
-            $this->log()->logCrit( "The template [$_tpl] does not exist in one of the possible template paths!", $paths );
+            self::log()->addEmergency( "The template [$_tpl] does not exist in one of the possible template paths!", $paths );
             // the template does not exists, so at least prompt an error
             $br = "\n";
             CAT_Object::printFatalError(
-                "Unable to render the page",
+                "Unable to render the page (template: $_tpl)",
                 NULL,true,
                 $paths
             );

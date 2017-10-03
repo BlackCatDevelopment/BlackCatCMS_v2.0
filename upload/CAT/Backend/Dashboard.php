@@ -26,6 +26,7 @@ if (!class_exists('CAT_Backend_Dashboard'))
     {
         protected static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        protected static $debug    = true;
         //protected static $loglevel = \Monolog\Logger::DEBUG;
 
         /**
@@ -224,7 +225,8 @@ Array
                 $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('Invalid data');
+                echo CAT_Helper_JSON::printError('Invalid data')
+                   . (self::$debug ? '(CAT_Backend_Dashboard::remove())' : '');
             $widget = CAT_Helper_Validate::sanitizePost('widget_id');
             CAT_Helper_Dashboard::removeWidget($widget,$dash);
             echo CAT_Helper_JSON::printSuccess('ok');
@@ -242,7 +244,8 @@ Array
                 $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
             if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('Invalid data');
+                echo CAT_Helper_JSON::printError('Invalid data')
+                   . (self::$debug ? '(CAT_Backend_Dashboard::reset())' : '');
             // remove current settings
             self::db()->query(
                 'DELETE FROM `:prefix:dashboard_has_widgets` WHERE `dashboard_id`=?',

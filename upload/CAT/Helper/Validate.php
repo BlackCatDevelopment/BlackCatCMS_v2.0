@@ -356,6 +356,10 @@ if (!class_exists('CAT_Helper_Validate'))
                  . $rel_parsed['host']
                  . ( isset($rel_parsed['port']) ? ':'.$rel_parsed['port'] : NULL )
                  . "/" . implode("/", $parts);
+echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r( array($url, utf8_decode($url)) );
+echo "</textarea>";
+return utf8_decode($url);
             return $url;
         }   // end function sanitize_url()
 

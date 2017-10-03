@@ -80,13 +80,14 @@ if (!class_exists('CAT_Helper_Media'))
                 array($id)
             );
             $data = $sth->fetchAll();
+
             if(is_array($data) && count($data))
             {
                 foreach($data as $item)
                 {
                     $attr[$item['attribute']] = $item['value'];
                 }
-                $attr['hfilesize'] = CAT_Helper_Directory::byte_convert($attr['filesize']);
+                $attr['hfilesize'] = CAT_Helper_Directory::humanize($attr['filesize']);
                 $attr['path']      = $data[0]['path'];
                 $attr['filename']  = $data[0]['filename'];
                 $attr['is_image']  = (substr($attr['mime_type'],0,6) == 'image/')
@@ -114,24 +115,13 @@ if (!class_exists('CAT_Helper_Media'))
                     return false;
             }
 
-            $files = CAT_Helper_Directory::getInstance()
-                   ->setRecursion(false)
-                   ->scanDirectory(
-                        $dir,
-                        true,              // with files
-                        true,              // files only
-                        NULL,              // prefix to remove
-                        $suffixes,         // allowed suffixes
-                        array(),           // no dirs to skip
-                        array('index.php') // skip files
-                    );
-            CAT_Helper_Directory::reset();
+            $files = CAT_Helper_Directory::findFiles($dir,array('extension'=>$suffixes));
 
             // load file data from database
             $sth = self::db()->query(
                   'SELECT * FROM `:prefix:media` AS `t1` '
                 . 'WHERE `path`=?',
-                array($dir)
+                array(CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($dir)))
             );
             $dbdata  = $sth->fetchAll();
             $dbfiles = array();
@@ -158,7 +148,7 @@ if (!class_exists('CAT_Helper_Media'))
                     self::db()->query(
                           'INSERT INTO `:prefix:media` ( `site_id`, `path`, `filename`, `checksum` ) '
                         . 'VALUES (?, ?, ?, ? )',
-                        array(1, $dir, $decoded_filename, sha1_file($filename))
+                        array(1, CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($dir)), $decoded_filename, sha1_file($filename))
                     );
                     $data[$index]['media_id'] = self::db()->lastInsertId();
                     $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
@@ -214,7 +204,7 @@ if (!class_exists('CAT_Helper_Media'))
             // file size
             if(isset($data['filesize']) && $data['filesize'] != 'n/a')
             {
-                $data['hfilesize'] = CAT_Helper_Directory::byte_convert($data['filesize']);
+                $data['hfilesize'] = CAT_Helper_Directory::humanize($data['filesize']);
                 self::db()->query(
                       'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
                     . 'VALUES(?, ?, ?)',
@@ -242,7 +232,7 @@ if (!class_exists('CAT_Helper_Media'))
                     case 'image':
                         if($type == 'jpeg') $type = 'jpg';
                         $data['image']    = true;
-                        $data['preview']  = CAT_Helper_Validate::path2uri($filename);
+                        $data['url']      = CAT_Helper_Validate::path2uri($filename);
                         break;
                 }
 

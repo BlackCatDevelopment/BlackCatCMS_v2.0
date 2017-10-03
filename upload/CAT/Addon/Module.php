@@ -104,14 +104,14 @@ if (!class_exists('CAT_Addon_Module', false))
 			self::setIDs();
 
 			// Should be moved to the Object
-			self::setParserValue();
+			//self::setParserValue();
 
-			$parser->setPath( CAT_PATH . '/modules/' . static::$directory . '/templates/' . self::getVariant() );
-			$parser->setFallbackPath( CAT_PATH . '/modules/' . static::$directory . '/templates/default' );
+			$parser->setPath(CAT_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
+			$parser->setFallbackPath(CAT_PATH.'/modules/'.static::$directory.'/templates/default');
 
 			$parser->output(
 				self::$template,
-				self::getParserValue()
+				array() //self::getParserValue()
 			);
 		}
 

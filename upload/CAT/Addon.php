@@ -219,8 +219,14 @@ if (!class_exists('CAT_Addon', false))
 		 */
 		public static function getAllVariants()
 		{
-			foreach( CAT_Helper_Directory::getInstance()->setRecursion(false)
-				->scanDirectory( CAT_PATH . '/modules/' . static::$directory . '/templates/' ) as $path)
+            $dirs = CAT_Helper_Directory::findDirectories(
+                CAT_PATH.'/modules/'.static::$directory.'/templates/',
+                array(
+                    'remove_prefix' => true
+                )
+            );
+
+            foreach($dirs as $dir)
 			{
 				self::$allVariants[]	= basename($path);
 			}
@@ -410,37 +416,5 @@ if (!class_exists('CAT_Addon', false))
 		
 			return $output;
 		}
-
-
-		/**
-		 * Should be removed from this class
-		 */
-		public static function setParserValue($name=NULL,$value=NULL)
-		{
-			if( count($parserValues) == 0 )
-				self::$parserValues	= array(
-					'CAT_ADMIN_URL'		=> CAT_ADMIN_URL,
-					'CAT_PATH'			=> CAT_PATH,
-					'CAT_URL'			=> CAT_URL,
-					'page_id'			=> self::$page_id,
-					'section_id'		=> self::$section_id,
-					'version'			=> CAT_Helper_Addons::getModuleVersion(static::$directory),
-					'allVariants'		=> self::getAllVariants(),
-					'variant'			=> self::getVariant()
-				);
-			if ($name)
-				self::$parserValues[$name]	= $value;
-		}
-
-		/**
-		 * Should be removed from this class
-		 */
-
-		public static function getParserValue()
-		{
-			if( count($parserValues) == 0 ) self::setParserValue();
-			return self::$parserValues;
-		}
-
 	}
 }

@@ -44,7 +44,7 @@ if (!class_exists('CAT_Helper_Page'))
         /**
          *
          **/
-        private   static $css_folders         = array('','css','css/default');
+        private   static $css_folders         = array('css','css/default');
         /**
          * output template for external javascripts
          **/
@@ -75,6 +75,7 @@ if (!class_exists('CAT_Helper_Page'))
 
         private   static $meta                = array();
         private   static $css                 = array();
+        private   static $title               = null;
 
         /**
          * the constructor loads the available pages from the DB and stores it
@@ -661,6 +662,20 @@ if (!class_exists('CAT_Helper_Page'))
         }   // end function getParentIDs()
 
         /**
+         * returns the root level page of a trail
+         *
+         * @access public
+         * @return integer
+         **/
+        public static function getRootParent($page_id)
+        {
+            if(self::properties($page_id,'level')==0)
+                return 0;
+            $trail = self::getPageTrail($page_id,false,true);
+            return $trail[0];
+        }   // end function getRootParent()
+
+        /**
          *
          * @access public
          * @return
@@ -670,7 +685,7 @@ if (!class_exists('CAT_Helper_Page'))
             if(!count(self::$visibilities))
             {
                 $sth = self::$instance->db()->query(
-                    'SELECT * FROM `:prefix:pages_visibility`'
+                    'SELECT * FROM `:prefix:visibility`'
                 );
                 $temp = $sth->fetchAll();
                 foreach($temp as $item)
@@ -781,13 +796,11 @@ if (!class_exists('CAT_Helper_Page'))
         public static function properties($page_id=NULL,$key=NULL)
         {
             if(!$page_id)
-            {
                 $page_id = CAT_Page::getID();
-            }
+
             if(!count(self::$pages) && !CAT_Registry::exists('CAT_HELPER_PAGE_INITIALIZED'))
-            {
                 self::init();
-            }
+
             // get page data
             $page = isset(self::$id_to_index[$page_id])
                   ? self::$pages[self::$id_to_index[$page_id]]
@@ -971,6 +984,7 @@ if (!class_exists('CAT_Helper_Page'))
         public static function renderMeta($droplets_config=array())
         {
             $output = array();
+            $title  = null;
 
             // check global meta array
             if(is_array(self::$meta) && count(self::$meta))
@@ -991,20 +1005,21 @@ if (!class_exists('CAT_Helper_Page'))
             if(!CAT_Backend::isBackend())
             {
                 $properties = self::properties(CAT_Page::getID());
+
                 // droplets may override page title and description and/or
                 // add meta tags
 
                 // check page title
                 if(isset($droplets_config['page_title']))
                     $title = $droplets_config['page_title'];
+                elseif(self::$title)
+                    $title = self::$title;
                 elseif(defined('WEBSITE_TITLE'))
                     $title = WEBSITE_TITLE . (isset($properties['page_title']) ? ' - ' . $properties['page_title'] : '' );
                 elseif(isset($properties['page_title']))
                     $title = $properties['page_title'];
                 else
                     $title = '-';
-                if($title)
-                    $output[] = '<title>' . $title . '</title>';
 
                 // check description
                 if(isset($droplets_config['description']))
@@ -1013,8 +1028,6 @@ if (!class_exists('CAT_Helper_Page'))
                     $description = $properties['description'];
                 else
                     $description = CAT_Registry::get('WEBSITE_DESCRIPTION');
-                if ($description!='')
-                    $output[] = '<meta name="description" content="' . $description . '" />';
 
                 // check other meta tags set by droplets
                 if(isset($droplets_config['meta']))
@@ -1023,6 +1036,73 @@ if (!class_exists('CAT_Helper_Page'))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: SEO
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            }
+            else {
+                $description = CAT_Registry::get('WEBSITE_DESCRIPTION');
+                if(self::$title)
+                    $title = self::$title;
+            }
+
+            if($title)
+                $output[] = '<title>' . $title . '</title>';
+            if ($description!='')
+                $output[] = '<meta name="description" content="' . $description . '" />';
+
+            // favicons
+            $favs = CAT_Backend_Favicon::findFiles(1);
+            if(is_array($favs) && count($favs))
+            {
+                foreach($favs as $group => $items)
+                {
+                    switch($group)
+                    {
+                        case 'apple':
+                            foreach($items as $item => $size) {
+                                $output[] = '<link rel="apple-touch-icon" sizes="'.$size.'" href="'.CAT_URL.'/'.$item.'" />';
+                            }
+                            break;
+                        case 'desktop':
+                            foreach($items as $item => $size) {
+                                $type = pathinfo($item,PATHINFO_EXTENSION);
+                                $output[] = '<link rel="icon" type="'
+                                          . ($type=='ico' ? 'image/vnd.microsoft.icon' : 'image/png')
+                                          . '" href="'.CAT_URL.'/'.$item.'" sizes="'.$size.'" />';
+                            }
+                            break;
+                        case 'windows':
+                            if(array_key_exists('browserconfig.xml',$items))
+                            {
+                                $output[] = '<meta name="msapplication-config" content="'.CAT_URL.'/browserconfig.xml" />';
+                                unset($items['browserconfig.xml']);
+                            }
+                            else
+                            {
+                                $output[] = '<meta name="msapplication-config" content="none" />';
+                            }
+                            foreach($items as $item => $size) {
+                                if($size=='144x144') {
+                                    $output[] = '<meta name="msapplication-TileImage" content="'
+                                              . CAT_URL.'/mstile-144x144.png" />';
+                                } else {
+                                    $output[] = '<meta name="msapplication-'
+                                              . ($size=='310x150' ? 'wide' : 'square')
+                                              . $size.'logo" content="'.CAT_URL.'/'.$item.'" />';
+                                }
+                            }
+                            $tilecolor = self::getSetting('favicon_tilecolor');
+                            if(strlen($tilecolor)) {
+                                $output[] = '<meta name="msapplication-TileColor" content="#'.$tilecolor.'" />';
+                            }
+                            $appname = self::getSetting('app_name');
+                            if(strlen($appname)) {
+                                $output[] = '<meta name="application-name" content="'
+                                          . $appname
+                                          . (CAT_Backend::isBackend() ? ' - '.self::lang()->t('Administration') : '')
+                                          . '" />';
+                            }
+                            break;
+                    }
+                }
             }
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1048,6 +1128,17 @@ if (!class_exists('CAT_Helper_Page'))
             return implode("\n",array_unique($output));
         } // end function renderMeta()
 
+        /**
+         * allows to set the page title for the current page
+         *
+         * @access public
+         * @return
+         **/
+        public static function setTitle($title)
+        {
+            self::$title = $title;
+        }   // end function setTitle()
+        
         /**
          * check for allowed paths (CAT, templates, modules) inside engine
          * folder
@@ -1288,7 +1379,7 @@ if (!class_exists('CAT_Helper_Page'))
                 $result = self::$instance->db()->query(
                       'SELECT `t1`.*, `t2`.`vis_name` AS `visibility` '
                     . 'FROM `:prefix:pages` AS `t1` '
-                    . 'JOIN `:prefix:pages_visibility` AS `t2` '
+                    . 'JOIN `:prefix:visibility` AS `t2` '
                     . 'ON `t1`.`vis_id`=`t2`.`vis_id` '
                     . 'ORDER BY `level` ASC, `position` ASC'
                 );

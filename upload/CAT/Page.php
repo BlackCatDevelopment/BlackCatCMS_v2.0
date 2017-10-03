@@ -75,27 +75,32 @@ if (!class_exists('CAT_Page', false))
         {
             if(!self::$curr_page)
             {
-                // check if the system is in maintenance mode
-                if(CAT_Frontend::isMaintenance())
+                if(!CAT_Backend::isBackend())
                 {
-                    $result = self::db()->query(
-                        'SELECT `value` FROM `:prefix:settings` WHERE `name`="maintenance_page"'
-                    );
-                    $value = $result->fetch();
-                    self::$curr_page = $value['value'];
-                }
-                else
-                {
-                    $route = self::router()->getRoute();
-                    // no route -> get default page
-                    if($route == '')
+                    // check if the system is in maintenance mode
+                    if(CAT_Frontend::isMaintenance())
                     {
-                        self::$curr_page = CAT_Helper_Page::getDefaultPage();
+                        $result = self::db()->query(
+                            'SELECT `value` FROM `:prefix:settings` WHERE `name`="maintenance_page"'
+                        );
+                        $value = $result->fetch();
+                        self::$curr_page = $value['value'];
                     }
-                    else // find page by route
+                    else
                     {
-                        self::$curr_page = CAT_Helper_Page::getPageForRoute($route);
+                        $route = self::router()->getRoute();
+                        // no route -> get default page
+                        if($route == '')
+                        {
+                            self::$curr_page = CAT_Helper_Page::getDefaultPage();
+                        }
+                        else // find page by route
+                        {
+                            self::$curr_page = CAT_Helper_Page::getPageForRoute($route);
+                        }
                     }
+                } else {
+                    return CAT_Backend_Page::getPageID();
                 }
             }
             return self::$curr_page;
@@ -165,15 +170,24 @@ if (!class_exists('CAT_Page', false))
                     }
                     else
                     {
-                        $class      = 'CAT_Addon_Page_'.ucfirst($module);
-                        $handler    = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$module.'.php');
-                        if (file_exists($handler))
+                        // get the module class
+                        $name    = CAT_Helper_Addons::getDetails($module,'name');
+                        $handler = NULL;
+                        foreach(array_values(array(str_replace(' ','',$name),$module)) as $classname) {
+                            $filename = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
+                            if(file_exists($filename)) {
+                                 $handler = $filename;
+                            }
+                        }
+
+                        if($handler)
                         {
-                            // this will use the current language
+                            self::log()->addDebug(sprintf('found class file [%s]',$handler));
                             CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
                             self::setTemplatePaths($module);
                             include_once $handler;
-                            $output[] = $class::view($section_id);
+                            $classname::initialize();
+                            $content = $classname::view($section_id);
                         }
                         else
                         {

@@ -142,11 +142,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 // scan modules path for modules not seen yet
                 foreach(array('modules','templates') as $t)
                 {
-                    $subdirs = CAT_Helper_Directory::getInstance()
-                       ->maxRecursionDepth(0)
-                       ->setSkipDirs($seen)
-                       ->getDirectories(CAT_ENGINE_PATH.'/'.$t,CAT_ENGINE_PATH.'/'.$t.'/')
-                       ;
+                    $subdirs = CAT_Helper_Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
 
                     if(count($subdirs))
                     {
@@ -209,11 +205,11 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             // sanitize column name
             if(!in_array($field,array('*','addon_id','type','directory','name','description','function','version','guid','platform','author','license','installed','upgraded','removable','bundled')))
                 return NULL; // silently fail
-            $q = 'SELECT `%s` FROM `:prefix:addons` WHERE ';
+            $q = 'SELECT %s FROM `:prefix:addons` WHERE ';
             if(is_numeric($addon)) $q .= '`addon_id`=:val';
             else                   $q .= '`directory`=:val';
             $addon = self::db()->query(
-                sprintf($q,$field),
+                sprintf($q,($field != '*' ? '`'.$field.'`' : $field)),
                 array('val'=>$addon)
             );
             if($addon->rowCount())
@@ -232,15 +228,13 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          **/
         public static function getInfo($directory)
         {
-            $info    = array(
-            );
+            $info    = array();
             $fulldir = CAT_ENGINE_PATH.'/modules/'.$directory.'/inc';
+
             if(is_dir($fulldir))
             {
                 // find class.<modulename>.php
-                $files = CAT_Helper_Directory::getInstance()
-                    ->maxRecursionDepth(0)
-                    ->findFiles('class\..+?\.php',$fulldir,$fulldir.'/');
+                $files = CAT_Helper_Directory::findFiles($fulldir,array('extension'=>'php','remove_prefix'=>true));
                 if(count($files)==1)
                 {
                     $classname = str_ireplace('class.','',pathinfo($files[0],PATHINFO_FILENAME));

@@ -33,6 +33,7 @@ if (!class_exists('CAT_Addon_Page', false))
 		 */
 		protected static $type		= 'page';
 		protected static $addonID	= NULL;
+        protected static $template  = NULL;
 
 		public function __construct()
 		{
@@ -43,11 +44,14 @@ if (!class_exists('CAT_Addon_Page', false))
 			parent::__destruct();
 		}
 
+        /**
+         * default add function; override to add your own actions
+         **/
 		public static function add()
 		{
 			self::setIDs();
 
-			// Add a new news section
+			// Add a new section
 			if ( self::db()->query(
 					'INSERT INTO `:prefix:mod_' . static::$directory . '`
 						( `page_id`, `section_id` ) VALUES
@@ -64,21 +68,27 @@ if (!class_exists('CAT_Addon_Page', false))
 			else return NULL;
 		}
 
+        /**
+         * default view function
+         **/
 		public static function view($section_id)
 		{
-			global $parser;
-
 			self::$template	= 'view';
 
-			$parser->setPath( CAT_PATH . '/modules/' . static::$directory . '/templates/' . self::getVariant() );
-			$parser->setFallbackPath( CAT_PATH . '/modules/' . static::$directory . '/templates/default' );
+			self::tpl()->setPath(CAT_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
+			self::tpl()->setFallbackPath(CAT_PATH.'/modules/'.static::$directory.'/templates/default');
 			
-			$parser->output(
+			self::tpl()->output(
 				self::$template,
-				self::getParserValue()
+				array(
+                    'section_id' => $section_id
+                ) //self::getParserValue()
 			);
 		}
 
+        /**
+         * default remove function
+         **/
 		public static function remove()
 		{
 			// Remove from database 

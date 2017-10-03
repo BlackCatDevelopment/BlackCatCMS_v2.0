@@ -16,6 +16,44 @@
 */
 
 $FORMS = array(
+    'be_page_add' => array(
+        array(
+            'name'     => 'page_title',
+            'label'    => 'Page title',
+            'title'    => 'Please enter max. 55 characters',
+            'after'    => 'The title should be a nice &quot;human readable&quot; text having 30 up to 55 characters.',
+            'pattern'  => '.{1,55}',
+            'required' => true,
+        ),
+        array(
+            'type'     => 'select',
+            'name'     => 'parent',
+            'label'    => 'Parent page',
+            'after'    => 'The position of the page in the page tree',
+            'options'  => array(),
+            'break'    => false,
+        ),
+        array(
+            'type'     => 'select',
+            'name'     => 'language',
+            'label'    => 'Language',
+            'after'    => 'The (main) language of the page contents.',
+            'options'  => array(CAT_Registry::get('DEFAULT_LANGUAGE')),
+        ),
+        array(
+            'type'     => 'select',
+            'name'     => 'type',
+            'label'    => 'Type',
+            'after'    => 'The (main) type (section) for the page contents.',
+            'options'  => array(),
+        ),
+
+        // Note: As this form may be used in a modal / dialog, no submit button
+        // is added here! To suppress the auto-add by wbForms, set
+        // \wblib\wbForms::set('add_buttons',false);
+        // in the forms.init.php of the backend theme!
+    ),
+
     'be_page_settings' => array(
         // ----- general settings -----
         array(
@@ -28,6 +66,7 @@ $FORMS = array(
             'label'    => 'Parent page',
             'after'    => 'The position of the page in the page tree',
             'options'  => array(),
+            'break'    => false,
         ),
         array(
             'type'     => 'select',
@@ -90,12 +129,8 @@ $FORMS = array(
             'after'    => 'The (main) language of the page contents.',
             'options'  => array(CAT_Registry::get('DEFAULT_LANGUAGE')),
         ),
-
-        // ----- buttons -----
-        array(
-            'type'     => 'submit',
-            'label'    => 'Submit changes',
-        ),
+        // Note: As this form may be used in a modal / dialog, no submit button
+        // is added here!
     ),
 
     // ----- page based header files -----

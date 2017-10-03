@@ -28,6 +28,7 @@ if (!class_exists('CAT_Backend_Admintools'))
         protected static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         //protected static $loglevel = \Monolog\Logger::DEBUG;
+        protected static $debug    = false;
 
         /**
          *
@@ -178,7 +179,8 @@ if (!class_exists('CAT_Backend_Admintools'))
                 $tool = self::router()->getParam(-1);
 
             if(!$tool || !is_scalar($tool))
-                CAT_Object::printFatalError('Invalid data');
+                CAT_Object::printFatalError('Invalid data')
+                . (self::$debug ? '(CAT_Backend_Admintools::getTool())' : '');
 
             if(!CAT_Helper_Addons::exists($tool))
                 self::printFatalError('No such tool');

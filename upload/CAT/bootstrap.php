@@ -93,7 +93,7 @@ CAT_Registry::register('CAT_VERSION'     ,CAT_Registry::get('CAT_VERSION')      
 //******************************************************************************
 if (!defined('SESSION_STARTED'))
 {
-    session_name(CAT_Registry::get('APP_NAME').'sessionid');
+    session_name(CAT_Registry::get('COOKIE_NAME').'sessionid');
 	$cookie_settings = session_get_cookie_params();
 	session_start();
     // extend the session lifetime on each action

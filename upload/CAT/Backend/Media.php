@@ -25,6 +25,10 @@ if (!class_exists('CAT_Backend_Media'))
     class CAT_Backend_Media extends CAT_Object
     {
         /**
+         * log level
+         **/
+        protected static $loglevel   = \Monolog\Logger::EMERGENCY;
+        /**
          * current instance (singleton)
          **/
         protected static $instance = NULL;
@@ -77,7 +81,6 @@ if (!class_exists('CAT_Backend_Media'))
                 self::printFatalError('You are not allowed for the requested action!');
             $mediaID = self::getMediaID(); // prints fatal error on fail
             $details = CAT_Helper_Media::getAttributes($mediaID);
-//print_r($details);
             if(self::asJSON())
             {
                 CAT_Helper_JSON::printData($details);
@@ -95,26 +98,15 @@ if (!class_exists('CAT_Backend_Media'))
          **/
         public static function index()
         {
-            $base  = CAT_BACKEND_PATH.'/'.CAT_Backend::getArea();
-
-            // example route: backend/media/index/video
-            // ...where 'video' is the name of the requested sub folder
-            $route = self::router()->getRoute();
-            $subdir = NULL;
-
-            if($route != $base)
-                $subdir = str_ireplace(array($base.'/index',$base),'',$route);
-            if($subdir=='/') $subdir = '';
-
-            $home = self::user()->getHomeFolder();
-            $dirs = CAT_Helper_Directory::getInstance()
-                  ->setRecursion(true)
-                  ->getDirectories($home,$home,true);
+            $subdir = self::getPath();
+            $home   = self::user()->getHomeFolder();
+            $dirs   = CAT_Helper_Directory::findDirectories($home,array('remove_prefix'=>true,'recurse'=>true));
 
             $tpl_data = array(
-                'dirs'  => $dirs,
-                'files' => self::list($home.'/'.urldecode($subdir)),
-                'curr_folder' => '/'.urldecode($subdir),
+                'dirs'        => $dirs,
+                'files'       => self::list($home.'/'.urldecode($subdir),true),
+                'curr_folder' => urldecode(CAT_Helper_Directory::sanitizePath($subdir)),
+                'media_url'   => CAT_URL . urldecode(CAT_Helper_Directory::sanitizePath($subdir)),
             );
 
             if(self::asJSON())
@@ -134,8 +126,18 @@ if (!class_exists('CAT_Backend_Media'))
          * @access public
          * @return
          **/
-        public static function list($path)
+        public static function list($path,$return=false)
         {
+            if(!$path)
+            {
+                $subfolder = self::getPath();
+                $path      = self::user()->getHomeFolder(true) . '/' . $subfolder;
+            } else {
+                $subfolder = '';
+            #    $path      = self::user()->getHomeFolder(true) . '/' . $path;
+            }
+
+            // check permissions
             if(!self::user()->hasPathPerm($path))
             {
                 self::log()->addError(sprintf(
@@ -144,6 +146,8 @@ if (!class_exists('CAT_Backend_Media'))
                 ));
                 self::printFatalError('You are not allowed for the requested action!');
             }
+
+            // validate path
             if(!CAT_Helper_Directory::checkPath($path,'media'))
             {
                 self::log()->addError(sprintf(
@@ -152,21 +156,35 @@ if (!class_exists('CAT_Backend_Media'))
                 ));
                 self::printFatalError('You are not allowed for the requested action!');
             }
-            $filter = CAT_Helper_Validate::sanitizePost('filter');
-            $paths  = array();
-            $files  = CAT_Helper_Media::getMediaFromDir($path,$filter);
 
-return $files;
+            $filter    = CAT_Helper_Validate::sanitizePost('filter');
+            $files     = CAT_Helper_Media::getMediaFromDir($path,$filter);
+            $depth     = 0;
+
+            $parts = (substr_count($subfolder,'/')>1 ? explode('/',$subfolder) : array());
+            $depth = count($parts);
+
+            $result = array(
+                'files'  => $files,
+                'dirs'   => CAT_Helper_Directory::findDirectories($path,array('remove_prefix'=>$path)),
+                'folder' => CAT_Helper_Directory::getName($subfolder),
+                'depth'  => $depth,
+            );
+
+            if($return)
+            {
+                return $result['files'];
+            }
 
             if(self::asJSON())
             {
-                echo header('Content-Type: application/json');
-                echo json_encode($files,true);
-                return;
+                CAT_Helper_JSON::printData($result);
             }
             else
             {
-                return $files;
+                CAT_Backend::print_header();
+                self::tpl()->output('backend_media', $result);
+                CAT_Backend::print_footer();
             }
         }   // end function list()
 
@@ -250,6 +268,31 @@ return $files;
 
             return $mediaID;
         }   // end function getPageID()
+
+        /**
+         *
+         * @access private
+         * @return
+         **/
+        private static function getPath()
+        {
+            //$base  = CAT_BACKEND_PATH.'/'.CAT_Backend::getArea();
+            $base = CAT_BACKEND_PATH.'/'.CAT_Registry::get('media_directory');
+
+            // example route: backend/media/index/video
+            //                backend/media/list/video
+            // ...where 'video' is the name of the requested sub folder
+            $route = self::router()->getRoute();
+            $subdir = NULL;
+
+            if($route != $base)
+                $subdir = str_ireplace(array($base.'/index',$base.'/list',$base),'',$route);
+
+            if($subdir=='/') $subdir = '';
+
+            return $subdir;
+        }   // end function getPath()
+        
 
     } // class CAT_Helper_Media
 

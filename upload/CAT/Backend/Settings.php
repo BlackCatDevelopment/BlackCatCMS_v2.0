@@ -26,7 +26,7 @@ if (!class_exists('CAT_Backend_Settings'))
     {
         // log level
         protected static $loglevel       = \Monolog\Logger::EMERGENCY;
-        #protected static $loglevel  = \Monolog\Logger::DEBUG;
+        //protected static $loglevel  = \Monolog\Logger::DEBUG;
         protected static $instance       = NULL;
         protected static $perm_prefix    = 'settings_';
         private   static $regions        = NULL;

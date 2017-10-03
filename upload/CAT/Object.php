@@ -24,6 +24,10 @@ if(!class_exists('CAT_Object',false))
          **/
         private   static $loglevel   = \Monolog\Logger::EMERGENCY;
         /**
+         * adds function info to error messages; for debugging only!
+         **/
+        protected static $debug      = false;
+        /**
          * array to store class/object handlers (for accessor functions)
          */
         protected static $objects    = array();
@@ -165,9 +169,12 @@ if(!class_exists('CAT_Object',false))
         public static function lb()
         {
             if(!isset(CAT_Object::$objects['list']) || !is_object(CAT_Object::$objects['list']) )
-                self::storeObject('list',\wblib\wbList::getInstance(array(
-                    '__id_key'    => 'page_id',
-                    '__title_key' => 'menu_title',
+                self::storeObject('list', new \wblib\wbList(array(
+                    'id'    => 'page_id',
+                    'title' => 'menu_title',
+                    // for page selects
+                    'value' => 'page_id',
+                    'space' => '|- ',
                 )));
             return CAT_Object::$objects['list'];
         }   // end function list()
