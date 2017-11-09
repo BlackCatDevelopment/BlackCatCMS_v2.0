@@ -119,17 +119,23 @@ if (!class_exists('CAT_Backend_Admintools'))
             $name    = CAT_Helper_Addons::getDetails($tool,'name');
             $handler = NULL;
             foreach(array_values(array(str_replace(' ','',$name),$tool)) as $classname) {
-                $filename = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$tool.'/inc/class.'.$classname.'.php');
+                foreach(array_values(array(
+                    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$tool.'/inc/class.'.$classname.'.php'),
+                    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/tool_'.$tool.'/inc/class.'.$classname.'.php'),
+                )) as $filename )
+                {
                 if(file_exists($filename)) {
                      $handler = $filename;
                 }
             }
+            }
 
-            $tpl_data = array();
+            $tpl_data = array('content'=>'Ooops, no content');
             if ($handler)
             {
                 self::log()->addDebug(sprintf('found class file [%s]',$handler));
                 CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$tool.'/languages/');
+                CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/tool_'.$tool.'/languages/');
                 self::setTemplatePaths($tool);
                 include_once $handler;
                 // init forms
@@ -141,7 +147,10 @@ if (!class_exists('CAT_Backend_Admintools'))
                     CAT_Backend::initForm();
                     require $init;
                 }
-                #$classname::initialize();
+                if(is_callable(array($classname,'initialize')))
+                {
+                    $classname::initialize();
+                }
                 $tpl_data['content'] = $classname::tool();
             }
 

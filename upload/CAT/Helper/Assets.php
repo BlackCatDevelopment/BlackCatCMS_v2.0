@@ -71,10 +71,11 @@ if(!class_exists('CAT_Helper_Assets'))
             }
 
             // create asset factory and pass engine path as basedir
-            $factory = new \Assetic\Factory\AssetFactory(CAT_ENGINE_PATH);
+            $factory = new \Assetic\Factory\AssetFactory(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH));
             $fm      = new \Assetic\FilterManager();
             $factory->setFilterManager($fm);
             $factory->setDefaultOutput('assets/*');
+            $factory->setProxy(CAT_Registry::get('PROXY'),CAT_Registry::get('PROXY_PORT'));
 
             $filters = array();
             if($type=='css')
@@ -99,7 +100,7 @@ if(!class_exists('CAT_Helper_Assets'))
             $am = new \Assetic\AssetManager();
             $am->set('assets', $assets);
             // create the writer to save the combined file
-            $writer = new \Assetic\AssetWriter(CAT_PATH);
+            $writer = new \Assetic\AssetWriter(CAT_Helper_Directory::sanitizePath(CAT_PATH));
             $writer->writeManagerAssets($am);
             return CAT_URL.'/'.$assets->getTargetPath();
         }   // end function serve()

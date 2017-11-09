@@ -266,6 +266,7 @@ if (!class_exists('CAT_Helper_Page'))
                     {
                         $tool = CAT_Backend_Admintools::getTool();
                         array_push(self::$scan_paths,CAT_ENGINE_PATH.'/modules/'.$tool);
+                        array_push(self::$scan_paths,CAT_ENGINE_PATH.'/modules/tool_'.$tool);
                     }
                 }
                 else
@@ -378,11 +379,13 @@ if (!class_exists('CAT_Helper_Page'))
         {
             if(!count(self::$pages))
                 self::init();
+
             // for all pages with level 0...
             $root    = array();
             $now     = time();
             $ordered = CAT_Helper_Array::sort(self::$pages,'position');
-            foreach( $ordered as $page )
+
+            foreach($ordered as $page)
             {
                 if (
                        $page['level']      == 0
@@ -406,6 +409,8 @@ if (!class_exists('CAT_Helper_Page'))
                     return $page['page_id'];
                 }
             }
+            // no page
+            return false;
         } // end function getDefaultPage()
 
         /**
@@ -553,21 +558,42 @@ if (!class_exists('CAT_Helper_Page'))
          * returns complete pages array
          *
          * @access public
-         * @param  boolean $all - show all page or only visible (default:false)
+         * @param  boolean $all - show all pages or only visible (default:false)
          * @return array
          **/
         public static function getPages($all=false)
         {
             if(!count(self::$pages)) self::getInstance();
             if($all)
-                return self::$pages;
-            // only visible for current lang
-            $pages = array();
-            foreach(self::$pages as $pg)
-                if(self::isVisible($pg['page_id']))
-                    $pages[] = $pg;
+            {
+                $pages =  self::$pages;
+            } else {
+                // only visible for current lang
+                $pages = array();
+                foreach(self::$pages as $pg)
+                    if(self::isVisible($pg['page_id']))
+                        $pages[] = $pg;
+            }
             return $pages;
         }   // end function getPages()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getPagesAsList($all=false)
+        {
+            $pages = self::getPages($all);
+            // sort by children
+            $pages = self::lb()->sort($pages);
+            $list  = array(0=>self::lang()->translate('none'));
+            foreach($pages as $p) {
+                $list[$p['page_id']] = str_repeat('|-- ',$p['level']) . $p['menu_title'];
+            }
+            return $list;
+        }   // end function getPagesAsList()
+        
 
         /**
          *
@@ -641,6 +667,19 @@ if (!class_exists('CAT_Helper_Page'))
                 $as_array ? $ids : implode(',',$ids)
             );
         }   // end function getPageTrail()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getPageTypes()
+        {
+            return array(
+                'page' => 'Page',
+                'menu_link' => 'Menu Link',
+            );
+        }   // end function getPageTypes()
 
         /**
          * resolves the path to root and returns the list of parent IDs
@@ -1151,6 +1190,11 @@ if (!class_exists('CAT_Helper_Page'))
         {
             $path  = preg_replace('~^/~','',$path); // remove leading /
             $parts = explode('/',$path);
+            // path starting with 'plugins'? -> lib_javascript
+            if($parts[0]=='plugins')
+            {
+                return CAT_Helper_Directory::sanitizePath('modules/lib_javascript/'.implode('/',$parts));
+            }
             if(in_array($parts[0],array('CAT','templates','modules')))
             {
                 //array_shift($parts); // remove?
@@ -1174,33 +1218,38 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         private static function findJQueryPlugin($item)
         {
-            $plugin_path = '/modules/lib_jquery/plugins';
+            $plugin_path = CAT_JQUERY_PATH.'/plugins';
             // check suffix
             if(pathinfo($item,PATHINFO_EXTENSION) != 'js')
                 $item .= '.js';
 
             // prefer minimized
             $minitem = pathinfo($item,PATHINFO_FILENAME).'.min.js';
+            $file    = CAT_Helper_Directory::sanitizePath($plugin_path.'/'.$minitem);
 
             // just there?
-            if (!file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$plugin_path.'/'.$minitem)))
+            if (!file_exists($file))
             {
-                if (!file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$plugin_path.'/'.$item)))
+                $file = CAT_Helper_Directory::sanitizePath($plugin_path.'/'.$item);
+                if (!file_exists($file))
                 {
                     $dir = pathinfo($item,PATHINFO_FILENAME);
                     // prefer minimized
                     $minitem = pathinfo($item,PATHINFO_FILENAME).'.min.js';
-                    if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$plugin_path.'/'.$dir.'/'.$minitem)))
-                        return $plugin_path.'/'.$dir.'/'.$minitem;
-                    if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$plugin_path.'/'.$dir.'/'.$item)))
-                        return $plugin_path.'/'.$dir.'/'.$item;
+                    $file    = CAT_Helper_Directory::sanitizePath($plugin_path.'/'.$dir.'/'.$minitem);
+                    if(!file_exists($file))
+                    {
+                        $file = CAT_Helper_Directory::sanitizePath($plugin_path.'/'.$dir.'/'.$item);
+                        if(!file_exists($file))
+                        {
+                            // give up
+                            return false;
+                        }
+                    }
                 }
             }
-            else
-            {
-                return $item;
-            }
-            return false;
+
+            return $file;
         }   // end function findJQueryPlugin()
 
         /**
@@ -1282,6 +1331,7 @@ if (!class_exists('CAT_Helper_Page'))
                         }
                     }
                 }   // end if($position=='header')
+
                 $self->log()->addDebug('checking jQuery components');
                 // ----- check jQuery components -----
                 if (isset($array[$for]['jquery']) && is_array($array[$for]['jquery']) && count($array[$for]['jquery']) && !self::$jquery_seen)
@@ -1341,13 +1391,13 @@ if (!class_exists('CAT_Helper_Page'))
 
                 if(self::$jquery_ui_enabled && !self::$jquery_ui_seen)
                 {
-                    array_unshift($ref,'/modules/lib_jquery/jquery-ui/ui/jquery-ui.min.js');
-                    array_unshift($ref,'/modules/lib_jquery/jquery-ui/ui/i18n/jquery-ui-i18n.min.js');
+                    array_unshift($ref,'/modules/lib_javascript/jquery-ui/ui/jquery-ui.min.js');
+                    array_unshift($ref,'/modules/lib_javascript/jquery-ui/ui/i18n/jquery-ui-i18n.min.js');
                     self::$jquery_ui_seen = true;
                 }
                 if(self::$jquery_enabled && !self::$jquery_seen)
                 {
-                    array_unshift($ref,'/modules/lib_jquery/jquery-core/jquery-core.min.js');
+                    array_unshift($ref,'/modules/lib_javascript/jquery-core/jquery-core.min.js');
                     self::$jquery_seen = true;
                 }
             }

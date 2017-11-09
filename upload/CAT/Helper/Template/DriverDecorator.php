@@ -118,8 +118,8 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
             if(CAT_Backend::isBackend()) $context = 'backend';
             $path = CAT_Helper_Directory::sanitizePath($path);
             $this->last = NULL;
-            $this->log()->logDebug(sprintf('context [%s] path [%s]', $context, $path ));
-            if ( file_exists( $path ) )
+            $this->log()->logDebug(sprintf('context [%s] path [%s]',$context,$path));
+            if(file_exists($path))
             {
                 if(isset($this->te->paths[$context]))
                     $this->last = $this->te->paths[$context];

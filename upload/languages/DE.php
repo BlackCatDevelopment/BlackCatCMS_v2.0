@@ -45,6 +45,7 @@ $LANG = array(
     'You are not allowed for the requested action' => 'Sie sind nicht berechtigt, die Aktion auszuführen',
 
     // --------------- Globals ---------------
+    'Active'          => 'Aktiv',
     'All'             => 'Alle',
     'Cancel'          => 'Abbrechen',
     'Cancel & close'  => 'Abbrechen & Schließen',
@@ -82,6 +83,7 @@ $LANG = array(
     'Type'            => 'Typ',
     'View'            => 'Ansicht',
     'Welcome'         => 'Willkommen',
+    'Sorry, there is no content to show' => 'Entschuldigung, es gibt leider keine Inhalte anzuzeigen',
     'Successfully saved' => 'Erfolgreich gespeichert',
 
     // --------------- Login page ---------------

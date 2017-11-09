@@ -5,7 +5,7 @@
     CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
     CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
     CAT_Helper_Page::addCSS('templates/backstrap/css/default/login.css');
-    CAT_Helper_Page::addJS('modules/lib_jquery/jquery-core/jquery-core.min.js','footer');
+    CAT_Helper_Page::addJS('modules/lib_javascript/jquery-core/jquery-core.min.js','footer');
     CAT_Helper_Page::addJS('modules/lib_bootstrap/vendor/js/bootstrap.min.js','footer');
     CAT_Helper_Page::addJS('templates/backstrap/js/login.js','footer');
     CAT_Helper_Page::addMeta(array('charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8")));

@@ -170,8 +170,8 @@ $(function() {
     $('#dashboard_reset').unbind('click').on('click',function(e) {
         e.preventDefault();
         var $this = $(this);
-        $('#modal_dialog .modal-body').html(cattranslate('Do you really want to reset the Dashboard? All your customization settings will be lost!'));
-        $('#modal_dialog .modal-title').text(cattranslate('Reset Dashboard'));
+        $('#modal_dialog .modal-body').html($.cattranslate('Do you really want to reset the Dashboard? All your customization settings will be lost!'));
+        $('#modal_dialog .modal-title').text($.cattranslate('Reset Dashboard'));
         $('#modal_dialog').modal('show');
         $('button.btn-primary').unbind('click').on('click',function(e) {
             $('#modal_dialog').modal('hide');

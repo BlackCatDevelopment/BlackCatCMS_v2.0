@@ -42,6 +42,7 @@ if (!class_exists('CAT_Backend', false))
         {
             if (!self::$instance)
             {
+                self::log()->addDebug('creating new backend instance');
                 self::$instance = new self();
                 self::tpl()->setGlobals(array(
                     'LANGUAGE'      => strtolower(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang())),
@@ -49,14 +50,6 @@ if (!class_exists('CAT_Backend', false))
                     'CAT_ADMIN_URL' => CAT_ADMIN_URL,
                     'WEBSITE_TITLE' => CAT_Registry::get('WEBSITE_TITLE'),
                 ));
-                if(self::$instance->user()->is_authenticated())
-                {
-                    // for re-login dialog
-                    self::tpl()->setGlobals(array(
-                        'PASSWORD_FIELDNAME' => CAT_Helper_Validate::createFieldname('password_'),
-                        'USERNAME_FIELDNAME' => CAT_Helper_Validate::createFieldname('user_'),
-                    ));
-                }
                 self::$instance->initPaths();
                 $current_language = strtoupper(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang()));
                 self::$instance->lang()->addFile(
@@ -70,6 +63,18 @@ if (!class_exists('CAT_Backend', false))
                         CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('default_theme').'/languages/'
                     );
                 }
+                if(self::$instance->user()->is_authenticated())
+                {
+                    $add_form   = CAT_Helper_FormBuilder::generateForm('be_page_add');
+                    $add_form->getElement('page_type')->setValue("page");
+
+                    // for re-login dialog
+                    self::tpl()->setGlobals(array(
+                        'PASSWORD_FIELDNAME' => CAT_Helper_Validate::createFieldname('password_'),
+                        'USERNAME_FIELDNAME' => CAT_Helper_Validate::createFieldname('user_'),
+                        'add_page_form'      => $add_form->render(true),
+                    ));
+                }
             }
             return self::$instance;
         }   // end function getInstance()
@@ -82,7 +87,10 @@ if (!class_exists('CAT_Backend', false))
             $self   = self::getInstance();
             // get the route handler
             $router = self::router();
-            $self->log()->addDebug('checking if route is protected');
+            $self->log()->addDebug(sprintf(
+                'checking if route [%s] is protected',
+                $router->getFunction()
+            ));
             // check for protected route
             if(!in_array($router->getFunction(),self::$public))
             {
@@ -90,7 +98,7 @@ if (!class_exists('CAT_Backend', false))
 // Das erfordert die Einhaltung bestimmter Regeln, z.B. dass die Funktion
 // "index" immer das Recht "<Funktionsname>" erfordert (z.B. "groups"), alle
 // weiteren das Recht "<Funktionsname>_<$funcname>" (z.B. "pages_list")
-// Der Code ist irgendwie unelegant... Später nochmal drauf schauen
+// Der Code ist irgendwie unelegant... SpÃ¤ter nochmal drauf schauen
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 $need_perm = strtolower($router->getFunction());
                 $router->setController('CAT_Backend_'.ucFirst($router->getFunction()));
@@ -101,15 +109,14 @@ if (!class_exists('CAT_Backend', false))
                     $need_perm .= '_'.strtolower($funcname);
                 $router->protect($need_perm);
             }
-
             // re-route to login page if the route is protected and the user is
             // not logged in
-            if($router->isProtected() && !$self->user()->is_authenticated())
+            if($router->isProtected() && !self::user()->is_authenticated())
             {
-echo "user auth error:<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( $self->user() );
-echo "</textarea>";
-exit;
+#echo "user auth error:<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+#print_r( $self->user() );
+#echo "</textarea>";
+#exit;
                 header('Location: '.CAT_ADMIN_URL.'/login');
             }
             else
@@ -274,14 +281,9 @@ exit;
          **/
         public static function initForm()
         {
-            if(!self::$form)
-            {
-                self::$form = CAT_Object::form();
                 \wblib\wbFormsJQuery::set('enabled',false);
                 \wblib\wbFormsJQuery::set('load_ui_theme',false);
                 \wblib\wbFormsJQuery::set('disable_tooltips',true);
-            }
-            return self::$form;
         }   // end function initForm()
 
         /**
@@ -315,12 +317,24 @@ exit;
             $backend_route = defined('CAT_BACKEND_PATH')
                            ? CAT_BACKEND_PATH
                            : 'backend';
+
+            if(substr($current_route, 0, -1) != '/')
+                $current_route .= '/';
+
 //echo "curr $current_route be $backend_route<br />";
+            self::log()->addDebug(sprintf(
+                'current route [%s] configured backend route [%s]',
+                $current_route,$backend_route
+            ));
 
             if(preg_match('~^/?'.$backend_route.'/~i', $current_route))
+            {
+                self::log()->addDebug('isBackend(true)');
                 return true;
-            else
+            } else {
+                self::log()->addDebug('isBackend(false)');
                 return false;
+            }
         }   // end function isBackend()
 
 
@@ -467,7 +481,8 @@ exit;
             $lb->set(array(
                 'top_ul_class'     => 'nav',
                 'ul_class'         => 'nav',
-                'current_li_class' => 'active'
+                'current_li_class' => 'active',
+                'space'            => '',
             ));
             $tpl_data['MAIN_MENU_UL'] = $lb->buildList($menu);
 

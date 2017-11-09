@@ -108,6 +108,7 @@ echo "<div style=\"display:none;\"></div>";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: per Checkbox steuern (wie beim Wiki)
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if(!strlen($olddata['content'])) $olddata['content'] = '-';
                 self::db()->query(
                     'INSERT INTO `:prefix:mod_wysiwyg_revisions` VALUES (?,?,?,?,?);',
                     array($section_id,date('Y-m-d-H-i-s'),time(),$olddata['content'],$olddata['text'])

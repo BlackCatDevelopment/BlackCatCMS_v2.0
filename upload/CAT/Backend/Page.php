@@ -24,9 +24,10 @@ if (!class_exists('CAT_Backend_Page'))
 
     class CAT_Backend_Page extends CAT_Object
     {
-        protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        protected static $instance = NULL;
-        protected static $debug    = false;
+        protected static $loglevel    = \Monolog\Logger::EMERGENCY;
+        protected static $instance    = NULL;
+        protected static $javascripts = NULL;
+        protected static $debug       = false;
 
         /**
          *
@@ -36,7 +37,9 @@ if (!class_exists('CAT_Backend_Page'))
         public static function getInstance()
         {
             if(!is_object(self::$instance))
+            {
                 self::$instance = new self();
+            }
             return self::$instance;
         }   // end function getInstance()
 
@@ -50,92 +53,105 @@ if (!class_exists('CAT_Backend_Page'))
             // check permissions
             if(!self::user()->hasPerm('pages_add'))
                 self::printFatalError('You are not allowed for the requested action!');
-            // we need at least a page title
-            if(!CAT_Helper_Validate::sanitizePost('page_title','string'))
-                self::printFatalError('Missing page title!');
 
-            // use query builder for easier handling
-            $query  = self::db()->qb();
-            $query->insert(self::db()->prefix().'pages');
+            $pageID   = NULL;
 
-            $i      = 0;
-            $parent = 0;
-
-            // expected data
-            foreach(array_values(array('page_title','language','parent')) as $key)
+            $add_form = CAT_Helper_FormBuilder::generateForm('be_page_add');
+            if($add_form->isValid())
             {
-                if(($val = CAT_Helper_Validate::sanitizePost($key)) != '')
+                $data   = $add_form->getData();
+                $errors = array();
+
+                // use query builder for easier handling
+                $query  = self::db()->qb();
+                $query->insert(self::db()->prefix().'pages');
+
+                $i      = 0;
+                $parent = 0;
+
+                // expected data
+                $title  = isset($data['page_title'])  ? htmlspecialchars($data['page_title']) : '*please add a title*';
+                $parent = isset($data['page_parent']) ? intval($data['page_parent']) : 0;
+                $lang   = isset($data['page_language']) ? $data['page_language'] : CAT_Registry::get('default_language');
+
+                // set menu title = page title for now
+                $query->setValue('page_title',$query->createNamedParameter($title));
+                $query->setValue('menu_title',$query->createNamedParameter($title));
+                $query->setValue('parent',$query->createNamedParameter($parent));
+                $query->setValue('language',$query->createNamedParameter($lang));
+                $query->setValue('modified_when',$query->createNamedParameter(time()));
+                $query->setValue('modified_by',$query->createNamedParameter(self::user()->getID()));
+
+                if($parent>0)
                 {
-                    $query->setValue($key,$query->createNamedParameter($val));
-                    if($key=='parent' && $val>0)
-                        $parent = $val;
-                    if($key=='page_title')
-                        $title  = $val;
+                    // get details for parent page
+                    $parent_page = CAT_Helper_Page::properties($parent);
+
+                    // set root parent
+                    $query->setValue('root_parent',$query->createNamedParameter($parent_page['page_id']));
+
+                    // set level
+                    $query->setValue('level',$query->createNamedParameter($parent_page['level']+1));
+
+                    // set trail
+                    $trail = (substr_count($parent_page['page_trail'],',')>0 ? explode(',',$parent_page['page_trail']) : array());
+                    array_push($trail,$parent_page['page_id']);
+                    $query->setValue('page_trail',$query->createNamedParameter(implode(',',$trail)));
+
+                    // set link
+                    $query->setValue('link',$query->createNamedParameter($parent_page['link'].'/'.$title));
                 }
-            }
+                else
+                {
+                    // set root parent
+                    $query->setValue('root_parent',$query->createNamedParameter(0));
+                    // set link
+                    $query->setValue('link',$query->createNamedParameter('/'.$title));
+                    // set trail
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// DER TRAIL MUSS NACH DEM ANLEGEN DER SEITE AKTUALISIERT WERDEN, DA ER DIE
+// ID DER SEITE SELBST BEINHALTET!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    $query->setValue('page_trail',$query->createNamedParameter(0));
+                }
 
-            // set menu title = page title for now
-            $query->setValue('menu_title',$query->createNamedParameter(CAT_Helper_Validate::sanitizePost('page_title')));
-            $query->setValue('modified_when',$query->createNamedParameter(time()));
-            $query->setValue('modified_by',$query->createNamedParameter(self::user()->getID()));
+                // save page
+                $sth   = $query->execute();
 
-            if($parent>0)
-            {
-                // get details for parent page
-                $parent_page = CAT_Helper_Page::properties($parent);
+                if(self::db()->isError()) {
+                    $errors[] = self::db()->getError();
+                }
 
-                // set root parent
-                $query->setValue('root_parent',$query->createNamedParameter($parent_page['page_id']));
+                // get the ID of the newly created page
+                $pageID = self::db()->lastInsertId();
 
-                // set level
-                $query->setValue('level',$query->createNamedParameter($parent_page['level']+1));
+                if(!$pageID) {
+                    self::printFatalError(
+                        'Unable to create the page: '.implode("<br />",$errors)
+                    );
+                } 
 
-                // set trail
-                $trail = (substr_count($parent_page['page_trail'],',')>0 ? explode(',',$parent_page['page_trail']) : array());
-                array_push($trail,$parent_page['page_id']);
-                $query->setValue('page_trail',$query->createNamedParameter(implode(',',$trail)));
-
-                // set link
-                $query->setValue('link',$query->createNamedParameter($parent_page['link'].'/'.$title));
+                $tpl_data = array(
+                    'success' => true,
+                    'page_id' => $pageID,
+                    'message' => self::lang()->t('The page was created successfully')
+                );
             }
             else
             {
-                // set root parent
-                $query->setValue('root_parent',$query->createNamedParameter(0));
-                // set link
-                $query->setValue('link',$query->createNamedParameter('/'.$title));
-            }
-
-            // save page
-            $sth   = $query->execute();
-
-            // get the ID of the newly created page
-            $pageID = self::db()->lastInsertId();
-
-            if(!$pageID) {
-                self::printFatalError('Unable to create the page: {{error}}', self::db()->getError());
-            } else {
-                if(($module = CAT_Helper_Validate::sanitizePost('type','numeric')) != '0')
-                {
-                    // create section
-                    CAT_Sections::addSection($pageID,$module);
-                }
+                $tpl_data['form'] = $add_form->render(true);
             }
 
             if(self::asJSON())
             {
-                echo json_encode(array(
-                    'success' => true,
-                    'page_id' => $pageID,
-                    'message' => self::lang()->t('The page was created successfully')
-                ),1);
+                echo CAT_Helper_JSON::printResult($tpl_data);
                 exit;
             }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             CAT_Backend::print_header();
-            self::tpl()->output('', $tpl_data);
+            self::tpl()->output('backend_page_add', $tpl_data);
             CAT_Backend::print_footer();
         }   // end function add()
 
@@ -321,7 +337,7 @@ if (!class_exists('CAT_Backend_Page'))
                             foreach(array_values($item[$key]) as $file)
                             {
                                 $file = str_ireplace(
-                                    array('/modules/lib_jquery/plugins/'),
+                                    array('/modules/lib_javascript/plugins/'),
                                     '',
                                     $file
                                 );
@@ -351,13 +367,6 @@ if (!class_exists('CAT_Backend_Page'))
                         }
                         self::delHeaderComponent($type,$item,$pageID);
                     }
-/*
-    [css] => Array
-                (
-                    [0] => /modules/lib_jquery/plugins/jquery.fileupload/css/style.css
-                )
-*/
-
                 }
             }
 
@@ -510,6 +519,24 @@ echo "remove file $remove_file\n<br />";
          * @access public
          * @return
          **/
+        public static function reorder()
+        {
+/*
+                        // page moved? (reorder)
+                        if(isset($data['page_position']) && $old_position!=$data['page_position'])
+                        {
+                            //CAT_Helper_DB::reorder('pages',$pageID,$data['page_position'],'position','page_id');
+                            $page['position'] = $data['page_position'];
+                        }
+*/
+        }   // end function reorder()
+        
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function save()
         {
             $pageID  = self::getPageID();
@@ -530,80 +557,136 @@ echo "remove file $remove_file\n<br />";
         {
             $pageID  = self::getPageID();
 
-            // the user needs to have the global pages_edit permission plus
+            // the user needs to have the global pages_settings permission plus
             // permissions for the current page
             if(!self::user()->hasPerm('pages_settings') || !self::user()->hasPagePerm($pageID,'pages_settings'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
-            // now, let's load the form(s)
-            $form = CAT_Backend::initForm();
-            $form->loadFile('pages.forms.php',__dir__.'/forms');
-            $form->setForm('be_page_settings');
-
-            $curr_tpl   = CAT_Helper_Page::getPageTemplate($pageID);
             $page       = CAT_Helper_Page::properties($pageID);
-            $languages  = array();
-            $templates  = array();
-            $pages      = self::lb()->sort(CAT_Helper_Page::getPages(1),0);
-
-            // to fill the several page select fields (f.e. "parent")
-            $pages_select = array();
-            foreach($pages as $p)
-                $pages_select[$p['page_id']] = $p['menu_title'];
-
-            // language select
-            $langs        = self::getLanguages();
-            if(is_array($langs) && count($langs))
-            {
-                foreach(array_values($langs) as $lang)
-                {
-                    $data        = CAT_Helper_Addons::getDetails($lang);
-                    $languages[] = $data;
-                }
-            }
+            $form       = CAT_Helper_FormBuilder::generateForm('be_page_settings',$page);
+            $form->setAttribute('action',CAT_ADMIN_URL.'/page/settings/'.$pageID);
 
             // template select
+            $templates = array(''=>self::lang()->translate('System default'));
             if(is_array(($tpls=CAT_Helper_Addons::getAddons('template'))))
-            {
                 foreach(array_values($tpls) as $dir => $name)
-                {
                     $templates[$dir] = $name;
+            $form->getElement('page_template')->setData($templates);
+
+            // set current value for template select
+            $curr_tpl   = CAT_Helper_Page::getPageTemplate($pageID);
+            $form->getElement('page_template')->setValue($curr_tpl);
+
+            // remove variant select if no variants are available
+            $variants   = CAT_Helper_Template::getVariants($curr_tpl);
+            if(!$variants) $form->removeElement('template_variant');
+            else           $form->getElement('template_variant')->setData($variants);
+
+            // remove menu select if there's only one menu block
+            $menus      = CAT_Helper_Template::get_template_menus($curr_tpl);
+            if(!$menus) $form->removeElement('page_menu');
+            else {
+                $form->getElement('page_menu')->setData($menus);
+                $form->getElement('page_menu')->setValue($page['menu']);
+            }
+
+            // form already sent?
+            if($form->isSent())
+            {
+                // check data
+                if($form->isValid())
+                {
+                    // save data
+                    $data = $form->getData();
+/*
+---form data---
+Array
+(
+    [page_id] => 30
+    [page_parent] => 30
+    [page_visibility] => 1
+    [page_menu] => 1
+    [page_template] =>
+    [template_variant] =>
+    [page_title] => Homepage
+    [menu_title] => Homepage
+    [page_description] => asdfasdf
+    [page_language] => DE
+)
+
+CREATE TABLE `cat_pages` (
+	`page_id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`vis_id` INT(2) UNSIGNED NOT NULL DEFAULT '7',
+	`parent` INT(11) UNSIGNED NOT NULL DEFAULT '0',
+	`root_parent` INT(11) UNSIGNED NOT NULL DEFAULT '0',
+	`level` INT(11) UNSIGNED NOT NULL DEFAULT '0',
+	`link` TEXT NOT NULL,
+	`page_title` VARCHAR(255) NOT NULL DEFAULT '',
+	`menu_title` VARCHAR(255) NOT NULL DEFAULT '',
+	`description` TEXT NOT NULL,
+	`page_trail` TEXT NOT NULL,
+	`template` VARCHAR(255) NOT NULL DEFAULT '',
+	`position` INT(11) NOT NULL DEFAULT '1',
+	`menu` INT(11) NOT NULL DEFAULT '1',
+	`language` VARCHAR(5) NOT NULL DEFAULT '',
+	`searching` INT(11) NOT NULL DEFAULT '1',
+	`created_by` INT(11) UNSIGNED NOT NULL DEFAULT '1',
+	`modified_by` INT(11) UNSIGNED NOT NULL DEFAULT '0',
+	`modified_when` INT(11) NOT NULL DEFAULT '0',
+	PRIMARY KEY (`page_id`),
+	INDEX `FK_cat_pages_cat_visibility` (`vis_id`),
+	INDEX `FK_cat_pages_cat_rbac_users` (`created_by`),
+	INDEX `FK_cat_pages_cat_rbac_users_2` (`modified_by`),
+	CONSTRAINT `FK_cat_pages_cat_rbac_users` FOREIGN KEY (`created_by`) REFERENCES `cat_rbac_users` (`user_id`),
+	CONSTRAINT `FK_cat_pages_cat_rbac_users_2` FOREIGN KEY (`modified_by`) REFERENCES `cat_rbac_users` (`user_id`),
+	CONSTRAINT `FK_cat_pages_cat_visibility` FOREIGN KEY (`vis_id`) REFERENCES `cat_visibility` (`vis_id`) ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=47
+;
+
+*/
+echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r($page);
+echo "</textarea>";
+                    if(is_array($data) && count($data))
+                    {
+                        // get old data
+                        $old_parent       = intval($page['parent']);
+                        $old_position     = intval($page['position']);
+                        $old_link         = $page['link'];
+
+                        // new parent?
+                        if(isset($data['page_parent']) && $old_parent!=intval($data['page_parent']))
+                        {
+                            // new position (add to end)
+                            $page['position'] = CAT_Helper_DB::getNext(
+                                'pages',
+                                intval($data['page_parent'])
+                            );
+                            $page['parent'] = intval($data['page_parent']);
+                        }
+                        // Work out level and root parent
+                        if(intval($data['page_parent'])!='0')
+                        {
+                            $page['level'] = CAT_Helper_Page::properties(intval($data['page_parent']),'level') + 1;
+                            $page['root_parent']
+                                = ($page['level'] == 1)
+                                ? $page['parent']
+                                : CAT_Helper_Page::getRootParent($page['parent'])
+                                ;
+                        }
+/*
+                        
+*/
+echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r($page);
+echo "</textarea>";
+                    }
                 }
             }
 
-            // page parent
-            $form->getElement('parent')
-                 ->setAttr('options',array_merge(
-                     array('0'=>'['.self::lang()->t('none').']'),
-                     $pages_select
-                   ))
-                 ->setValue($page['parent'])
-                 ;
-            // template
-            $form->getElement('template')
-                 ->setAttr('options',array_merge(
-                     array(''=>'System default'),
-                     $templates
-                   ))
-                 ->setValue($curr_tpl)
-                 ;
-
-            // remove variant select if no variants are available
-            $variants = CAT_Helper_Template::getVariants($curr_tpl);
-            if(!$variants) $form->removeElement('template_variant');
-            else           $form->getElement('template_variant')->setAttr('options',$variants);
-
-            // remove menu select if there's only one menu block
-            $menus    = CAT_Helper_Template::get_template_menus($curr_tpl);
-            if(!$menus)    $form->removeElement('page_menu');
-            else           $form->getElement('page_menu')->setAttr('options',$menus);
-
-            // visibility
-            $vis_list = CAT_Helper_Page::getVisibilities();
-            $form->getElement('visibility')->setAttr('options',$vis_list)->setValue($page['vis_id']);
-
-            // set current data
-            $form->setData($page);
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Die aktuellen Einstellungen als JSON zurueckliefern, nicht nur als
@@ -611,11 +694,11 @@ echo "remove file $remove_file\n<br />";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(self::asJSON())
             {
-                CAT_Helper_JSON::printSuccess($form->getForm());
+                CAT_Helper_JSON::printSuccess($form->render(true));
             } else {
                 CAT_Backend::print_header();
                 self::tpl()->output('backend_page_settings', array(
-                    'form' => $form->getForm(),
+                    'form' => $form->render(true),
                     'page' => CAT_Helper_Page::properties($pageID),
                 ));
                 CAT_Backend::print_footer();
@@ -771,7 +854,7 @@ echo "remove file $remove_file\n<br />";
                 else
                 {
                     $paths = array(
-                        CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/lib_jquery/plugins/')
+                        self::$javascripts
                     );
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

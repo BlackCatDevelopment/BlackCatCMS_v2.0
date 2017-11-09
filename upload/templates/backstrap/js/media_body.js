@@ -240,13 +240,13 @@ $(function() {
                 $(data.context.children()[index])
                     .append('<br>')
                     .append($('<span class="alert alert-info"/>').text(
-                        cattranslate('Success, file size: '+file.size)
+                        $.cattranslate('Success, file size: '+file.size)
                     ));
             }
         });
     }).on('fileuploadfail', function (e, data) {
         $.each(data.files, function (index) {
-            var error = $('<span class="text-danger"/>').text(cattranslate('File upload failed.'));
+            var error = $('<span class="text-danger"/>').text($.cattranslate('File upload failed.'));
             $(data.context.children()[index])
                 .append('<br>')
                 .append(error);

@@ -36,7 +36,9 @@ if(!class_exists('JSMgr',false))
          **/
         public static function initialize()
         {
-            self::$basepath = CAT_ENGINE_PATH.'/modules/lib_javascripts/plugins/';
+            self::$basepath = CAT_Helper_Directory::sanitizePath(
+                CAT_ENGINE_PATH.'/modules/lib_javascript/plugins/'
+            );
         }   // end function initialize()
 
         /**
@@ -83,10 +85,20 @@ if(!class_exists('JSMgr',false))
                             'recurse'   => true
                         )
                     );
+                    // find readme(s)
+                    $readmes = CAT_Helper_Directory::findFiles(
+                        self::$basepath.'/'.$name,
+                        array(
+                            'extension' => 'html',
+                            'recurse'   => true
+                        )
+                    );
+                    // analyze JS files
                     if(is_array($jsfiles) && count($jsfiles)>0)
                     {
                         $version  = null;
                         $isjquery = false;
+                        $readme   = null;
 
                         foreach($jsfiles as $file)
                         {
@@ -108,15 +120,25 @@ if(!class_exists('JSMgr',false))
                             } catch(Exception $e) {}
                         }
 
+                        if(is_array($readmes) && count($readmes)>0) {
+                            // get the first one
+                            $readme = str_ireplace(
+                                self::$basepath.'/'.$name.'/',
+                                '',
+                                $readmes[0]
+                            );
+                        }
+
                         self::db()->query(
                             'INSERT INTO `:prefix:addons_javascripts` '
-                            .'(`directory`,`name`,`version`,`jquery`) VALUES '
-                            .'(:dir       ,:name ,:version ,:jq )',
+                            .'(`directory`,`name`,`version`,`jquery`,`readme`) VALUES '
+                            .'(:dir       ,:name ,:version ,:jq     , :readme)',
                             array(
-                                'dir'  => $name,
-                                'name' => $name,
+                                'dir'     => $name,
+                                'name'    => $name,
                                 'version' => ( $version ? $version : 0 ),
-                                'jq'      => ( $isjquery ? 'Y' : 'N' )
+                                'jq'      => ( $isjquery ? 'Y' : 'N' ),
+                                'readme'  => $readme
                             )
                         );
                         if(!self::db()->isError()) $added++;
@@ -131,47 +153,12 @@ if(!class_exists('JSMgr',false))
                     'SELECT * FROM `:prefix:addons_javascripts` ORDER BY `name`'
                 );
             }
-
-            // get readmes (if available)
-            $readmes = self::getReadmes($plugins);
+            // CAT_Helper_Validate::path2uri(self::$basepath.$p.'/'.$rfile);
 
             // render
             self::tpl()->setPath(CAT_ENGINE_PATH.'/modules/tool_JSMgr/templates/default','backend');
-            return self::tpl()->get('tool',array('plugins'=>$data,'readmes'=>$readmes));
+            return self::tpl()->get('tool',array('plugins'=>$data,'baseuri'=>CAT_Helper_Validate::path2uri(self::$basepath)));
         }   // end function tool()
-
-        /**
-         * find files with name "readme_<lang>.html" or "readme.html" for
-         * all directories in $plugins
-         *
-         * @access protected
-         * @param  array     $plugins
-         * @return array
-         **/
-        protected static function getReadmes($plugins)
-        {
-            $readme_filenames = array(
-                // current language
-                'readme_'.strtolower( LANGUAGE ).'.html',
-                // default
-                'readme.html'
-            );
-            $readmes = array();
-            foreach($plugins as $p)
-            {
-                foreach($readme_filenames as $rfile)
-                {
-                    if(file_exists(self::$basepath.$p.'/'.$rfile))
-                    {
-                        $readmes[$p] = CAT_Helper_Validate::path2uri(self::$basepath.$p.'/'.$rfile);
-                        break;
-                    }
-                    if(!isset($readmes[$p]))
-                        $readmes[$p]='';
-                }
-            }
-            return $readmes;
-        }   // end function getReadmes()
 
         /**
          *

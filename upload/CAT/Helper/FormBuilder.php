@@ -15,6 +15,11 @@
 
 */
 
+use wblib\wbForms\Form;
+use wblib\wbForms\Element;
+
+require CAT_ENGINE_PATH.'/modules/lib_wblib/wblib/wbForms/autoload.php';
+
 if (!class_exists('CAT_Helper_FormBuilder'))
 {
     if (!class_exists('CAT_Object', false))
@@ -25,120 +30,100 @@ if (!class_exists('CAT_Helper_FormBuilder'))
     class CAT_Helper_FormBuilder extends CAT_Object
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        protected static $forms    = array();
 
-        public static function generate($name,$items,$legend_key,$data)
+        public static function generate($name,$items,$formdata=array(),$legend_key='fieldset')
         {
-            $form = CAT_Backend::initForm();
-            $form->createForm($name);
+            \wblib\wbForms\Base::$lang_path = CAT_ENGINE_PATH.'/CAT/Backend/languages';
+            $form = new Form($name);
 
-            $lastlegend = '';
-            foreach($items as $item)
+            if(is_array($items) && count($items))
             {
-                if($item[$legend_key] != $lastlegend)
+                $lastlabel = null;
+                foreach($items as $item)
                 {
-                    $form->addElement(array(
-                        'type'  => 'legend',
-                        'label' => self::lang()->translate(self::humanize($item[$legend_key])),
-                        'class' => '',
-                    ));
-                    $lastlegend = $item[$legend_key];
-                }
-                $element = array(
-                    'type'  => (
-                          strlen($item['fieldtype'])
-                        ? $item['fieldtype']
-                        : 'text'
-                    ),
-                    'name'  => $item['name'],
-                    'label' => (
-                          strlen($item['fieldlabel'])
-                        ? $item['fieldlabel']
-                        : self::lang()->translate(self::humanize($item['name']))
-                    ),
-                    'default' => (
-                          strlen($item['default_value'])
-                        ? $item['default_value']
-                        : ''
-                    ),
-                    'after'   => (
-                          strlen($item['helptext'])
-                        ? $item['helptext']
-                        : ''
-                    ),
-                    'required' => (
-                          (isset($item['is_required']) && $item['is_required'] == 'Y')
-                        ? true
-                        : false
-                    ),
-                );
+                    if(isset($item['fieldset']) && $lastlabel != $item['fieldset'])
+                    {
+                        $form->addElement(new wblib\wbForms\Element\Fieldset(
+                            self::lang()->translate(self::humanize($item['fieldset'])),
+                            self::lang()->translate(self::humanize($item['fieldset']))
+                        ));
+                    }
 
-                switch($element['type'])
-                {
-                    case 'labeledbutton':
-                        $element['text'] = self::lang()->translate('Go');
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// TODO: convert handler name to route
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // check for route
-                        if(strlen($item['fieldhandler']) && substr($item['fieldhandler'],0,1)=='/') {
-                            $element['onclick'] = "javascript:parent.location='".$item['fieldhandler']."';return false;";
+                    $type = 'wblib\wbForms\Element\\'.ucfirst($item['fieldtype']);
+                    $label = strlen($item['label'])
+                            ? self::lang()->translate($item['label'])
+                            : self::lang()->translate(self::humanize($item['name']));
+
+                    $element = array(
+                        'required' => (
+                              (isset($item['required']) && strlen($item['required']))
+                            ? true
+                            : false
+                        ),
+                        'helptext' => $item['helptext'],
+                        'pattern'  => ( isset($item['pattern']) ? $item['pattern'] : false ),
+                    );
+                    $e = $form->addElement(new $type($label,$item['name'],$element));
+
+                    if(strlen($item['fieldhandler'])) {
+                        $params = ( substr_count($item['params'], ',') ? explode(', ',$item['params']) : array($item['params']) );
+                        $data = call_user_func_array($item['fieldhandler'], $params);
+                        if($data) {
+                            $e->setData($data);
                         }
-                        break;
-                    case 'radiogroup':
-                        $element['options'] = array('y'=>'yes','n'=>'no');
-                        break;
-                    case 'checkbox':
-                        if(strlen($item['default_value']))
-                        {
-                            $element['value'] = $item['default_value'];
-                        }
-                        break;
+                    }
+
+                    if(isset($formdata[$item['name']])) {
+                        $e->setValue($formdata[$item['name']]);
+                    } elseif(isset($item['mapto']) && isset($formdata[$item['mapto']])) {
+                        $e->setValue($formdata[$item['mapto']]);
+                    }
                 }
 
-                $elem = $form->addElement($element);
-                if(strlen($item['fieldhandler']) && $element['type'] != 'labeledbutton')
-                {
-                    $handler = $item['fieldhandler'];
-                    if(strlen($item['params']))
-                    {
-                        $params = $item['params'];
-                        if(substr_count($params,','))
-                            $params = explode(',',$params);
-                        else
-                            $params = array($params);
-                        $data = call_user_func_array($handler,$params);
-                    }
-                    else
-                        $data = $handler();
-
-                    if($elem instanceof wblib\wbFormsElementSelect)
-                    {
-                        $elem->setAttr('options',$data);
-                    }
-                    else
-                    {
-                        $elem->setAttr('value',$data);
-                    }
-                }
+                // buttons
+                $form->addElement(new wblib\wbForms\Element\Button(
+                    self::lang()->translate('Save'),
+                    self::lang()->translate('Save')
+                ));
+                $form->addElement(new wblib\wbForms\Element\Button(
+                    self::lang()->translate('Cancel'),
+                    self::lang()->translate('Cancel')
+                ));
             }
-
-            // add buttons
-            $form->addElement(array(
-                'type' => 'submit',
-                'label' => 'Save changes',
-            ));
-            $form->addElement(array(
-                'type'  => 'button',
-                'label' => 'Cancel',
-                'value' => 'cancel',
-            ));
-
-            // set current data
-            $form->setData($data);
-
             return $form;
+        }   // end function generate()
 
-        }
-
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function generateForm($name,$data=array())
+        {
+            //if(!in_array($name,self::$forms))
+            //{
+                // get form from DB
+                $stmt = self::db()->query(
+                    'SELECT `t1`.`action`, `t2`.*, '
+                    . '     `t3`.`name`, `t3`.`mapto`, `t3`.label, `t3`.`helptext`, `t3`.`pattern`, '
+                    . '     `t4`.`fieldtype` '
+                    . 'FROM `cat_forms` as `t1` '
+                    . 'JOIN `cat_forms_has_fields` AS `t2` ON `t1`.`form_id`=`t2`.`form_id` '
+                    . 'JOIN `cat_forms_fielddefinitions` AS `t3` ON `t2`.`field_id`=`t3`.`field_id` '
+                    . 'JOIN `cat_forms_fieldtypes` AS `t4` ON `t2`.type_id=`t4`.`type_id` '
+                    . 'WHERE `t1`.`form_name`=? ORDER BY `fieldset`, `t2`.`position` ',
+                    array($name)
+                );
+                $fields = $stmt->fetchAll();
+                if(!$fields) return false;
+                //self::$forms[$name] = self::generate($name,$fields,$data);
+                return self::generate($name,$fields,$data);
+            //}
+            //else
+            //{
+            //    return self::$forms[$name];
+            //}
+        }   // end function generateForm()
     } // class CAT_Helper_FormBuilder
 } // if class_exists()

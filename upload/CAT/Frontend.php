@@ -84,6 +84,16 @@ if (!class_exists('CAT_Frontend', false))
                 $self->router()->dispatch();
             }
             $page_id = CAT_Page::getID();
+            // no page found
+            if(!$page_id)
+            {
+                ob_start();
+                    $empty_page_bg = CAT_Helper_Assets::serve('images',array("CAT/templates/empty_page_bg.jpg"));
+                ob_end_clean();
+                require dirname(__FILE__).'/templates/empty.php';
+                exit;
+            }
+
             // get page handler
             $page   = CAT_Page::getInstance($page_id);
             // hand over to page handler

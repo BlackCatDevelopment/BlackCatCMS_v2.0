@@ -19,7 +19,7 @@
                 <tr>
                     <td>{$p.name}</td>
                     <td>{$p.version}</td>
-                    <td>{if $readmes.$dir} <a href="{$readmes.$dir}" class="readmedlg"><img src="{$CAT_URL}/modules/tool_JSMgr/images/info.png" alt="info.png" title="{translate('Open Readme')}" /></a>{/if}</td>
+                    <td>{if $p.readme} <a href="{$baseuri}/{$p.directory}/{$p.readme}" class="readmedlg"><img src="{$CAT_URL}/modules/tool_JSMgr/images/info.png" alt="info.png" title="{translate('Open Readme')}" /></a>{/if}</td>
                     <td>{if $p.jquery == 'Y'}<span class="fa fa-fw fa-check"></span>{/if}</td>
                 </tr>
         {/foreach}

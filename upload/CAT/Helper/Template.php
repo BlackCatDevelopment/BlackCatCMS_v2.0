@@ -165,16 +165,11 @@ if (!class_exists('CAT_Helper_Template'))
             else
                 $tpl_path = CAT_ENGINE_PATH.'/templates/'.$for.'/templates/';
 
-            //$info  = CAT_Helper_Addons::checkInfo($tpl_path);
             $paths = CAT_Helper_Directory::findDirectories($tpl_path,array('remove_prefix'=>true));
-
-            //if(isset($info['module_variants']) && is_array($info['module_variants']) && count($info['module_variants'])) {
-            //    $variants = $info['module_variants'];
-            //    array_unshift($variants,'');
-            //}
 
             if(count($paths))
                 $variants = array_merge($variants,$paths);
+
             return $variants;
         }   // end function getVariants()
         

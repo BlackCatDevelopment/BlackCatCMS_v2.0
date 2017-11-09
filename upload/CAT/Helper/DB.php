@@ -381,6 +381,33 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         }   // end function getConfig()
 
         /**
+         * replacement for old class.order.php; re-orders items
+         *
+         * @access public
+         * @param  string  $table - table name without prefix
+         * @param  integer $id - element ID
+         * @param  string  $order_field - column name, default 'position'
+         * @param  string  $id_field - column name, default 'id'
+         * @return
+         **/
+        public static function getNext(string $table, int $id, string $order_field='position', string $parent_field='parent')
+        {
+            $qb = self::qb()
+                ->select('max(:field) AS `next`')
+                ->from(self::$prefix.$table,'t1')
+                ->where($parent_field.'=:id')
+                ->setParameter('id',$id)
+                ->setParameter('field',$order_field);
+            $sth = $qb->execute();
+            $data = $sth->fetch();
+            if(is_int($data['next'])) {
+                return $data['next']++;
+            }
+            return 1; // ignore errors
+        }   // end function getNext()
+
+
+        /**
          * check for DB error
          *
          * @access public
@@ -390,14 +417,19 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         {
             return ( $this->lasterror ) ? true : false;
         }   // end function isError()
-        
+
         /**
          * replacement for old class.order.php; re-orders items
          *
          * @access public
+         * @param  string  $table - table name without prefix
+         * @param  integer $id - element ID
+         * @param  integer $newpos - new position
+         * @param  string  $order_field - column name, default 'position'
+         * @param  string  $id_field - column name, default 'id'
          * @return
          **/
-        public function reorder($table,$id,$newpos,$order_field='position',$id_field='id')
+        public function reorder(string $table, integer $id, integer $newpos, string $order_field='position', string $id_field='id')
         {
             // get original position
             $qb = self::qb()

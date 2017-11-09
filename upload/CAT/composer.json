@@ -8,6 +8,8 @@
         "mrclay/minify": "2.*",
         "matthiasmullie/minify": ">=1.2.41",
         "kriswallsmith/assetic": "1.*",
-        "verot/class.upload.php": "dev-master"
+        "verot/class.upload.php": "dev-master",
+        "pclzip/pclzip": ">=2.8"
+
     }
 }

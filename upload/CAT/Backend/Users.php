@@ -233,7 +233,7 @@ if (!class_exists('CAT_Backend_Users'))
             if(!$userID)
                 $userID = self::router()->getParam(-1);
 
-            if(!$userID || !is_numeric($userID) || !CAT_Helper_Page::exists($userID))
+            if(!$userID || !is_numeric($userID) || !CAT_Helper_Users::exists($userID))
                 CAT_Object::printFatalError('Invalid data')
                 . (self::$debug ? '(CAT_Backend_Users::getUserID())' : '');;
 
@@ -250,36 +250,9 @@ if (!class_exists('CAT_Backend_Users'))
             return CAT_Helper_FormBuilder::generate(
                 'edit_user',
                 self::getSettings(),
-                'fieldset',
                 $data
             );
-
-/*
-            $form = CAT_Backend::initForm();
-            $form->loadFile('users.forms.php',__dir__.'/forms');
-            $form->setForm('edit_user');
-            $form->setAttr('class','tabbed');
-            if(isset($data['extended']) && is_array($data['extended']))
-            {
-                $form->addElement(array(
-                    'type' => 'legend',
-                    'label' => 'Additional options',
-                ));
-                foreach($data['extended'] as $opt => $val)
-                {
-                    $form->addElement(array(
-                        'type' => 'text',
-                        'name' => $opt,
-                        'label' => $opt,
-                        'value' => $val
-                    ));
-                }
-            }
-            $form->setData($data);
-            return $form->getForm();
-*/
         }   // end function renderForm()
-        
 
     } // class CAT_Helper_Users
 

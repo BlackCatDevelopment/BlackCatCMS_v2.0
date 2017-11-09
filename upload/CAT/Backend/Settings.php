@@ -62,7 +62,7 @@ if (!class_exists('CAT_Backend_Settings'))
                 $data = self::db()->query(
                     'SELECT * FROM `:prefix:settings` AS `t1` '
                     . 'JOIN `:prefix:forms_fieldtypes` AS `t2` '
-                    . 'ON `t1`.`fieldtype`=`t2`.`id` '
+                    . 'ON `t1`.`fieldtype`=`t2`.`type_id` '
                     . 'WHERE `is_editable`=? '
                     . 'ORDER BY `region`',
                     array('Y')
@@ -102,7 +102,7 @@ if (!class_exists('CAT_Backend_Settings'))
                 self::tpl()->output(
                     'backend_settings',
                     array(
-                        'form'   => $form->getForm(),
+                        'form'   => $form->render(true),
                     )
                 );
                 CAT_Backend::print_footer();

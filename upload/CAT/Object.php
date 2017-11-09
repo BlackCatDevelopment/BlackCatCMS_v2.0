@@ -174,7 +174,6 @@ if(!class_exists('CAT_Object',false))
                     'title' => 'menu_title',
                     // for page selects
                     'value' => 'page_id',
-                    'space' => '|- ',
                 )));
             return CAT_Object::$objects['list'];
         }   // end function list()
@@ -388,7 +387,7 @@ if(!class_exists('CAT_Object',false))
 // TODO: Eventuell gibt es spaeter spezielle Berechtigungen fuer den Zugriff
 // auf jQuery
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            $basedir = CAT_ENGINE_PATH.'/modules/lib_jquery/plugins';
+            $basedir = CAT_ENGINE_PATH.'/modules/lib_javascript/plugins';
             if(!$type)
             {
                 $data = CAT_Helper_Directory::getInstance(true)

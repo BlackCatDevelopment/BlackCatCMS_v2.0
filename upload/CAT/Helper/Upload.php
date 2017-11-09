@@ -67,6 +67,7 @@ if (!class_exists('CAT_Helper_Upload'))
             }
             else
             {
+                $files[] = $_FILES[$param_name];
             }
 
             // do we have a list of upload handles?

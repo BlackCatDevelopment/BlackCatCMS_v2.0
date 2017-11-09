@@ -57,6 +57,19 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
          * @access public
          * @return
          **/
+        public static function exists($user_id)
+        {
+            $data = self::getUsers(array('user_id'=>$user_id),true);
+            if($data && is_array($data) && count($data))
+                return true;
+            return false;
+        }   // end function exists()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function getDetails($user_id)
         {
             $data = self::getUsers(array('user_id'=>$user_id),true);

@@ -59,14 +59,18 @@ spl_autoload_register(function($class)
 });
 
 //******************************************************************************
-// Register Whoops as Exception handler
+// Register jQuery / JavaScripts base path
 //******************************************************************************
-if(CAT_Backend::isBackend())
-{
-    #$whoops = new \Whoops\Run;
-    #$whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
-    #$whoops->register();
-}
+CAT_Registry::register(
+    'CAT_JQUERY_PATH',
+    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/lib_javascript/'),
+    true
+);
+CAT_Registry::register(
+    'CAT_JS_PLUGINS_PATH',
+    CAT_JQUERY_PATH.'/plugins/',
+    true
+);
 
 //******************************************************************************
 // Get website settings and register as globals

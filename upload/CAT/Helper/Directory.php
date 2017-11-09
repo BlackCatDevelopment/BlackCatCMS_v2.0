@@ -220,7 +220,7 @@ if (!class_exists('CAT_Helper_Directory'))
             $dir = self::sanitizePath($dir);
 
             if(isset($options['remove_prefix']) && is_bool($options['remove_prefix']))
-                $options['remove_prefix'] = self::sanitizePath($dir);
+                $options['remove_prefix'] = self::sanitizePath($dir).'/';
 
             $directories = array();
             foreach(scandir($dir) as $file) {

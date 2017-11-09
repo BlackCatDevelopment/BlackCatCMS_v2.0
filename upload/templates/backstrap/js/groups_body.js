@@ -83,7 +83,7 @@ $(function() {
                                 data    : $(_this).find('form').serialize(),
                                 success : function(data, status) {
                                     _this.parent().parent().remove();
-                                    $('div.infopanel span#message').html(cattranslate('Group member successfully removed'));
+                                    $('div.infopanel span#message').html($.cattranslate('Group member successfully removed'));
                                     $('div.infopanel').removeClass('alert-danger').addClass('alert-success').show();
                                 }
                             });
@@ -92,9 +92,9 @@ $(function() {
                 }
                 else {
                     $('div.infopanel span#message').html(
-                        cattranslate('No addable users found') + '<br />' +
-                        cattranslate('Please note') + ': ' +
-                        cattranslate('Users of group "Administrators" and users that are already member of this group cannot be added.')
+                        $.cattranslate('No addable users found') + '<br />' +
+                        $.cattranslate('Please note') + ': ' +
+                        $.cattranslate('Users of group "Administrators" and users that are already member of this group cannot be added.')
                     );
                     $('div.infopanel').removeClass('alert-danger').addClass('alert-warning').show();
                 }

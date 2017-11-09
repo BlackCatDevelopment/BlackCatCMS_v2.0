@@ -85,7 +85,7 @@
         </div>
 
 {* get the name of the language file; allows to check if it exists *}
-{$file = cat('modules/lib_jquery/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
+{$file = cat('modules/lib_javascript/plugins/jquery.datatables/i18n/',lower($LANGUAGE),'.json')}
 <script type="text/javascript">
 //<![CDATA[
     $(function() {

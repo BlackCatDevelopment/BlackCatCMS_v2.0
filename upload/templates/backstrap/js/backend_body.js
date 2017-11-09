@@ -18,8 +18,8 @@ $(function() {
     /* show javascript errors as modal */
     function bsErrorMsg(message)
     {
-        $('#bsDialog .modal-title').html('<div class="text-danger"><i class="fa fa-fw fa-warning"></i> '+cattranslate('Sorry, there was an error')+'</div>');
-        $('#bsDialog .modal-body').html('<div class="text-danger">'+cattranslate(message)+'</div>');
+        $('#bsDialog .modal-title').html('<div class="text-danger"><i class="fa fa-fw fa-warning"></i> '+$.cattranslate('Sorry, there was an error')+'</div>');
+        $('#bsDialog .modal-body').html('<div class="text-danger">'+$.cattranslate(message)+'</div>');
         $('#bsDialog').modal('show');
     }
 
@@ -76,7 +76,7 @@ $(function() {
     // allow to add a new page everywhere
     $("a.bsAddPage").unbind("click").on("click",function(e) {
         e.preventDefault();
-        $("#add_page_modal .modal-title").text(cattranslate("Add page"));
+        $("#add_page_modal .modal-title").text($.cattranslate("Add page"));
         // remove buttons from form
         $("#add_page_modal .form-group.row.buttonline").remove();
         //$("#add_page_modal form").fieldset_to_tabs();
@@ -166,7 +166,7 @@ $(function() {
     });
 
     // style file upload form fields
-    $(":file").filestyle({buttonName:"btn-primary"});
+    //$(":file").filestyle({buttonName:"btn-primary"});
 
     // add session timer
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());

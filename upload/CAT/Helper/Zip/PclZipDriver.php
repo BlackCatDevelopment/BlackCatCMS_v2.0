@@ -1,33 +1,21 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013, Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
-    @include dirname(__FILE__).'/../Object.php';
-}
+   @author          Black Cat Development
+   @copyright       2017 Black Cat Development
+   @link            https://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
 
-if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
+*/
+
+if(!class_exists('CAT_Helper_Zip_PclZipDriver',false))
 {
 
 	class CAT_Helper_Zip_PclZipDriver extends CAT_Object
@@ -41,6 +29,7 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
 	    private   $dirh;
 	    //
 	    protected $_config = array(
+            'PATH' => false,
 	        // ----- PclZip create options: -----
 	        // PCLZIP_OPT_ADD_PATH, "/abs/path/to"
 			// ability to insert a path
@@ -72,13 +61,14 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
 	    /**
 	     * constructor; creates an internal PclZip object
 	     **/
-		public function __construct( $zipfile = NULL ) {
-		    $this->dirh = new CAT_Helper_Directory();
-			if ( ! class_exists( 'PclZip', false ) ) {
-			    define( 'PCLZIP_TEMPORARY_DIR', $this->dirh->sanitizePath( CAT_PATH.'/temp' ) );
-				@include $this->dirh->sanitizePath( CAT_PATH.'/modules/lib_pclzip/pclzip.lib.php' );
+		public function __construct($zipfile=NULL)
+        {
+			if(!class_exists('PclZip',false))
+            {
+			    define( 'PCLZIP_TEMPORARY_DIR', CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/temp'));
+				@include CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/CAT/vendor/pclzip/pclzip/pclzip.lib.php');
 			}
-			$this->config( 'Path', $this->dirh->sanitizePath( CAT_PATH.'/temp' ) );
+			$this->config('Path',PCLZIP_TEMPORARY_DIR);
 		    $this->zip = new PclZip($zipfile);
 		    return $this->zip;
 		}   // end function __construct()
@@ -94,6 +84,16 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
                 return $this->zip->$method($attr[0]);
             }
         }   // end function __call()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function config($attr,$value)
+        {
+            $this->_config[$attr] = $value;
+        }   // end function config()
 
 		/**
 		 * accessor to PclZip->listContent()
@@ -138,7 +138,7 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
 
 			if ( is_scalar($p_filelist) )
 			{
-			    #$p_filelist = $this->dirh->sanitizePath($p_filelist);
+			    #$p_filelist = CAT_Helper_Directory::sanitizePath($p_filelist);
 			}
 
 			$code = '$ret = $this->zip->add( $p_filelist'
@@ -171,7 +171,7 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
 
 			if ( is_scalar($p_filelist) )
 			{
-			    $p_filelist = $this->dirh->sanitizePath($p_filelist);
+			    $p_filelist = CAT_Helper_Directory::sanitizePath($p_filelist);
 			}
 
 			$code = '$ret = $this->zip->create( $p_filelist'
@@ -192,17 +192,18 @@ if ( ! class_exists( 'CAT_Helper_Zip_PclZipDriver', false ) )
 		 **/
 		public function extract()
 		{
-
 		    // generate function call
-			$options = array( 'PCLZIP_OPT_PATH, "'.$this->dirh->sanitizePath($this->_config['Path']).'"' );
+			$options = array(
+                'PCLZIP_OPT_PATH, "'.CAT_Helper_Directory::sanitizePath($this->_config['Path']).'"'
+            );
 			$ret     = NULL;
 			if ( isset($this->_config['addPath']) && $this->_config['addPath'] != '' )
 			{
-			    $options[] = 'PCLZIP_OPT_ADD_PATH, "'.$this->dirh->sanitizePath($this->_config['addPath']).'"';
+			    $options[] = 'PCLZIP_OPT_ADD_PATH, "'.CAT_Helper_Directory::sanitizePath($this->_config['addPath']).'"';
 			}
 			if ( isset($this->_config['removePath']) && $this->_config['removePath'] != '' )
 			{
-			    $options[] = 'PCLZIP_OPT_REMOVE_PATH, "'.$this->dirh->sanitizePath($this->_config['removePath']).'"';
+			    $options[] = 'PCLZIP_OPT_REMOVE_PATH, "'.CAT_Helper_Directory::sanitizePath($this->_config['removePath']).'"';
 			}
 			if ( isset($this->_config['removeAllPath']) && $this->_config['removeAllPath'] != '' )
 			{

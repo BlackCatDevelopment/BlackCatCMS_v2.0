@@ -12,11 +12,11 @@ $(function() {
         e.preventDefault();
         var id = $(this).data("id");
         $(".modal-body").html(
-            cattranslate("Do you really want to delete this user?") +
+            $.cattranslate("Do you really want to delete this user?") +
             "<br />" +
             $(this).data("name")
         );
-        $(".modal-title").text(cattranslate("Delete user",undefined,undefined,"BE"));
+        $(".modal-title").text($.cattranslate("Delete user",undefined,undefined,"BE"));
         $("#modal_dialog").modal("show");
         $(".modal-content button.btn-primary").unbind("click").on("click",function(e) {
             e.preventDefault();
@@ -44,7 +44,7 @@ $(function() {
                 },
                 success : function(data, status) {
 console.log(data);
-                    $(".modal-title").text(cattranslate("Edit user",undefined,undefined,"BE"));
+                    $(".modal-title").text($.cattranslate("Edit user",undefined,undefined,"BE"));
                     $(".modal-body").html(data.form);
                     $('form').fieldset_to_tabs();
                     $('div.fbbuttonline').remove();

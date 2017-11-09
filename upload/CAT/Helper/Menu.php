@@ -76,7 +76,7 @@ if(!class_exists('CAT_Helper_Menu',false))
                 self::$list = self::lb();
             if($reset)
             {
-                self::$list->reset();
+                self::$list->initialize();
                 self::$list->set(
                     array(
                         '__id_key'    => 'page_id',

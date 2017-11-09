@@ -78,11 +78,11 @@
                                 e.preventDefault();
                                 var plugin = $(this).data('plugin');
                                 $('.modal-body').html(
-                                    cattranslate('Do you really want to unlink the selected plugin?',undefined,undefined,'backstrap') +
+                                    $.cattranslate('Do you really want to unlink the selected plugin?',undefined,undefined,'backstrap') +
                                     '<br />' +
                                     plugin
                                 );
-                                $('.modal-title').text(cattranslate('Remove plugin',undefined,undefined,'backstrap'));
+                                $('.modal-title').text($.cattranslate('Remove plugin',undefined,undefined,'backstrap'));
                                 $('#modal_dialog').modal('show');
                                 $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
                                     e.preventDefault();
@@ -105,12 +105,12 @@ console.log(data);
                                 e.preventDefault();
                                 var file = $(this).data('file');
                                 $('.modal-body').html(
-                                    cattranslate('Do you really want to unlink the selected file?',undefined,undefined,'backstrap') +
+                                    $.cattranslate('Do you really want to unlink the selected file?',undefined,undefined,'backstrap') +
                                     '<br />' +
                                     file
                                 );
                                 //string,elem,attributes,module
-                                $('.modal-title').text(cattranslate('Unlink plugin file',undefined,undefined,'backstrap'));
+                                $('.modal-title').text($.cattranslate('Unlink plugin file',undefined,undefined,'backstrap'));
                                 $('#modal_dialog').modal('show');
                                 $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
                                     e.preventDefault();
@@ -206,7 +206,7 @@ console.log(data);
                     if(data.length)
                     {
                         var $clone  = _this.parent().parent().clone();
-                        $clone.find('label').html(cattranslate('Page title'));
+                        $clone.find('label').html($.cattranslate('Page title'));
                         var $select = $clone.find('select');
                         $select.find('option').remove();
                         $select.attr('name','page').attr('id','page');
@@ -225,11 +225,11 @@ console.log(data);
     $('.fa-chain-broken').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
         $('.modal-body').html(
-            cattranslate('Do you really want to unlink the selected page?') +
+            $.cattranslate('Do you really want to unlink the selected page?') +
             '<br />' +
             $(this).parent().next('td').next('td').text()
         );
-        $('.modal-title').text(cattranslate('Remove relation'));
+        $('.modal-title').text($.cattranslate('Remove relation'));
         $('#modal_dialog').modal('show');
         $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
@@ -254,7 +254,7 @@ console.log(data);
     var pluginform = $('select#jquery_plugin').parent().parent();
     $('button#bsAddPlugin').unbind('click').on('click', function(e) {
         $('.modal-body').html(pluginform);
-        $('.modal-title').text(cattranslate('Add jQuery Plugin'));
+        $('.modal-title').text($.cattranslate('Add jQuery Plugin'));
         $('#modal_dialog').modal('show');
         $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
@@ -277,11 +277,11 @@ console.log(data);
     $('.fa-trash').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
         $('#bsDialog .modal-body').html(
-            cattranslate('Do you really want to delete this section?',undefined,undefined,'BE') +
+            $.cattranslate('Do you really want to delete this section?',undefined,undefined,'BE') +
             '<br />' +
-            cattranslate('ID') + ': ' + id + ' | ' + cattranslate('Module',undefined,undefined,'BE') + ': ' + $(this).data('module')
+            $.cattranslate('ID') + ': ' + id + ' | ' + $.cattranslate('Module',undefined,undefined,'BE') + ': ' + $(this).data('module')
         );
-        $('#bsDialog .modal-title').html('<i class="fa fa-fw fa-warning text-danger"></i> '+cattranslate('Delete section'));
+        $('#bsDialog .modal-title').html('<i class="fa fa-fw fa-warning text-danger"></i> '+$.cattranslate('Delete section'));
         $('#bsDialog ').modal('show');
         $('#bsDialog .modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
@@ -294,7 +294,7 @@ console.log(data);
                     section_id: id
                 },
                 success : function(data, status) {
-                    BCGrowl(cattranslate(data.message));
+                    BCGrowl($.cattranslate(data.message));
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
@@ -308,9 +308,9 @@ console.log(data);
     $('.fa-life-saver').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
         $('.modal-body').html(
-            cattranslate('Do you really want to recover this section?')
+            $.cattranslate('Do you really want to recover this section?')
         );
-        $('.modal-title').html('<i class="fa fa-fw fa-life-saver"></i> '+cattranslate('Recover section'));
+        $('.modal-title').html('<i class="fa fa-fw fa-life-saver"></i> '+$.cattranslate('Recover section'));
         $('#modal_dialog').modal('show');
         $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
@@ -319,7 +319,7 @@ console.log(data);
                 url     : CAT_ADMIN_URL + '/section/recover/' + id,
                 dataType: 'json',
                 success : function(data, status) {
-                    BCGrowl(cattranslate(data.message));
+                    BCGrowl($.cattranslate(data.message));
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
@@ -343,7 +343,7 @@ console.log(data);
                     page_id: pageID
                 },
                 success : function(data, status) {
-                    BCGrowl(cattranslate(data.message));
+                    BCGrowl($.cattranslate(data.message));
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
@@ -356,7 +356,7 @@ console.log(data);
     $('.fa-external-link').unbind('click').on('click', function(e) {
         var dialog = $('#bsDialog').clone().detach();
         var id     = $(this).data('id');
-        $(dialog).find('.modal-title').text(cattranslate('Move section to another page'));
+        $(dialog).find('.modal-title').text($.cattranslate('Move section to another page'));
         $.ajax({
             type    : 'POST',
             url     : CAT_ADMIN_URL + '/page',
@@ -387,7 +387,7 @@ console.log(data);
                         success : function(data, status) {
                             if(data.success) {
                                 if(data.message) {
-                                    BCGrowl(cattranslate(data.message));
+                                    BCGrowl($.cattranslate(data.message));
                                 }
                                 window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                             }
@@ -433,7 +433,7 @@ console.log(data);
             ;
 
         $(modal).find('.modal-body').html(clone.html());
-        $(modal).find('.modal-title').text(cattranslate('Set publishing period',undefined,undefined,'backstrap'));
+        $(modal).find('.modal-title').text($.cattranslate('Set publishing period',undefined,undefined,'backstrap'));
 
         //$.datetimepicker.setLocale('de');
         $(modal).find('.modal-body input.datepicker').datetimepicker({
@@ -543,7 +543,7 @@ console.log(data);
                             .attr('data-pubend',data.publ_end)
                             .attr('data-timestart',data.publ_by_time_start)
                             .attr('data-timeend',data.publ_by_time_end);
-                        BCGrowl(cattranslate('Successfully saved'));
+                        BCGrowl($.cattranslate('Successfully saved'));
                     }
                 });
             }
