@@ -13,9 +13,9 @@
             {foreach $groups group}
                 <tr>
                     <td>
-                        <span class="fa fa-fw{if $group.group_builtin == 'Y'} fa-anchor" data-title="{translate('Built-in objects cannot be removed')}"{else}"{/if}></span>
+                        <span class="fa fa-fw{if $group.group_builtin == 'Y'} fa-anchor" title="{translate('Built-in objects cannot be removed')}"{else}"{/if}></span>
                         {if user_has_perm('groups_delete') && $group.group_builtin != 'Y'}
-                        <a href="#" class="delete" data-title="{translate('Delete group')}" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}" data-name="{$group.group_title}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>
+                        <a href="#" class="delete" title="{translate('Delete group')}" data-url="{$CAT_ADMIN_URL}/groups/delete" data-id="{$group.group_id}" data-name="{$group.group_title}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>
                         {/if}
                         {if user_has_perm('groups_users')}
                         {if $group.member_count > 0}<a href="#" class="members" data-toggle="tooltip" title="{translate('Manage group members')}" data-group-id="{$group.group_id}"><span class="fa fa-fw fa-groups"></span></a>{else}<span class="fa fa-fw"></span>{/if}
@@ -25,8 +25,8 @@
                         {/if}
                     </td>
                     <td>{$group.group_id}</td>
-                    <td><a href="#" class="editable" data-name="group_title" data-type="text" data-pk="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/groups/edit" data-title="{translate('Title')}">{$group.group_title}</a></td>
-                    <td><a href="#" class="editable" data-name="group_description" data-type="text" data-pk="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/groups/edit" data-title="{translate('Description')}">{$group.group_description}</a></td>
+                    <td><a href="#" class="editable" data-name="group_title" data-type="text" data-pk="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/groups/edit" title="{translate('Title')}">{$group.group_title}</a></td>
+                    <td><a href="#" class="editable" data-name="group_description" data-type="text" data-pk="{$group.group_id}" data-url="{$CAT_ADMIN_URL}/groups/edit" title="{translate('Description')}">{$group.group_description}</a></td>
                     <td>{$group.member_count}</td>
                     <td>{$group.role_count}</td>
                 </tr>
@@ -36,7 +36,7 @@
 
         <span class="fa fa-fw fa-groups text-primary"></span> = {translate('Edit group members')}
         <span class="fa fa-fw fa-user-plus text-success"></span> = {translate('Add group members')}
-        <span data-title="{translate('Built-in objects cannot be removed')}"><span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}</span>
+        <span title="{translate('Built-in objects cannot be removed')}"><span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}</span>
         <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
         {if user_has_perm('groups_add')}
@@ -70,7 +70,7 @@
                     <tr>
                         <td data-col="1">
                             {if user_has_perm('groups_users')}
-                            <a href="#" class="deleteuser" data-title="{translate('Remove group member')}" data-id="" data-username="" data-url="{$CAT_ADMIN_URL}/groups/deleteuser">
+                            <a href="#" class="deleteuser" title="{translate('Remove group member')}" data-id="" data-username="" data-url="{$CAT_ADMIN_URL}/groups/deleteuser">
                               <span class="fa fa-fw fa-trash text-danger"></span>
                             </a>
                             {/if}

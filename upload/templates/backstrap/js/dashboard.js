@@ -88,14 +88,14 @@ $(function() {
             // make sure this only fires once
             if (this === ui.item.parent()[0]) {
                 $(this).removeClass('bs_highlight');
-                $(this).find('.panel').effect("highlight","slow");
+                $(this).find('.card').effect("highlight","slow");
                 $.ajax({
                     type    : 'POST',
                     url     : CAT_ADMIN_URL + '/dashboard/order',
                     data    : {
                         col      : $(this).data('col'),
                         row      : ui.item.index()+1,
-                        id       : ui.item.find('.panel').data('id'),
+                        id       : ui.item.find('.card').data('id'),
                         dashboard: dashboard_id
                     },
                     dataType: 'json'
@@ -105,11 +105,11 @@ $(function() {
     }).disableSelection();
 
     // toggle panel
-    $(document).on('click', '.panel-heading span.toggle', function(e){
+    $(document).on('click', '.card-header span.toggle', function(e){
         var $this = $(this);
-        if(!$this.hasClass('panel-collapsed')) {
-            $this.parents('.panel').find('.panel-body').slideUp();
-            $this.addClass('panel-collapsed');
+        if(!$this.hasClass('card-collapsed')) {
+            $this.parents('.card').find('.card-body').slideUp();
+            $this.addClass('card-collapsed');
             $this.removeClass('fa-eye').addClass('fa-eye-slash');
             $.ajax({
                 type    : 'POST',
@@ -122,8 +122,8 @@ $(function() {
                 dataType: 'json'
             });
         } else {
-            $this.parents('.panel').find('.panel-body').slideDown();
-            $this.removeClass('panel-collapsed');
+            $this.parents('.card').find('.card-body').slideDown();
+            $this.removeClass('card-collapsed');
             $this.removeClass('fa-eye-slash').addClass('fa-eye');
             $.ajax({
                 type    : 'POST',
@@ -139,7 +139,7 @@ $(function() {
     });
 
     // remove panel
-    $(document).on('click', '.panel-heading span.remove', function(e){
+    $(document).on('click', '.card-header span.remove', function(e){
         var $this = $(this);
         $('#modal_remove').modal('show');
         $('#modal_remove button.btn-primary').unbind('click').on('click',function(e) {

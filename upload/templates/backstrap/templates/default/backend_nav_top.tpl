@@ -1,60 +1,51 @@
+{template dropdownmenu data}
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            {foreach $data item}
+            <li{if $item.children} class="dropdown-submenu"{/if}>
+              <a class="dropdown-item{if $item.children} dropdown-toggle{/if}" href="{$item.href}"{if $item.children} data-toggle="dropdown"{/if}>{$item.title}</a>
+              {if $item.children}{dropdownmenu $item.children}{/if}
+            </li>
+            {/foreach}
+          </ul>
+{/template}
 {template topmenu data}
         {foreach $data item}{if $item.name != 'preferences' && $item.name != 'page' && $item != 1}
-        <li{if $item.children} class="dropdown{if $item.level>0}-submenu{/if}{if $item.is_current || $item.is_in_trail} active{/if}"{/if}>
-          <a href="{$item.href}"{if $item.children} class="dropdown-toggle" data-toggle="dropdown" aria-has-popup="true" aria-expanded="false"{/if}>
+        <li class="nav-item{if $item.children} dropdown{/if}{if $item.is_current || $item.is_in_trail} active{/if}">
+          <a href="{$item.href}" class="nav-link{if $item.children} dropdown-toggle{/if}"{if $item.children} data-toggle="dropdown" aria-has-popup="true" aria-expanded="false"{/if}>
             <i class="fa fa-fw fa-{$item.name}"></i>
             {translate($item.title)}
-            {if $item.children}<i class="fa fa-caret-{if $item.level>0}right{else}down{/if}"></i>{/if}
           </a>
-          {if $item.children}
-          <ul class="dropdown-menu">
-            {topmenu $item.children}
-          </ul>
-          {/if}
+          {if $item.children}{dropdownmenu $item.children}{/if}
         </li>{/if}{/foreach}
 {/template}
-<div class="container-fluid">
-  <div class="row">
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="navbar-header col-sm-3 col-md-2">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">{translate('Toggle navigation')}</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
-      </div>
-      <div class="navbar-collapse collapse">
-        <ul class="nav navbar-nav">
+  <header>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" id="bsTop">
+      <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarMainContent" aria-controls="navbarMainContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-collapse collapse" id="navbarMainContent">
+        <ul class="navbar-nav mr-auto">
           {topmenu $MAIN_MENU_RECURSIVE}
         </ul>
-        <ul class="nav navbar-right navbar-nav">
-          <li class="dropdown">
-            <a class="dropdown-toggle" data-toggle="dropdown" title="{$meta.USER.display_name}" href="#">
-              <i class="fa fa-user fa-fw"></i> {$meta.USER.display_name} <i class="fa fa-caret-down"></i>
+        <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+          <li class="nav-item dropdown">
+            <a class="nav-item nav-link dropdown-toggle mr-md-2" id="bsUserDropdown" data-toggle="dropdown" title="{$meta.USER.display_name}" href="#" aria-haspopup="true" aria-expanded="false">
+              <i class="fa fa-user fa-fw"></i> {$meta.USER.display_name}
             </a>
-            <ul class="dropdown-menu dropdown-user">
-              <li><a href="#"><i class="fa fa-user fa-fw"></i> {translate('User Profile')}</a></li>
-              <li class="divider"></li>
-              <li><a href="{$CAT_ADMIN_URL}/logout/"><i class="fa fa-sign-out fa-fw"></i> {translate('Logout')}</a></li>
-            </ul>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="bsUserDropdown">
+              <a href="#" class="dropdown-item active"><i class="fa fa-user fa-fw"></i> {translate('User Profile')}</a>
+              <a href="{$CAT_ADMIN_URL}/logout/" class="dropdown-item"><i class="fa fa-sign-out fa-fw"></i> {translate('Logout')}</a>
+            </div>
           </li>
         </ul>{* /.navbar-top-links *}
       </div>{* /.navbar-collapse *}
     </nav>
-  </div>{* /.row *}
-  <div class="row breadcrumb">
-    <div class="col-md-10 col-md-offset-2" style="padding:0;">
-      <section id="subheader" role="navigation">
-        <div id="contextual" class="pull-right"></div>
-        <ol class="breadcrumb">
-          <li><a href="{$CAT_ADMIN_URL}">{translate('Home')}</a></li>
-          {if $meta.SECTION}<li><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}">{translate($meta.SECTION)}</a></li>{/if}
-          {if $meta.ACTION}<li><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}/{$meta.ACTION}">{translate($meta.ACTION)}</a></li>{/if}
-        </ol>
-      </section>
-    </div>
-  </div>
-</div>{* /.container-fluid *}
-
+    <nav aria-label="breadcrumb" role="navigation" class="mt50" id="bsBreadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item{if $meta.SECTION} active" aria-current="page"{else}"{/if}><a href="{$CAT_ADMIN_URL}">{translate('Home')}</a></li>
+        {if $meta.SECTION}<li class="breadcrumb-item{if ! $meta.ACTION} active" aria-current="page"{else}"{/if}><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}">{translate($meta.SECTION)}</a></li>{/if}
+        {if $meta.ACTION}<li class="breadcrumb-item active" aria-current="page"><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}/{$meta.ACTION}">{translate($meta.ACTION)}</a></li>{/if}
+      </ol>
+    </nav>
+  </header>

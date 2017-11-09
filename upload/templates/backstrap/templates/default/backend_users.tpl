@@ -26,15 +26,15 @@
                 {/if}
             </td>
             <td>{$user.user_id}</td>
-            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="title" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} data-title="{translate('Username')}">{$user.username}</a></td>
-            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="display_name" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} data-title="{translate('Display name')}">{$user.display_name}</a></td>
-            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="email" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} data-title="{translate('eMail')}">{$user.email}</a></td>
+            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="title" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} title="{translate('Username')}">{$user.username}</a></td>
+            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="display_name" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} title="{translate('Display name')}">{$user.display_name}</a></td>
+            <td><a href="#" {if user_has_perm('users_edit')}class="editable" data-name="email" data-type="text" data-pk="{$user.user_id}" data-url="{$CAT_ADMIN_URL}/users/edit"{/if} title="{translate('eMail')}">{$user.email}</a></td>
             <td>
                 {if user_has_perm('users_edit') && count($user.groups)}
                 <div class="pillbox" data-initialize="pillbox" id="groupList">
                     <ul class="clearfix pill-group">
                         {foreach $user.groups group}
-                        <li class="btn btn-default btn-xs pill" data-value="foo">
+                        <li class="btn btn-default btn-sm pill" data-value="foo">
                             <span{if $group.primary == 'Y'} class="text-primary"{/if}>{$group.group_title}</span>
                             <span class="glyphicon glyphicon-close"><span class="sr-only">{translate('Remove')}</span></span>
                         </li>

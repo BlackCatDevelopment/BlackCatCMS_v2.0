@@ -17,7 +17,7 @@
                     <span>{translate('Delete')}</span>
                 </button><br /><br />
 
-                <div id="progress" class="progress hidden">
+                <div id="progress" class="progress" hidden>
                     <div class="progress-bar progress-bar-success"></div>
                 </div>
 

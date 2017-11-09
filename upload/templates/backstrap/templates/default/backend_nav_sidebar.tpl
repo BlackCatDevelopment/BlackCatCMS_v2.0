@@ -1,27 +1,39 @@
-{template pagetree data}
-    {foreach $data item}
-    <li>
-        <span class="pull-left fa fa-fw{if $item.children} fa-caret-right" id="pg{$item.page_id}" data-toggle="collapse" data-target="#sub{$item.page_id}" aria-expanded="false{/if}"></span>
-        <a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}" class="hasTooltip">{$item.menu_title}</a>
-        <div class="hidden">
-            {translate('Page ID')}: {$item.page_id}<br />
-            {if count($_.sections[$item.page_id])}
-              <strong>{translate('Sections')}:</strong><br />
-              {foreach $_.sections[$item.page_id] secitem}{foreach $secitem section}{$section.module} (ID: {$section.section_id})<br />{/foreach}{/foreach}
-            {/if}
-            {if $item.template}<strong>{translate('Template')}:</strong> {$item.template}{/if}
-        </div>
-        {if $item.children}
-        <ul class="nav collapse submenu" id="sub{$item.page_id}" role="menu" aria-labelledby="pg{$item.page_id}">
-            {pagetree $item.children}
-        </ul>{/if}
-    </li>
-    {/foreach}
+{template submenu data}
+          <ul class="flex-column pl-3 nav">
+          {foreach $data item}
+            <li class="nav-item">
+              <span class="nav-link{if $item.children} arrow{/if}"{if $item.children} data-toggle="collapse" data-target="#sub-{$item.page_id}"{/if}>
+                {$item.menu_title}
+                <a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}"><i class="fa fa-fw fa-edit"></i></a>
+              </span>
+              {if $item.children}
+                <div class="collapse" id="sub-{$item.page_id}" aria-expanded="false">
+                {submenu $item.children}
+                </div>
+              {/if}
+            </li>
+          {/foreach}
+          </ul>
 {/template}
-<div class="col-sm-3 col-md-2 sidebar-offcanvas" id="sidebar" role="navigation">
-    <ul class="nav nav-sidebar">
-        {pagetree $pages}
-    </ul><br /><br />
-    <a href="{$_root.CAT_ADMIN_URL}/page/add" class="btn btn-primary">{translate('Add page')}</a>
-</div>
 
+{template pagetree data}
+  {foreach $data item}
+      <li class="nav-item">
+        <span class="nav-link{if $item.children} arrow{/if}"{if $item.children} data-toggle="collapse" data-target="#sub-{$item.page_id}"{/if}>
+          {$item.menu_title}
+          <a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}"><i class="fa fa-fw fa-edit"></i></a>
+        </span>
+        {if $item.children}
+        <div class="collapse" id="sub-{$item.page_id}" aria-expanded="false">
+        {submenu $item.children}
+        </div>
+        {/if}
+      </li>
+  {/foreach}
+{/template}
+
+    <div class="col-2 collapse d-md-flex bg-light pt-2 h-100" id="sidebar">
+      <ul class="nav flex-column flex-nowrap">
+      {pagetree $pages}
+      </ul>
+    </div>

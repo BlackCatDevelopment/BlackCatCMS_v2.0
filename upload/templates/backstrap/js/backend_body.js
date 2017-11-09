@@ -73,6 +73,33 @@ $(function() {
         return false;
     });
 
+    // allow to add a new page everywhere
+    $("a.bsAddPage").unbind("click").on("click",function(e) {
+        e.preventDefault();
+        $("#add_page_modal .modal-title").text(cattranslate("Add page"));
+        // remove buttons from form
+        $("#add_page_modal .form-group.row.buttonline").remove();
+        //$("#add_page_modal form").fieldset_to_tabs();
+        //$("div.fbform form#be_page_settings ul.nav.nav-tabs.inner a:last").tab("show");
+        $("#add_page_modal").modal("show");
+        var _this = $(this);
+        $("#add_page_modal .modal-content button.btn-primary").unbind("click").on("click",function(e) {
+            //console.log($("div.fbform form#be_page_settings").serialize());
+            e.preventDefault();
+            $("#add_page_modal").modal("hide");
+            $.ajax({
+                type    : "POST",
+                url     : CAT_ADMIN_URL+"/page/add/",
+                dataType: "json",
+                data    : $("#add_page_modal form").serialize(),
+                success : function(data, status) {
+                    BCGrowl(data.message,data.success);
+                    window.location.href = CAT_ADMIN_URL + "/page/edit/" + data.page_id
+                }
+            });
+        });
+    });
+
     // handle nested tabs
     $("ul.nav-tabs.inner a").click(function (e) {
         e.preventDefault();
@@ -86,11 +113,14 @@ $(function() {
     $('.editable').editable();
 
     // add tooltip
+    /*
     $('[data-title!=""]').qtip({
         content: { attr: 'data-title' },
         style: { classes: 'qtip-bootstrap' },
         viewport: $(window)
     });
+    */
+    tippy(document.querySelectorAll('*:not([title=""])'),{arrow:true,theme:'light'});
 
     // page tree hover tooltips
     $('.hasTooltip').each(function() { // Notice the .each() loop, discussed below
@@ -105,7 +135,8 @@ $(function() {
     // detach = move to region header
     $('.detach').each( function() {
         $(this).detach()
-               .appendTo('section#subheader div#contextual');
+               .addClass("float-right")
+               .appendTo('#bsTop');
     });
 
     // format buttons

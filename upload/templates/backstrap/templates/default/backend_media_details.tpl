@@ -1,5 +1,5 @@
             <td colspan="3">
-                <div id="" class="gridder-content panel">
+                <div id="" class="gridder-content card">
                     <div class="row">
     				    <div class="col-sm-6">
                             {if $is_image}
@@ -19,7 +19,7 @@
     					<div class="col-sm-6">
                             <strong data-field="filename">{$filename}</strong>
                             {if user_has_perm('media_delete')}
-                            <a href="" class="delete" data-title="{translate('Delete item')}" data-url="{$CAT_ADMIN_URL}/media/delete" data-id=""><span class="fa fa-fw fa-trash text-danger"></span></a>
+                            <a href="" class="delete" title="{translate('Delete item')}" data-url="{$CAT_ADMIN_URL}/media/delete" data-id=""><span class="fa fa-fw fa-trash text-danger"></span></a>
                             {else}<span class="fa fa-fw"></span>{/if}
                             <br /><br />
                             {if $copyright}

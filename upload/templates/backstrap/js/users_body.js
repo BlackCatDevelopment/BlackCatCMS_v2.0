@@ -43,6 +43,7 @@ $(function() {
                     user_id: id
                 },
                 success : function(data, status) {
+console.log(data);
                     $(".modal-title").text(cattranslate("Edit user",undefined,undefined,"BE"));
                     $(".modal-body").html(data.form);
                     $('form').fieldset_to_tabs();

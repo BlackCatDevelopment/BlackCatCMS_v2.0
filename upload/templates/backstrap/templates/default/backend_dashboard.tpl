@@ -1,21 +1,21 @@
-<button style="display:none" class="btn btn-xs btn-primary detach" id="bsAddWidget">{translate('Add widget')}</button>
+<button style="display:none" class="btn btn-sm btn-primary detach" id="bsAddWidget">{translate('Add widget')}</button>
 
 <div class="dashboard" data-id="{$dashboard.id}" data-columns="{$dashboard.columns}">
 {if count($dashboard.widgets)}
-    <button role="button" class="btn btn-xs btn-warning detach" id="dashboard_reset" data-id="{$dashboard.id}">{translate('Reset Dashboard')}</button>
+    <button role="button" class="btn btn-sm btn-warning detach" id="dashboard_reset" data-id="{$dashboard.id}">{translate('Reset Dashboard')}</button>
     <ul class="columnize">
     {foreach $dashboard.widgets widget}
         <li data-row="{$widget.position}" data-col="{$widget.column}">
-            <div class="panel"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}>
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
+            <div class="card"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}>
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary">
                         {if $widget.icon}<span class="fa fa-fw {$widget.icon}"></span>{/if}
                         {if $widget.widget_name}{translate($widget.widget_name)}{/if}
                         {if $widget.link}{$widget.link}{/if}
-                        <span class="pull-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
-                        <span class="pull-right toggle{if $widget.open != 'Y'} panel-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
+                        <span class="float-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
+                        <span class="float-right toggle{if $widget.open != 'Y'} card-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
                     </div>
-                    <div class="panel-body"{if $widget.open != 'Y'} style="display:none;"{/if}>
+                    <div class="card-body"{if $widget.open != 'Y'} style="display:none;"{/if}>
                         {$widget.content}
                     </div>
                 </div>

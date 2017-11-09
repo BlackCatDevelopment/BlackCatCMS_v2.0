@@ -3,31 +3,31 @@ $(function() {
     "use strict";
 
     // extract the templates
-    var tablerow = $(this).find('tbody > tr').clone().detach().removeClass('hidden');
-    var listitem = $(this).find('li.gridder-expander').clone().detach().removeClass('hidden');
+    var tablerow = $(this).find('tbody > tr').clone().detach().removeAttr('hidden');
+    var listitem = $(this).find('li.gridder-expander').clone().detach().removeAttr('hidden');
 
     var loadPane = function(target,data) {
         var panelid = $(target).attr('id');
         switch(panelid) {
             case "list":
-                $(target).find('tbody > tr').not('.hidden').remove();
+                $(target).find('tbody > tr').not(':hidden').remove();
                 var appendto = $(target).find('tbody');
+                var tables = $('table.datatable').DataTable();
+                tables.table(0).clear().draw();
                 break;
             case "grid":
-                $(target).find('li').not('.hidden').remove();
+                $(target).find('li').not(':hidden').remove();
                 var appendto = $(target).find('ul.gridder');
+                var toclone  = listitem;
                 break;
         }
-
-        var tables = $('table.datatable').DataTable();
-        tables.table(0).clear().draw();
 
         if(!data.files || !data.files.length) {
             //$(target).html('<div class="alert alert-info">No files</div>');
         } else {
 
             $.each(data.files, function(index,file) {
-                var item = $(tablerow).clone();
+                var item = $(toclone).clone();
 
                 $(item).attr("data-gridder-url",file.media_id);
                 $(item).attr("data-title",file.filename);
@@ -42,14 +42,24 @@ $(function() {
                     if(file.mime_type.indexOf('image/') == 0) {
                         var src = $(item).find('[data-field="preview"]');
                         src.attr('src',src.attr('src')+file.url);
-                        src.removeClass('hidden');
                     } else {
-                        $(item).find('.fa-file-movie-o').removeClass('hidden');
+                        $(item).find('[data-field="preview"]').remove();
+                        $(item).find('.fa-file-movie-o').removeAttr('hidden');
                     }
                     // show mime type
                     $(item).find('[data-field="mime_type"]').text(file.mime_type);
                 }
-                tables.table(0).rows.add($(item)).draw();
+
+                $(item).removeAttr('hidden');
+
+                switch(panelid) {
+                    case "list":
+                        tables.table(0).rows.add($(item)).draw();
+                        break;
+                    case "grid":
+                        $(item).appendTo(appendto);
+                        break;
+                    }
             });
         }
     };
@@ -110,7 +120,7 @@ $(function() {
                                 if(file.mime_type) {
                                     // show preview
                                     if(file.mime_type.indexOf('image/') == 0) {
-                                        $('img.thumb',row).attr("src",data.media_url + file.url).removeClass('hidden');
+                                        $('img.thumb',row).attr("src",data.media_url + file.url).removeAttr('hidden');
                                     }
                                 }
                                 $('span.filename',row).text(file.filename);
@@ -139,7 +149,7 @@ $(function() {
     // handle folder select
     // #########################################################################
     $('select#root_folder').on('change', function() {
-        if($('.nav-tabs li.active a').attr('aria-controls') !== 'upload') {
+        if($('.nav-tabs li a.active').attr('aria-controls') !== 'upload') {
             // get the files
             $.ajax({
                 type    : 'POST',
@@ -182,7 +192,7 @@ $(function() {
         });
         $('button.start').removeClass('disabled');
         $('button.delete').removeClass('disabled');
-        $('div#progress').removeClass('hidden');
+        $('div#progress').removeAttr('hidden');
         $('#bsUploadFiles > thead').show();
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,

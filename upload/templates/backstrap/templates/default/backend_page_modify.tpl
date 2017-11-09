@@ -3,23 +3,23 @@
 <div class="row flex">
   <div class="col-md-12">
     <ul class="nav nav-tabs" role="tablist">{* Tabs *}
-      <li role="presentation" class="active">
-        <a href="#contents" aria-controls="contents" role="tab" data-toggle="tab">{translate('Content')}</a>
+      <li class="nav-item">
+        <a class="nav-link active" href="#contents" aria-controls="contents" role="tab" data-toggle="tab">{translate('Content')}</a>
       </li>
-      <li role="presentation">
-        <a href="#relations" aria-controls="relations" role="tab" data-toggle="tab">{translate('Relations')}</a>
+      <li class="nav-item">
+        <a class="nav-link" href="#relations" aria-controls="relations" role="tab" data-toggle="tab">{translate('Relations')}</a>
       </li>
-      <li role="presentation">
-        <a href="#config" aria-controls="config" role="tab" data-toggle="tab" data-id="{$page.page_id}" data-url="{$CAT_ADMIN_URL}/page/settings">{translate('Settings')}</a>
+      <li class="nav-item">
+        <a class="nav-link" href="#config" aria-controls="config" role="tab" data-toggle="tab" data-id="{$page.page_id}" data-url="{$CAT_ADMIN_URL}/page/settings">{translate('Settings')}</a>
       </li>
-      <li role="presentation">
-        <a href="#headerfiles" aria-controls="headerfiles" role="tab" data-toggle="tab" data-id="{$page.page_id}" data-url="{$CAT_ADMIN_URL}/page/headerfiles">{translate('Header files')}</a>
+      <li class="nav-item">
+        <a class="nav-link" href="#headerfiles" aria-controls="headerfiles" role="tab" data-toggle="tab" data-id="{$page.page_id}" data-url="{$CAT_ADMIN_URL}/page/headerfiles">{translate('Header files')}</a>
       </li>
-      <li role="presentation" class="pull-right">
-        <a href="#help" aria-controls="help" role="tab" data-toggle="tab" data-title="{translate('Help')}">?</a>
+      <li class="nav-item ml-auto">
+        <a class="nav-link" href="#help" aria-controls="help" role="tab" data-toggle="tab" title="{translate('Help')}">?</a>
       </li>
-      <li role="presentation" class="pull-right">
-        <a href="{$page.href}" target="catPreview" data-title="{translate('See this page in the frontend; opens a new tab or browser window')}">{translate('Preview')}</a>
+      <li class="nav-item">
+        <a class="nav-link" href="{$page.href}" target="catPreview" title="{translate('See this page in the frontend; opens a new tab or browser window')}">{translate('Preview')}</a>
       </li>
     </ul>
 
@@ -29,12 +29,12 @@
       <div role="tabpanel" class="tab-pane active" id="contents">
         <div class="row">
           <div class="col-md-6">
-            <button id="bsCollapseAll" class="btn btn-default btn-xs"><span class="fa fa-chevron-up"></span> {translate('Collapse all')}</button>
-            <button id="bsExpandAll" class="btn btn-default btn-xs"><span class="fa fa-chevron-down"></span> {translate('Expand all')}</button>
+            <button id="bsCollapseAll" class="btn btn-default btn-sm" hidden><span class="fa fa-chevron-up"></span> {translate('Collapse all')}</button>
+            <button id="bsExpandAll" class="btn btn-default btn-sm" hidden><span class="fa fa-chevron-down"></span> {translate('Expand all')}</button>
           </div>
           <div class="col-md-6">
 {if $addable}
-            <span id="bsAddonSelect" class="pull-right">
+            <span id="bsAddonSelect" class="float-right">
               <label for="module">{translate('Add section')}</label>
               <select name="module" id="module">
                 <option value="">{translate('[Please select]')}</option>
@@ -51,10 +51,10 @@
 {if $blocks}
       <div class="row">
         <div class="col-md-12">
-          <ul class="draggable-panel">
+          <ul class="draggable-card">
 {foreach $blocks as block}
-            <li class="panel panel-primary" data-id="{$block.section_id}" id="section_{$block.section_id}">
-              <div class="panel-heading">
+            <li class="card border-secondary" data-id="{$block.section_id}" id="section_{$block.section_id}">
+              <div class="card-header">
                 <table style="width:100%;">
                   <tr>
                     <td><span class="fa fa-fw fa-arrows"></span></td>
@@ -62,33 +62,33 @@
                     <td><strong>{translate('Name')}:</strong> <span class="editable" data-name="name" data-type="text" data-pk="{$block.section_id}" data-url="{$CAT_ADMIN_URL}/sections/edit">{if !$block.name}<i>{translate('no name')}</i>{else}{$block.name}{/if}</span></td>
                     <td><strong>{translate('Module')}:</strong> {$block.module}</td>
                     <td><strong>{translate('Section ID')}:</strong> {$block.section_id}</td>
-                    <td><span class="pull-right toggle fa fa-fw fa-chevron-down"></span></td>
+                    <td><span class="float-right toggle fa fa-fw fa-chevron-down"></span></td>
                   </tr>
                 </table>
               </div>
-              <div class="panel-body pos-r">
-                <div class="panel-icon-wrapper bg-white">
+              <div class="card-body pos-r">
+                <div class="card-icon-wrapper bg-white">
                   {if user_has_perm('pages_edit')}
                   <ul class="nav nav-left">
                     {if $block.state_id==2}
-                      <li><span class="fa fa-life-saver" data-title="{translate('Recover')}" data-id="{$block.section_id}"></span></li>
+                      <li><span class="fa fa-life-saver" title="{translate('Recover')}" data-id="{$block.section_id}"></span></li>
                     {else}
-                      <li><span class="fa fa-eye" data-title="{translate('If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.')}" data-id="{$block.section_id}"></span></li>
-                      <li><span class="fa fa-calendar" data-title="{translate('Set publishing period')}" data-id="{$block.section_id}" data-pubstart="{$block.publ_start}" data-pubend="{$block.publ_end}" data-timestart="{$block.publ_by_time_start}" data-timeend="{$block.publ_by_time_end}"></span></li>
+                      <li><span class="fa fa-eye" title="{translate('If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.')}" data-id="{$block.section_id}"></span></li>
+                      <li><span class="fa fa-calendar" title="{translate('Set publishing period')}" data-id="{$block.section_id}" data-pubstart="{$block.publ_start}" data-pubend="{$block.publ_end}" data-timestart="{$block.publ_by_time_start}" data-timeend="{$block.publ_by_time_end}"></span></li>
                       {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
-                      <li><span class="fa fa-trash text-danger" data-title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                      <li><span class="fa fa-trash text-danger" title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
                       {/if}
                       {if user_has_perm('pages_section_move') && user_has_module_perm($block.module)}
-                      <li><span class="fa fa-external-link" data-title="{translate('Move')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                      <li><span class="fa fa-external-link" title="{translate('Move')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
                       {/if}
                       {if block_has_revisions($block.section_id)}
-                      <li><span class="fa fa-clone" data-title="{translate('View revisions')}"></span></li>
+                      <li><span class="fa fa-clone" title="{translate('View revisions')}"></span></li>
                       {/if}
                     {/if}
                   </ul>
                   {/if}
                 </div>
-                <div class="panel-content">
+                <div class="card-content">
                   {if $block.state_id!=2}
                   {$block.content}
                   {else}

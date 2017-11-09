@@ -1,13 +1,14 @@
-  </div></div></div>
-  <footer class="navbar-default navbar-fixed-bottom">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-3">{$WEBSITE_TITLE}</div>
-        <div id="sessiontimer" class="col-md-3 pull-right text-muted text-right">{translate('Remaining session time')}: <span id="sesstime">{$SESSION_TIME}</span></div>
-      </div>
+      </main>
     </div>
+  </div>
+
+  <footer class="navbar fixed-bottom navbar-expand navbar-dark bg-dark">
+    <div class="navbar-nav flex-row ml-md-auto d-none d-md-flex">{$WEBSITE_TITLE}</div>
+    <div id="sessiontimer" class="navbar-nav flex-row ml-md-auto d-none d-md-flex text-muted">{translate('Remaining session time')}: <span id="sesstime">{$SESSION_TIME}</span></div>
   </footer>
+
   {include(file='backend_modal.tpl' modal_id='bsDialog' modal_title='', modal_text='', modal_savebtn='1')}
+  {include(file='backend_modal.tpl' modal_id='add_page_modal' modal_title='', modal_text='$add_page_form', modal_savebtn='1')}
 
   {* Session timeout dialog *}
   <div class="modal fade dark" id="bsSessionTimedOutDialog" tabindex="-1" role="dialog" aria-labelledby="bsSessionTimedOutDialogLabel" data-keyboard="false" data-backdrop="static">

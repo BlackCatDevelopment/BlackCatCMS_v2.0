@@ -11,7 +11,7 @@
                         <tr class="gridder-expander hidden" data-gridder-url="" data-gridder-title="">
                             <td>
                                 {if user_has_perm('media_delete')}
-                                <a href="" class="delete" data-title="{translate('Delete item')}" data-url="{$CAT_ADMIN_URL}/media/delete" data-id="">
+                                <a href="" class="delete" title="{translate('Delete item')}" data-url="{$CAT_ADMIN_URL}/media/delete" data-id="">
                                     <span class="fa fa-fw fa-trash text-danger"></span>
                                 </a>
                                 {else}<span class="fa fa-fw"></span>{/if}

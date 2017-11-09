@@ -1,5 +1,5 @@
 <div>
-    <span id="bsFilterSelect" class="pull-right">
+    <span id="bsFilterSelect" class="float-right">
       <label for="filter">{translate('Filter by type')}</label>
       <select name="filter" id="filter">
         <option value="">{translate('All')}</option>
@@ -12,9 +12,9 @@
     </span>
 
   <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="active"><a href="#installed" aria-controls="installed" role="tab" data-toggle="tab">{translate('Installed')}</a></li>
-    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/addons/catalog">{translate('Catalog')}</a></li>
-    <li role="presentation"><a href="#notinstalled" aria-controls="notinstalled" role="tab" data-toggle="tab">{translate('Not (yet) installed')}</a></li>
+    <li class="nav-item"><a class="nav-link active" href="#installed" aria-controls="installed" role="tab" data-toggle="tab">{translate('Installed')}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/addons/catalog">{translate('Catalog')}</a></li>
+    <li class="nav-item"><a class="nav-link" href="#notinstalled" aria-controls="notinstalled" role="tab" data-toggle="tab">{translate('Not (yet) installed')}</a></li>
   </ul>
 
   {* Tab panes *}
@@ -57,8 +57,8 @@
             <td class="bs-module-name">
               <p><strong>%%name%%</strong></p>
               <span class="small">
-                <a href="#" class="btn btn-xs btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
-                <a href="#" class="btn btn-xs btn-info"><span class="fa fa-level-up"></span> {translate('Upgrade')}</a>
+                <a href="#" class="btn btn-sm btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
+                <a href="#" class="btn btn-sm btn-info"><span class="fa fa-level-up"></span> {translate('Upgrade')}</a>
               </span>
             </td>
             <td class="bs-module-desc">

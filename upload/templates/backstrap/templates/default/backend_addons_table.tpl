@@ -15,8 +15,8 @@
             <td class="bs-module-name">
               <p><strong>{$module.name}</strong></p>
               <span class="small">
-              {if $module.install_date}<a href="#" class="btn btn-xs btn-danger{if $module.removable != 'Y'} disabled{/if}"><span class="fa fa-remove"></span> {translate('Uninstall')}</a>
-              {else}<a href="#" class="btn btn-xs btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
+              {if $module.install_date}<a href="#" class="btn btn-sm btn-danger{if $module.removable != 'Y'} disabled{/if}"><span class="fa fa-remove"></span> {translate('Uninstall')}</a>
+              {else}<a href="#" class="btn btn-sm btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
               {/if}
               </span>
               

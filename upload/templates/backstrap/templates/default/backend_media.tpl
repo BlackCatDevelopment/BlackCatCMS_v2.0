@@ -1,26 +1,26 @@
-<ul class="nav nav-tabs" role="tablist">{* Tabs *}
-    <li role="presentation">
-        <a href="#list" aria-controls="list" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
+<ul class="nav nav-tabs nav-fill" role="tablist">{* Tabs *}
+    <li class="nav-item">
+        <a class="nav-link" href="#list" aria-controls="list" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
           <span class="fa fa-fw fa-bars"></span>
           {translate('List')}
         </a>
     </li>
-    <li role="presentation">
-        <a href="#grid" aria-controls="grid" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
+    <li class="nav-item">
+        <a class="nav-link" href="#grid" aria-controls="grid" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
           <span class="fa fa-fw fa-th"></span>
           {translate('Grid')}
         </a>
     </li>
     {if user_has_perm('media_upload')}
-    <li role="presentation">
-        <a href="#upload" aria-controls="upload" role="tab" data-toggle="tab">
+    <li class="nav-item">
+        <a class="nav-link" href="#upload" aria-controls="upload" role="tab" data-toggle="tab">
           <span class="fa fa-fw fa-upload"></span>
           {translate('Upload')}
         </a>
     </li>
     {/if}
     {if count($dirs)}
-    <li>
+    <li class="nav-item">
         <span class="fa fa-fw fa-folder"></span>
         <label for="media_folder">{translate('Select folder')}:</label>
         <select id="root_folder" name="root_folder">
@@ -63,7 +63,7 @@
 </div>{* Tab panes End *}
 
 {* will be cloned and added to list and grid view *}
-<span class="bsFilterSelect pull-right" style="display:none">
+<span class="bsFilterSelect float-right" style="display:none">
     <label for="filter">{translate('Filter by type')}</label>
     <select name="filter">
         <option value="">{translate('All')}</option>

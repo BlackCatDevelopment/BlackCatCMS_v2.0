@@ -1,18 +1,25 @@
-body{padding-top:50px;}
-.navbar-brand{font-size:1.2em;}
-.nav-sidebar{margin-left:-15px;margin-right:-15px;}
-.nav-sidebar > li > a,ul.nav-media > li > a{padding-left:15px;padding-right:20px;z-index:1;}
-/* .main{padding:20px;} */
-ul.nav.nav-sidebar li span,ul.nav-media li span{position:relative;display:inline-block;padding-top:15px;z-index:3;} /* caret icon */
-div#sidebar ul.nav.nav-sidebar li li, ul.nav-media li li {padding-left:22px;}
-html body.fuelux div.container-fluid div.row div.col-md-10 section ol.breadcrumb{margin:0;padding:0 0 0 7px;}
+html,body{height:100%;min-height:100%}
 
-/* drag & drop */
-.bs_placeholder{border:1px dashed #9C9C9C;margin:0 1em 1em 0;height:50px;}
-.bs_highlight{background-color:#ccc;}
+.navbar-brand{font-size:1.2em;}
+.navbar{padding:.5rem 1rem;} /* fix for some Bootswatch themes */
+a.nav-item{padding:3px 15px;}
+#navbarMainContent{margin-left:50px;}
+
+/* dark backdrop for session timed out modal */
+modal.fade.dark.show{opacity:.7 !important;background-color:#00;}
 
 /* detached buttons */
-div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-left:5px;}
+ol.breadcrumb{padding-left:18.5rem;}
+
+/* margin for tablist */
+ul[role="tablist"]{margin-bottom:15px;}
+
+/* form buttons */
+.buttonline{border-top:1px solid #ccc;padding:5px;background-color:#f5f5f5;}
+
+/* modals */
+.modal-header h1{font-size:1.5rem;}
+.modal-body h2{font-size:1.2rem;}
 
 /* Font Awesome Aliases */
 .fa-addons:before,.fa-module:before{content:"\f12e";}
@@ -20,6 +27,7 @@ div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-lef
 .fa-admintools:before{content:"\f0ad";}
 .fa-datetime:before{content:"\f017";}
 .fa-deleted:before{content:"\f014";}
+.fa-draft:before{content:"\f250";}
 .fa-groups:before{content:"\f0c0";}
 .fa-headers:before{content:"\f0ac";}
 .fa-hidden:before{content:"\f070";}
@@ -41,54 +49,37 @@ div.row.breadcrumb section#subheader div#contextual.pull-right button{margin-lef
 .fa-users:before{content:"\f183";}
 .fa-wysiwyg:before{content:"\f2c3"}
 
-/* dark backdrop for session timed out modal */
-.dark.fade.in ~ .modal-backdrop.fade.in {opacity:.9 !important;}
-
-/* remove pillbox border */
-.fuelux .pillbox{border:0;}
-
-/* draggable panels with left icon bar for page modification */
-ul.draggable-panel{list-style:none outside none;padding-left:0;}
-div.pos-r{position:relative;}
-div.panel-icon-wrapper{position:absolute;bottom:0;left:0;margin-left:0;z-index:99;height:100%;overflow-y:auto;border-right:1px solid #ccc;border-bottom-left-radius:4px;}
-div.panel-content{margin-left:35px;}
-
-/* fixes panels for Bootswatch Themes */
-ul.draggable-panel li.panel.panel-primary div.panel-body.pos-r{background-color:white;}
-.panel table{background-color:transparent;}
-div.panel-heading table{color:#fff;}
-
-/* edit page icons */
-li.panel div.panel-body.pos-r div.panel-icon-wrapper ul.nav.nav-left li span.fa{display:block;padding:10px 15px;color:#337ab7;}
-
-/* make sure the datepicker is in foreground on modals */
-html body.fuelux.modal-open div#ui-datepicker-div.ui-datepicker.ui-widget.ui-widget-content.ui-helper-clearfix.ui-corner-all{z-index:99999 !important;}
-
-/* mark.js */
-mark{background:orange;color:black;}
-
-/* margin for tablist */
-ul[role="tablist"]{margin-bottom:15px;}
-
-/* multilevel dropdown */
+/* fix for Boostrap v4: Multilevel Sub Menu for top navbar */
 .dropdown-submenu{position:relative;}
-.dropdown-submenu>.dropdown-menu{top:0;left:100%;-webkit-border-radius:0 6px 6px 6px;-moz-border-radius:0 6px 6px 6px;border-radius:0 6px 6px 6px;}
-.dropdown-submenu:active>.dropdown-menu, .dropdown-submenu:hover>.dropdown-menu {display:block;}
-.dropdown-submenu:active>a:after{border-left-color:#ffffff;}
-.dropdown-submenu.pull-left{float:none;}
-.dropdown-submenu.pull-left>.dropdown-menu{left:-100%;margin-left:10px;-webkit-border-radius:6px 0 6px 6px;-moz-border-radius:6px 0 6px 6px;border-radius:6px 0 6px 6px;}
+.dropdown-submenu a::after{transform:rotate(-90deg);position:absolute;right:3px;top:40%;}
+.dropdown-submenu:hover .dropdown-menu, .dropdown-submenu:focus .dropdown-menu{display:flex;flex-direction:column;position:absolute !important;margin-top:-30px;left:100%;}
+@media (max-width: 992px) { .dropdown-menu{width: 50%;} .dropdown-menu .dropdown-submenu{width: auto;} }
 
-/* forms */
-.fbrequired{}
-span.buttonText{margin-left:3px} /* filestyle plugin */
-html body.fuelux.modal-open div.modal-dialog div.modal-content div.modal-body form .form-group{margin-bottom:0;}
+/* fix for Bootstrap v4: Multilevel Vertical Menu - https://www.codeply.com/go/q0b6ILuRyx/bootstrap-4-vertical-menu-with-submenu */
+div#sidebar{min-width:130px;}
+div#sidebar .nav-link{padding:0}
+
+/* toggle edit link */
+div#sidebar li.nav-item span::before{content:" ";width:25px;display:inline-block;}
+div#sidebar li.nav-item span.arrow::before{font-family: Verdana, Geneva, Tahoma, sans-serif;content:"\25b6";}
+div#sidebar li.nav-item span.arrow[aria-expanded="true"]::before{content:"\25bc";}
+div#sidebar li.nav-item span.nav-link > a{display:none;padding:0;}
+div#sidebar li.nav-item span.nav-link:hover > a{display:inline-block;}
 
 /* color change for session timeout counter */
 div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite alternate;}
-@-webkit-keyframes colorchange {
-    0% {color:#f00;}
-    50% {color:white}
-}
+@-webkit-keyframes colorchange {0% {color:#f00;} 50% {color:white} }
+
+/* draggable panels with left icon bar for page modification */
+ul.draggable-card{list-style:none outside none;padding-left:0;}
+div.pos-r{position:relative;}
+div.card-icon-wrapper{position:absolute;bottom:0;left:0;margin-left:0;z-index:99;height:100%;width:45px;border-right:1px solid #ccc;border-bottom-left-radius:4px;}
+div.card-content{margin-left:35px;}
+
+/* edit page icons */
+li.card div.card-body.pos-r div.card-icon-wrapper ul.nav.nav-left li span.fa{display:block;padding:10px 15px;color:#337ab7;}
+
+.mt50{margin-top:50px !important;}
 
 /*
  * Off Canvas
@@ -125,11 +116,4 @@ div#sessiontimer.sesstimealert{-webkit-animation:colorchange .2s infinite altern
 }
 .main .page-header {
   margin-top: 0;
-}
-
-/*
- * Firefox fieldset fix
- **/
-@-moz-document url-prefix() {
-  fieldset { display: table-cell; }
 }

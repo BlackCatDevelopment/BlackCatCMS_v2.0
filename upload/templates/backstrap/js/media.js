@@ -3,6 +3,7 @@ $(function() {
     // save last selected tab on toggle
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         localStorage.setItem('lastTab', $(this).attr('href'));
+        $('select#root_folder option[value=""]').prop('selected',true);
     });
 
     var filtergrid = $('span.bsFilterSelect').clone().detach();
