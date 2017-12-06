@@ -549,4 +549,12 @@ console.log(data);
             }
         });
     });
+
+    $('button#bsAddCSS').unbind('click').on('click',function(e) {
+        var list = $('div#bsCSSFiles').clone();
+        $('.modal-body').html(list);
+        //$('.modal-title').text($.cattranslate('Remove plugin',undefined,undefined,'backstrap'));
+        $('#tplcss').modal('show');
+    });
+
 })(jQuery);

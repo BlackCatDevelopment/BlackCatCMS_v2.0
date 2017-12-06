@@ -44,7 +44,7 @@
     <nav aria-label="breadcrumb" role="navigation" class="mt50" id="bsBreadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item{if $meta.SECTION} active" aria-current="page"{else}"{/if}><a href="{$CAT_ADMIN_URL}">{translate('Home')}</a></li>
-        {if $meta.SECTION}<li class="breadcrumb-item{if ! $meta.ACTION} active" aria-current="page"{else}"{/if}><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}">{translate($meta.SECTION)}</a></li>{/if}
+        {if $meta.SECTION && $meta.SECTION!='Dashboard'}<li class="breadcrumb-item{if ! $meta.ACTION} active" aria-current="page"{else}"{/if}><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}">{translate($meta.SECTION)}</a></li>{/if}
         {if $meta.ACTION}<li class="breadcrumb-item active" aria-current="page"><a href="{$CAT_ADMIN_URL}/{$meta.SECTION}/{$meta.ACTION}">{translate($meta.ACTION)}</a></li>{/if}
       </ol>
     </nav>

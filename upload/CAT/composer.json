@@ -10,6 +10,15 @@
         "kriswallsmith/assetic": "1.*",
         "verot/class.upload.php": "dev-master",
         "pclzip/pclzip": ">=2.8"
-
+    },
+    "authors": [
+        {
+            "name": "BlackCat Development",
+            "email": "info@blackcat-cms.de",
+            "homepage": "https://blackcat-cms.de",
+            "role": "Developer"
     }
+    ],
+    "license": "GPL-3.0",
+    "homepage": "https://blackcat-cms.de"
 }

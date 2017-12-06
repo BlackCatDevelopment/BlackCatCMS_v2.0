@@ -62,6 +62,7 @@ $LANG = array_merge($LANG,array(
     // --------------- Backend -> Pages ---------------
     'Add page'          => 'Neue Seite',
     'Add section'       => 'Sektion hinzufügen',
+    'Add Template CSS'  => 'Template CSS hinzufügen',
     'Actions'           => 'Aktionen',
     'Block number'      => 'Blocknr.',
     'Collapse all'      => 'Alle einklappen',
@@ -95,7 +96,10 @@ $LANG = array_merge($LANG,array(
     'Time of day'       => 'Uhrzeit',
     'Time from'         => 'Uhrzeit von',
     'Time until'        => 'Uhrzeit bis',
+    'Use jQuery'        => 'jQuery verwenden',
+    'Use jQuery UI'     => 'jQuery UI verwenden',
     'Visibility'        => 'Sichtbarkeit',
+
     'Add jQuery Plugin' => 'jQuery Plugin hinzufügen',
     'Add explicit Javascript file' => 'Ein bestimmtes Javascript hinzufügen',
     'Add explicit CSS file' => 'Eine bestimmte CSS Datei hinzufügen',

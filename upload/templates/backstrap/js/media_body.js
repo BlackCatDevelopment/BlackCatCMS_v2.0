@@ -1,5 +1,4 @@
 $(function() {
-
     "use strict";
 
     // extract the templates

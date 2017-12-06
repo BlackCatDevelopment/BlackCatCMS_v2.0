@@ -213,6 +213,43 @@ Array
             }
         }   // end function order()
 
+        public static function reload($dash=NULL)
+        {
+            // validate path
+            if(!$dash)
+            {
+                // remove "reload" from route
+                $route = self::router()->getRoute();
+                $route = preg_replace('~\/reload$~i','',$route);
+                $dash = CAT_Helper_Dashboard::getDashboardID($route);
+            }
+            // check if dashboard exists
+            if(!CAT_Helper_Dashboard::exists($dash))
+                echo CAT_Helper_JSON::printError('Invalid data')
+                   . (self::$debug ? '(CAT_Backend_Dashboard::reload())' : '');
+            $widget = CAT_Helper_Validate::sanitizePost('widget_id');
+            // check if widget exists
+            if(CAT_Helper_Widget::exists($widget))
+            {
+                // check if widget is visible on current dashboard
+                if(CAT_Helper_Widget::isOnDashboard($widget,$dash))
+                {
+                    // forward
+                    $widget  = CAT_Helper_Widget::getWidget($widget);
+                    $content = CAT_Helper_Widget::execute($widget,$dash);
+                    if(self::asJSON())
+                    {
+                        echo header('Content-Type: application/json');
+                        echo CAT_Helper_JSON::printSuccess($content);
+                        return;
+                    } else {
+
+                    }
+                }
+            }
+
+        }
+
         /**
          *
          * @access public

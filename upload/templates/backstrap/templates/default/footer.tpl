@@ -47,6 +47,6 @@
       </div>
     </div>
   </div>
-  {get_page_footers("backend")}
+  {get_page_footers()}
 </body>
 </html>

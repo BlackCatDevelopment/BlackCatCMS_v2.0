@@ -24,9 +24,26 @@ if (!class_exists('CAT_Helper_Directory'))
 
     class CAT_Helper_Directory extends CAT_Object
     {
+        /**
+         * IMPORTANT: Enabling debugging here causes endless loop! DON'T!!!
+         **/
         protected static $loglevel     = \Monolog\Logger::EMERGENCY;
+        /**
+         * enable INTERNAL logging
+         **/
+        protected static $debug        = false;
+        /**
+         * Window or not
+         **/
         protected static $is_win       = null;
+        /**
+         * current instance
+         **/
         private   static $instance     = NULL;
+        /**
+         * collect trace (debug output)
+         **/
+        private   static $trace        = array();
 
         /**
          * get an instance of the directory class; optional param $reset
@@ -36,17 +53,10 @@ if (!class_exists('CAT_Helper_Directory'))
          * @param  boolean  $reset
          * @return object
          **/
-        public static function getInstance($reset=false)
+        public static function getInstance()
         {
             if (!self::$instance)
-            {
                 self::$instance = new self();
-            }
-            else
-            {
-                if($reset)
-                    self::reset();
-            }
             return self::$instance;
         }   // end function getInstance()
 
@@ -246,12 +256,15 @@ if (!class_exists('CAT_Helper_Directory'))
         {
             if(!is_dir($dir)) return array();
 
+            if(self::$debug) self::$trace[] = sprintf('scanning path [%s]',$dir);
+
             // merge options with defaults
             $options = array_merge(array(
                 'curr_depth'    => 0,     // pass current recursion depth
                 'extension'     => null,  // file extension to scan for
                 'extensions'    => null,  // array of extensions to scan for
                 'filename'      => null,  // filename to scan for
+                'filter'        => null,  // filename filter
                 'max_depth'     => 9,     // max recursion depth
                 'recurse'       => false, // recurse or not
                 'remove_prefix' => false, // prefix to remove from path
@@ -292,18 +305,27 @@ if (!class_exists('CAT_Helper_Directory'))
                 $options['remove_prefix'] = self::sanitizePath($dir);
             }
 
+            if(self::$debug) self::$trace[] = var_export($options,1);
+
             foreach(scandir($dir) as $file)
             {
                 if(substr($file,0,1)=='.') continue;
                 $curr_item = self::getName(self::sanitizePath($dir.'/'.$file));
+                if(self::$debug) self::$trace[] = sprintf('current item: %s', $curr_item);
                 if(is_file($curr_item))
                 {
                     $filename = str_ireplace($options['remove_prefix'],'',$curr_item);
+                    if(self::$debug) self::$trace[] = sprintf('checking file: %s', $filename);
                     // filename match
                     if(
                            strlen($options['filename'])
                         && pathinfo($curr_item,PATHINFO_FILENAME) != $options['filename']
                     ) {
+                        if(self::$debug) self::$trace[] = sprintf(
+                            '>>> skipped by filename filter --- [%s] != [%s]',
+                            pathinfo($curr_item,PATHINFO_FILENAME),
+                            $options['filename']
+                        );
                         continue;
                     }
                     // extension match
@@ -312,16 +334,40 @@ if (!class_exists('CAT_Helper_Directory'))
                         && count($options['extensions'])
                         && !in_array(pathinfo($curr_item,PATHINFO_EXTENSION),$options['extensions'])
                     ) {
+                        if(self::$debug) self::$trace[] = sprintf(
+                            '>>> skipped by extensions filter; allowed extensions:',
+                            implode(',',$options['extensions'])
+                        );
                         continue;
                     }
+                    // filter match
+                    if(strlen($options['filter']))
+                    {
+                        $filter = "~^".$options['filter'];
+                        if(count($options['extensions']>0))
+                        {
+                            $filter .= "\.(" . implode("|",$options['extensions']) . ")";
+                        } else {
+                            $filter .= "\..*";
+                        }
+                        $filter .= "$~i";
+                        if(!preg_match($filter,pathinfo($curr_item,PATHINFO_BASENAME))
+                        ) {
+                            if(self::$debug) self::$trace[] = sprintf(
+                                '>>>skipped by regexp filter: [%s]',
+                                $filter
+                            );
+                            continue;
+                        }
+                    }
+                    if(self::$debug) self::$trace[] = sprintf(
+                        'adding file [%s]', $filename
+                    );
                     $files[] = $filename;
                 } else {
                     if(is_dir($curr_item) && $options['recurse']===true && $options['curr_depth']<$options['max_depth']) {
                         $files = array_merge($files, self::findFiles($curr_item,$options));
                     }
-                }
-                if(isset($options['filename']) && strlen($options['filename']) && count($files)) {
-                    return $files[0];
                 }
             }
 
@@ -430,6 +476,16 @@ if (!class_exists('CAT_Helper_Directory'))
         	return $size;
         }   // end function getSize()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getTrace($nl="\n")
+        {
+            return implode($nl,self::$trace);
+        }   // end function getTrace()
+        
 		/**
          * convert bytes to human readable string
          *
@@ -505,7 +561,7 @@ if (!class_exists('CAT_Helper_Directory'))
          **/
         public static function sanitizePath($path,$as_array=false)
         {
-            self::log()->addDebug(sprintf('> sanitizePath(%s)',$path));
+            #self::log()->addDebug(sprintf('> sanitizePath(%s)',$path));
 
             // remove trailing slash; this will make sanitizePath fail otherwise!
             $path       = preg_replace( '~/{1,}$~', '', $path );
@@ -544,7 +600,7 @@ if (!class_exists('CAT_Helper_Directory'))
             if(!preg_match('/^[a-z]\:/i', $new_path)) {
                 $new_path = '/' . $new_path;
             }
-            self::log()->addDebug('< returning path [{path}]',array('path'=>$new_path),array(__METHOD__,__LINE__));
+            #self::log()->addDebug('< returning path [{path}]',array('path'=>$new_path),array(__METHOD__,__LINE__));
             return $new_path;
         }   // end function sanitizePath()
 

@@ -73,14 +73,12 @@ if(!class_exists('CAT_Helper_Menu',false))
         protected static function listbuilder($reset=false)
         {
             if(!self::$list)
-                self::$list = self::lb();
-            if($reset)
             {
-                self::$list->initialize();
-                self::$list->set(
+                self::$list = self::lb();
+                self::$list->initialize(
                     array(
-                        '__id_key'    => 'page_id',
-                        '__title_key' => 'menu_title',
+                        'id'    => 'page_id',
+                        'title' => 'menu_title',
                     ));
             }
             return self::$list;

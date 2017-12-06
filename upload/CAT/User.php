@@ -208,8 +208,6 @@ if (!class_exists('CAT_User'))
          **/
         public function login()
         {
-			$this->reset();
-
 			$field	= CAT_Helper_Validate::sanitizePost('username_fieldname');
 			$user	= htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
 			$name	= preg_match('/[\;\=\&\|\<\> ]/',$user) ? '' : $user;
@@ -235,12 +233,13 @@ if (!class_exists('CAT_User'))
 				$token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
 
 				// check whether the password is correct
-				if (CAT_Authenticate::getInstance()->authenticate($uid, $passwd, $token))
+				if(CAT_Authenticate::authenticate($uid, $passwd, $token))
                 {
                     $this->db()->query(
                         'UPDATE `:prefix:rbac_users` SET `login_when`=?, `login_ip`=? WHERE `user_id`=?',
                         array(time(), $_SERVER['REMOTE_ADDR'], $uid)
                     );
+                    self::initUser($uid);
                     return true;
                 }
 				
@@ -290,24 +289,6 @@ if (!class_exists('CAT_User'))
                 ));
             }
         }   // end function logout()
-
-        /**
-         * create a new secret for a user
-         *
-         * @access public
-         * @return binary  QRCode image
-         **/
-        public function setSecret()
-        {
-			$secret	= CAT_Authenticate::getInstance()->setSecret();
-			$QRCode	= CAT_Authenticate::getInstance()->createQRCode($this->id);
-
-			$this->db()->query(
-				'UPDATE `:prefix:rbac_users` SET `secret`=? WHERE `username`=?',
-				array($secret,$this->get('username'))
-			);
-			return $QRCode;
-        }   // end function createSecret()
 
         /**
          * checks if the user is member of the given group

@@ -236,7 +236,7 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function sanitizePost( $field, $require=NULL, $escape = false )
         {
-            self::$instance->log()->addDebug(sprintf(
+            self::log()->addDebug(sprintf(
                 'get field [%s] from $_POST, require type [%s], escape [%s]',$field,$require,$escape
             ));
             return self::get('_POST',$field,$require,$escape);
@@ -254,7 +254,7 @@ if (!class_exists('CAT_Helper_Validate'))
          **/
         public static function sanitizeGet($field,$require=NULL,$escape=false)
         {
-            self::$instance->log()->addDebug(sprintf(
+            self::log()->addDebug(sprintf(
                 'get field [%s] from $_GET, require type [%s], escape [%s]',$field,$require,$escape
             ));
             return self::get('_GET',$field,$require,$escape);

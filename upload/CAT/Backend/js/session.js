@@ -1,4 +1,7 @@
 function CATSecondsToTimeString(seconds) {
+    if(!seconds>0) {
+        seconds = 1;
+    }
     return (new Date(seconds * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0];
 }
 function CATTimeStringToSecs(hms) {

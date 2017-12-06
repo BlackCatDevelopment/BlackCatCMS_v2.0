@@ -34,6 +34,7 @@ $(function() {
             }
         });
     });
+
     $('.btn-primary').click( function(e) {
         e.preventDefault();
 
@@ -64,7 +65,7 @@ $(function() {
             {
                 if ( data.success === true )
                 {
-                    window.location        = data.url
+                    window.location = data.url;
                 }
                 else {
 

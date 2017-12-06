@@ -29,23 +29,23 @@ $mod_headers = array(
         'css' => array(
             array('file'=>'modules/lib_bootstrap/vendor/css/font-awesome.min.css',),
             array('file'=>$bootstrapcss,),
-            array('file'=>'plugins/tippy/1.4.1/tippy.css'),
+            array('file'=>'modules/lib_javascript/plugins/tippy/1.4.1/tippy.css'),
             array('file'=>'modules/lib_javascript/jquery-ui/themes/base/jquery-ui.css',),
             array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),
-            array('file'=>'plugins/jquery.datatables/css/dataTables.bootstrap.min.css',),
+            array('file'=>'modules/lib_javascript/plugins/jquery.datatables/css/dataTables.bootstrap.min.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(
             'core'    => true,
             'ui'      => true,
-            'plugins' => array ('jquery.cattranslate','cookie','jquery.mark'),
+            'plugins' => array ('jquery.cattranslate','jquery.cookies','jquery.mark','jquery.columns'),
         ),
         'js' => array(
-            'plugins/jquery.columns/jquery.columns.js',
-            'plugins/jquery.datatables/js/jquery.dataTables.min.js',
-            'plugins/jquery.datatables/js/dataTables.mark.min.js',
-            'plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
-            'plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js',
+            'modules/lib_javascript/plugins/jquery.columns/jquery.columns.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.mark.min.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.bootstrap.min.js',
+            'modules/lib_javascript/plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js',
             'CAT/Backend/js/session.js',
             'templates/backstrap/js/datetimepicker/jquery.datetimepicker.full.js',
             array(
@@ -60,14 +60,14 @@ $mod_headers = array(
 );
 
 if(file_exists(CAT_JQUERY_PATH.'/jquery-ui/ui/i18n/jquery-ui-i18n.min.js'))
-    $mod_headers['backend']['js'][] = 'jquery-ui/ui/i18n/jquery-ui-i18n.min.js';
+    $mod_headers['backend']['js'][] = 'modules/lib_javascript/jquery-ui/ui/i18n/jquery-ui-i18n.min.js';
 
 if(CAT_Backend::getArea() == 'media')
 {
     //$mod_headers['backend']['css'][] = array('file'=>'plugins/jquery.fileupload/css/jquery.fileupload.css');
-    $mod_headers['backend']['css'][] = array('file'=>'plugins/jquery.gridder/css/gridder.css');
-    $mod_headers['backend']['js'][]  = 'plugins/jquery.datatables/js/jquery.dataTables.min.js';
-    $mod_headers['backend']['js'][]  = 'plugins/jquery.gridder/js/gridder.js';
+    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_javascript/plugins/jquery.gridder/css/gridder.css');
+    $mod_headers['backend']['js'][]  = 'modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js';
+    $mod_headers['backend']['js'][]  = 'modules/lib_javascript/plugins/jquery.gridder/js/gridder.js';
 }
 
 if(CAT_Backend::getArea() == 'admintools')

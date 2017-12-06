@@ -1,5 +1,4 @@
 $(function() {
-
     jQuery.ajaxSetup({
         error: function( x, e )
         {
@@ -110,18 +109,15 @@ $(function() {
     $('form.tabbed').fieldset_to_tabs();
 
     // add X-Editable to elements with 'editable' class
-    $('.editable').editable();
+    if(typeof editable != 'undefined') {
+        $('.editable').editable();
+    }
 
-    // add tooltip
-    /*
-    $('[data-title!=""]').qtip({
-        content: { attr: 'data-title' },
-        style: { classes: 'qtip-bootstrap' },
-        viewport: $(window)
-    });
-    */
-    tippy(document.querySelectorAll('*:not([title=""])'),{arrow:true,theme:'light'});
-
+    // tooltips
+    if(typeof tippy != 'undefined') {
+        tippy(document.querySelectorAll('*:not([title=""])'),{arrow:true,theme:'light'});
+    }
+/**
     // page tree hover tooltips
     $('.hasTooltip').each(function() { // Notice the .each() loop, discussed below
         $(this).qtip({
@@ -131,7 +127,7 @@ $(function() {
             style: { classes: 'qtip-bootstrap' }
         });
     });
-
+**/
     // detach = move to region header
     $('.detach').each( function() {
         $(this).detach()

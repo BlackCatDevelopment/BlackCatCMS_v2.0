@@ -20,8 +20,8 @@ if(!class_exists('CAT_Helper_Router',false))
     class CAT_Helper_Router extends CAT_Object
     {
         // log level
-        public    static $loglevel   = \Monolog\Logger::EMERGENCY;
-        #public    static $loglevel   = \Monolog\Logger::DEBUG;
+        #public    static $loglevel   = \Monolog\Logger::EMERGENCY;
+        public    static $loglevel   = \Monolog\Logger::DEBUG;
         // instance
         private   static $instance   = NULL;
         // full route
@@ -101,7 +101,10 @@ if(!class_exists('CAT_Helper_Router',false))
                     'Routing error: User [{user}] tried to access [{func}] in controller [{controller}]',
                     array('user'=>$this->user()->get('username'),'func'=>$function,'controller'=>$controller)
                 );
-                CAT_Object::printFatalError('Access denied');
+                return CAT_Backend::login(
+                    'Please enter valid login credentials to proceed<br />'
+                  . sprintf('(CAT_Backend_Router::dispatch#1) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
+                );
             }
             // check if controller exists
             if(!class_exists($controller) || !is_callable(array($controller,$function)))
@@ -110,7 +113,10 @@ if(!class_exists('CAT_Helper_Router',false))
                     'Routing error: No such controller [%s] (%s) or function not callable [%s] (%s)',
                     $controller, class_exists($controller), $function, is_callable(array($controller,$function))
                 ));
-                CAT_Object::printFatalError('Access denied');
+                return CAT_Backend::login(
+                    'Please enter valid login credentials to proceed<br />'
+                  . sprintf('(CAT_Backend_Router::dispatch#2) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
+                );
             }
 
             // hand over to controller
@@ -345,7 +351,7 @@ if(!class_exists('CAT_Helper_Router',false))
             }
 
             self::log()->addDebug(sprintf(
-                'returning result: route [%s] query [%s]', $route, $query
+                'initRoute() returning result: route [%s] query [%s]', $route, $query
             ));
             return array($route,$query);
         }   // end function initRoute()

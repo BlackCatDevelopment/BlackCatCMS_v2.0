@@ -207,6 +207,13 @@ if (!class_exists('CAT_Backend_Page'))
                 'addable' => $addable,
             );
 
+            /** sections array:
+            Array
+            (
+                [39] => Array                   pageID
+                        [1] => Array            block #
+                                [0] => Array    section index
+            **/
             if(count($sections))
             {
                 // for hybrid modules
@@ -218,7 +225,6 @@ if (!class_exists('CAT_Backend_Page'))
                     foreach($items as $section)
                     {
                         $content    = null;
-
                         // spare some typing
                         $section_id = $section['section_id'];
                         $module     = $section['module'];
@@ -305,7 +311,6 @@ if (!class_exists('CAT_Backend_Page'))
             return $pageID;
         }   // end function getPageID()
 
-
         /**
          * get header files
          *
@@ -321,115 +326,106 @@ if (!class_exists('CAT_Backend_Page'))
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 CAT_Object::printFatalError('You are not allowed for the requested action!');
 
+            // get current files
             $headerfiles = CAT_Helper_Page::getExtraHeaderFiles($pageID);
-            $headerfiles_by_plugin = array();
 
-            // link headerfiles to jQuery plugins
-            // !!!!!!!!!!!!!!! NOT USED AT THE MOMENT !!!!!!!!!!!!!!!
-            if(is_array($headerfiles) && count($headerfiles))
-            {
-                foreach(array_values($headerfiles) as $item)
-                {
-                    foreach(array_values(array('css','js')) as $key)
-                    {
-                        if(isset($item[$key]) && is_array($item[$key]) && count($item[$key]))
-                        {
-                            foreach(array_values($item[$key]) as $file)
-                            {
-                                $file = str_ireplace(
-                                    array('/modules/lib_javascript/plugins/'),
-                                    '',
-                                    $file
+            // get registered javascripts
+            $plugins     = CAT_Helper_Addons::getAddons('javascript');
+
+            // find javascripts in template directory
+            $tpljs       = CAT_Helper_Directory::findFiles(
+                CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($pageID),
+                array(
+                    'extension' => 'js',
+                    'recurse' => true
+                )
                                 );
-                                $plugin = substr($file,0,strpos($file,'/'));
-                                if(!isset($headerfiles_by_plugin[$plugin]))
-                                    $headerfiles_by_plugin[$plugin] = array();
-                                $headerfiles_by_plugin[$plugin][] = preg_replace('~^'.$plugin.'~i','',$file);
+
+/*
+Array
+(
+    [css] => Array
+        (
+            [screen,projection] => Array
+                (
+                    [0] => /modules/lib_bootstrap/vendor/css/font-awesome.min.css
+                    [1] => /modules/lib_bootstrap/vendor/v4/css/cerulean/bootstrap.min.css
+                    [2] => /modules/lib_javascript/plugins/tippy/1.4.1/tippy.css
+                    [3] => /modules/lib_javascript/jquery-ui/themes/base/jquery-ui.css
+                    [4] => /templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css
+                    [5] => /modules/lib_javascript/plugins/jquery.datatables/css/dataTables.bootstrap.min.css
+                    [6] => /templates/backstrap/css/default/theme.css
+                )
+
+        )
+
+    [js] => Array
+        (
+            [0] => /modules/lib_javascript/jquery-core/jquery-core.min.js
+            [1] => /modules/lib_javascript/jquery-ui/ui/i18n/jquery-ui-i18n.min.js
+            [2] => /modules/lib_javascript/jquery-ui/ui/jquery-ui.min.js
+            [3] => P:/BlackCat2/cat_engine/modules/lib_javascript/plugins/jquery.cattranslate/jquery.cattranslate.js
+            [4] => P:/BlackCat2/cat_engine/modules/lib_javascript/plugins/jquery.mark/jquery.mark.min.js
+            [5] => /modules/lib_javascript/plugins/jquery.columns/jquery.columns.js
+            [6] => /modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js
+            [7] => /modules/lib_javascript/plugins/jquery.datatables/js/dataTables.mark.min.js
+            [8] => /modules/lib_javascript/plugins/jquery.datatables/js/dataTables.bootstrap.min.js
+            [9] => /modules/lib_javascript/plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js
+            [10] => /CAT/Backend/js/session.js
+            [11] => /templates/backstrap/js/datetimepicker/jquery.datetimepicker.full.js
+            [12] => CONDITIONAL lt IE 9 START
+            [13] => https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js
+            [14] => https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js
+            [15] => CONDITIONAL lt IE 9 END
+            [16] => /templates/backstrap/js/backend.js
+        )
+
+)
+
+*/
+            // find css files in template directory
+            $tplcss = CAT_Helper_Directory::findFiles(
+                CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($pageID),
+                array(
+                    'extension' => 'css',
+                    'recurse' => true,
+                    'remove_prefix' => true,
+                )
+            );
+
+            // already assigned
+            $headerfiles = CAT_Helper_Page::getAssets('header',$pageID,false,false);
+            $footerfiles = CAT_Helper_Page::getAssets('footer',$pageID,false,false);
+            $files       = array('js'=>array(),'css'=>array());
+
+            if(count($headerfiles['js'])) {
+                foreach($headerfiles['js'] as $file) {
+                    $files['js'][] = array('file'=>$file,'pos'=>'header');
                             }
                         }
+            if(count($footerfiles['js'])) {
+                foreach($footerfiles['js'] as $file) {
+                    $files['js'][] = array('file'=>$file,'pos'=>'footer');
                     }
                 }
-            }
+echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">$pageID\n";
+print_r($headerfiles);
+#print_r($tpljs);
+#print_r($plugins);
+echo "</textarea>";
 
-            // check params
-            if(($remove_plugin = CAT_Helper_Validate::sanitizePost('remove_plugin')) !== NULL)
+            if(self::asJSON())
             {
-                // find plugin in $headerfiles_by_plugin
-                if(array_key_exists($remove_plugin,$headerfiles_by_plugin))
-                {
-                    foreach($headerfiles_by_plugin[$remove_plugin] as $item)
-                    {
-                        // find type
-                        $type = pathinfo($item,PATHINFO_EXTENSION);
-                        if(!in_array($type,array('css','js')))
-                        {
-
-                        }
-                        self::delHeaderComponent($type,$item,$pageID);
-                    }
-                }
+                CAT_Helper_JSON::printSuccess();
+            } else {
+                CAT_Backend::print_header();
+                self::tpl()->output('backend_page_headerfiles', array(
+                    'files'  => $files,
+                    'tplcss' => $tplcss,
+                ));
+                CAT_Backend::print_footer();
             }
-
-            // check params
-            if(($remove_file = CAT_Helper_Validate::sanitizePost('remove_file')) !== NULL)
-            {
-echo "remove file $remove_file\n<br />";
-            }
-
-            // available jQuery Plugins
-            $jq     = self::getJQueryFiles();
-            $jq_js  = self::getJQueryFiles('js');
-            $jq_css = self::getJQueryFiles('css');
-
-            array_unshift($jq,self::lang()->t('[Please select]'));
-            array_unshift($jq_js,self::lang()->t('[Please select]'));
-            array_unshift($jq_css,self::lang()->t('[Please select]'));
-
-            $forms = array();
-
-            // now, let's load the form(s)
-            $form = CAT_Backend::initForm();
-            $form->loadFile('pages.forms.php',__dir__.'/forms');
-            foreach(array_values(array(
-                'be_page_headerfiles_plugin',
-                'be_page_headerfiles_js',
-                'be_page_headerfiles_css'
-            )) as $name) {
-                $form->setForm($name);
-                $form->setAttr('action',CAT_ADMIN_URL.'/page/headerfiles');
-                $form->getElement('page_id')->setValue($pageID);
-                if($form->hasElement('jquery_plugin'))
-                    $form->getElement('jquery_plugin')->setAttr('options',$jq);
-                if($form->hasElement('jquery_js'))
-                    $form->getElement('jquery_js')->setAttr('options',$jq_js);
-                if($form->hasElement('jquery_css'))
-                    $form->getElement('jquery_css')->setAttr('options',$jq_css);
-
-                if($form->isSent() && $form->isValid())
-                {
-                    $data = $form->getData();
-                    foreach(array_values(array('jquery_plugin','jquery_js','jquery_css')) as $key)
-                    {
-                        if(isset($data[$key]))
-                        {
-                            $value = $data[$key];
-                            $type  = preg_replace('~^jquery_~i','',$key);
-                            if($type == 'plugin')
-                            {
-                                // find JS files
-                                $js  = self::getJQueryFiles('js',$value);
-                                // find CSS files
-                                $css = self::getJQueryFiles('css',$value);
-                                foreach($js as $file)
-                                    self::addHeaderComponent('js',$value.'/'.$file,$pageID);
-                                foreach($css as $file)
-                                    self::addHeaderComponent('css',$value.'/'.$file,$pageID);
-                            }
-                        }
-                    }
-                }
-                $forms[$name] = $form->getForm($name);
-            }
+return;
 
             if(self::asJSON())
             {

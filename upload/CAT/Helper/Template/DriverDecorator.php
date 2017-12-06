@@ -29,7 +29,6 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
         public    $template_block;
         protected $last         = NULL;
         private   $te           = NULL;
-        private   $dirh         = NULL;
         private   $seen         = array();
         private   $paths        = array(
             'current'           => NULL,
@@ -59,7 +58,6 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
                 $this->te->paths['workdir'] .= '/templates';
             }
             $this->te->paths['current'] = $this->te->paths['workdir'];
-            $this->dirh = CAT_Helper_Directory::getInstance();
         }
 
         public function __call($method, $args)
@@ -219,8 +217,8 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
         public function hasTemplate($name)
         {
             $file = $this->findTemplate($name);
-            if ( $file )
-                return $file;
+            if(is_array($file) && count($file)>0)
+                return $file[0];
             else
                 return false;
         }   // end function hasTemplate()
@@ -232,6 +230,9 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
          **/
         public function findTemplate($_tpl)
         {
+            // remove suffix
+            $_tpl = preg_replace('~\.tpl|htt$~i','',$_tpl);
+
             // cached
             if(isset($this->seen[$this->te->paths['current'] . $_tpl]))
                 return $this->seen[$this->te->paths['current'] . $_tpl];
@@ -263,22 +264,15 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
                 }
                 else
                 {
-                    $file = $this->dirh->findFiles($dir,array('filename'=>$_tpl,'extensions'=>array('tpl','htt')));
+                    $file = CAT_Helper_Directory::findFiles($dir,array('filename'=>$_tpl,'extensions'=>array('tpl','htt')));
                 }
-                if ( $file )
+                if(is_array($file) && count($file)>0)
                 {
-                    $this->seen[$this->te->paths['current'] . $_tpl] = $file;
-                    return $file;
+                    $this->seen[$this->te->paths['current'] . $_tpl] = $file[0];
+                    return $file[0];
                 }
             }
-            self::log()->addEmergency( "The template [$_tpl] does not exist in one of the possible template paths!", $paths );
-            // the template does not exists, so at least prompt an error
-            $br = "\n";
-            CAT_Object::printFatalError(
-                "Unable to render the page (template: $_tpl)",
-                NULL,true,
-                $paths
-            );
+            self::log()->addDebug( "The template [$_tpl] does not exist in one of the possible template paths!", $paths );
         }   // end function findTemplate()
 
     }

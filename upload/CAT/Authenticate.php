@@ -29,6 +29,10 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         #
         // singleton
         private static $instance        = NULL;
+        /**
+         * last error
+         **/
+        private static $lasterror     = null;
 
         /*******************************************************************************
          * http://aaronsaray.com/blog/2009/02/12/password-complexity-class/
@@ -78,20 +82,6 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
             return self::$instance;
         }   // end function getInstance()
 
-
-        /**
-         * get hash
-         *
-         * @access private
-         * @param string $passwd
-         * @return string
-        **/
-        private function getHash($passwd)
-        {
-            return password_hash($passwd, $this->_hashOpt->algo, array('cost'=>$this->_hashOpt->cost));
-        }   // end function getHash()
-
-
         /**
          * Compare user's password with given password
          * @access public
@@ -100,28 +90,23 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
          * @param string $tfaToken
          * @return bool
          */
-        public function authenticate($uid, $passwd, $tfaToken = NULL)
+        public static function authenticate($uid, $passwd, $tfaToken = NULL)
         {
-            $this->log()->debug(sprintf('Trying to verify password for UserID [%s]',$uid));
+            self::log()->debug(sprintf('Trying to verify password for UserID [%s]',$uid));
 
             if(!$uid||!$passwd)
             {
-                $this->setError('An empty value was sent for authentication!');
+                self::setError('An empty value was sent for authentication!');
                 return false;
             }
 
-            $storedHash     = $this->getPasswd($uid);
-            $storedToken    = $this->getSecret($uid);
+            $storedHash     = self::getPasswd($uid);
+			$storedToken    = self::getSecret($uid);
 
             if(password_verify($passwd,$storedHash)) // user found and password ok
             {
                 // init user object
-                $this->user()->initUser($uid);
-
-                // 2-Step authentification
-                // if TFA is not enabled (global or for the user) return true
-                if($storedToken === true)
-                    return true;
+                self::user()->initUser($uid);
 
                 // if TFA is enabled and token is given
                 if($tfaToken)
@@ -129,28 +114,28 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
                     $tfa = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE);
                     if($tfa->verifyCode($storedToken,$tfaToken) !== true)
                     {
-                        $this->reset();
-                        $this->setError(
+                        self::setError(
                             'Two step authentication failed!',
                             'Token verification failed'
                         );
                         return false;
                     }
-                }
                 else
                 {
                     // if TFA is enabled but token is missing
-                    $this->reset();
-                    $this->setError(
+                        self::setError(
                         'Two step authentication failed!',
                         'Missing token'
                     );
                     return false;
                 }
             }
+                $_SESSION['USER_ID'] = $uid;
+                return true;
+            }
             else
             {
-                $this->setError(
+                self::setError(
                     'Authentication failed!',
                     'No such user, user not active, or invalid password!'
                 );
@@ -159,24 +144,35 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         }   // end function authenticate()
 
         /**
+         * get hash
+         *
+         * @access private
+         * @param string $passwd
+         * @return string
+        **/
+        private static function getHash($passwd)
+        {
+            return password_hash($passwd, $this->_hashOpt->algo, array('cost'=>$this->_hashOpt->cost));
+        }   // end function getHash()
+
+        /**
          * Get hashed password from database
          *
          * @access private
          * @param int $uid
          * @return string
          **/
-        private function getPasswd($uid=NULL)
+        private static function getPasswd($uid=NULL)
         {
-            $storedHash    = $this->db()->query(
+            $storedHash = self::db()->query(
                 'SELECT `password` FROM `:prefix:rbac_users` WHERE `user_id`=:uid',
                 array( 'uid' => $uid )
             )->fetchColumn();
 
-            if($this->db()->isError()) return false;
+            if(self::db()->isError()) return false;
             else                       return $storedHash;
 
         }   // end function getPasswd()
-
 
         /**
          * Check if the user is authenticated
@@ -185,7 +181,7 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
          * @param int $uid
          * @return string
          **/
-        private function getSecret($uid)
+        private static function getSecret($uid)
         {
             // TFA enabled globally?
             if(
@@ -196,37 +192,31 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
             }
 
             // TFA enabled for current user?
-            $getTFA    = $this->db()->query(
+            $getTFA    = self::db()->query(
                 'SELECT `tfa_enabled`, `tfa_secret` FROM `:prefix:rbac_users` WHERE `user_id`=:uid',
                 array('name'=>$uid )
             );
 
-            if(!$this->db()->isError() && $getTFA->rowCount() != 0) // user found and password ok
+            if(!self::db()->isError() && $getTFA->rowCount() != 0) // user found and password ok
             {
                 $tfa    = $getTFA->fetch(\PDO::FETCH_ASSOC);
                 if( $tfa['tfa_enabled'] == 'Y') {
+                    // missing secret?
+                    if(!strlen($tfa['tfa_secret']))
+                    {
+                        $tfa['tfa_secret'] = $this->getTFAObject()->createSecret();
+                        self::db()->query(
+                            'UPDATE `:prefix:rbac_users` SET `tfa_secret`=? WHERE `user_id`=?',
+                            array($tfa['tfa_secret'],$uid)
+                        );
+                    }
                     return $tfa['tfa_secret'];
                 }
                 else return true;
             }
             else return false;
 
-        }   // end function getSecret()
-
-
-        /**
-         * create a new secret for a user
-         *
-         * @access public
-         * @return string
-         **/
-        public function setSecret()
-        {
-            // generate a new secret
-            if( is_null($this->tfaSecret) ) $this->tfaSecret    = $this->getTFAObject()->createSecret();
-            return $this->tfaSecret;
-        }   // end function createSecret()
-
+        }   // end function getTFASecret()
 
         /**
          * Check if the user is authenticated
@@ -238,10 +228,8 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         private function getTFAObject()
         {
             if ( is_object($this->tfa) ) return $this->tfa;
-
             $ignore        = new CAT_Helper_QRCode(); // just to make sure the helper is loaded
             $mp            = new CAT_Helper_QRCodeProvider(); // needed for image creation
-
             $this->tfa    = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
             return $this->tfa;
         }   // end function getTFAObject()
@@ -257,9 +245,10 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         public function createQRCode($uid)
         {
             return $this->getTFAObject()->getQRCodeImageAsDataUri(
-                    CAT_USER::getInstance($uid)->get('display_name'), $this->setSecret()
+                    CAT_USER::getInstance($uid)->get('display_name'),
+                    $this->setSecret()
             );
-        }   // end function getTFAObject()
+        }   // end function createQRCode()
 
         /**
          * Check if the user is authenticated
@@ -323,6 +312,21 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         {
             return $this->_issues;
         }
+
+        /***********************************************************************
+         * PROTECTED
+         **********************************************************************/
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        protected static function setError($msg,$logmsg=NULL)
+        {
+            self::log()->debug($logmsg?$logmsg:$msg);
+            self::$lasterror = $msg;
+        }   // end function setError()
+
         protected function _requireLowercase($newPass)
         {
             if (!preg_match('/[a-z]/', $newPass)) {
@@ -373,17 +377,5 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
             }
             return true;
         }
-
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public function setError($msg,$logmsg=NULL)
-        {
-            $this->log()->debug($logmsg?$logmsg:$msg);
-            $this->lasterror = $msg;
-        }   // end function setError()
     }
 }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{$LANGUAGE}">
 <head>
-    {get_page_headers("{$SECTION}")}
+    {get_page_headers()}
 </head>
 <body class="fuelux">
 {include file='backend_nav_top.tpl'}

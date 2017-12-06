@@ -119,20 +119,31 @@ if (!class_exists('CAT_Registry', false))
             // try to get the value from the settings table
             if(!$return_value)
             {
-                $self   = self::getInstance();
-                $result = $self->db()->query(
-                    'SELECT `value` FROM `:prefix:settings_global` WHERE `name`=?',
+                $result = self::db()->query(
+                    'SELECT `t1`.`name`, `t1`.`default_value`, '
+                    .'`t2`.`value` AS `global`, `t3`.`value` AS `site` '
+                    .'FROM `cat_settings` AS `t1` '
+                    .'LEFT JOIN `cat_settings_global` AS `t2` '
+                    .'ON `t1`.`name`=`t2`.`name` '
+                    .'LEFT JOIN `cat_settings_site` as `t3` '
+                    .'ON `t1`.`name`=`t3`.`name` '
+                    .'WHERE `t1`.`name`=?',
                     array(strtolower($key))
                 );
                 $row = $result->fetch();
-                if($row['value'] && strlen($row['value']))
+                if($row['name'] && strlen($row['name']))
                 {
+                    // value from 'site' over 'global' to 'default'
+                    $value = (strlen($row['site']) ? $row['site']
+                                : (strlen($row['global']) ? $row['global']
+                                    : $row['default_value'] )
+                             );
                     if($validate)
-                        $return_value = CAT_Helper_Validate::check($row['value'],$validate);
+                        $return_value = CAT_Helper_Validate::check($value,$validate);
                     else
-                        $return_value = $row['value'];
+                        $return_value = $value;
                     if($return_value)
-                        CAT_Registry::$REGISTRY[$key] = $return_value;
+                        CAT_Registry::$REGISTRY[$key] = $value;
                 }
             }
 

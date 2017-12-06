@@ -39,6 +39,7 @@ $LANG = array(
     'Click to dismiss' => 'Zum Schließen anklicken',
     'No such user, user not active, or invalid password!' => 'Benutzer nicht vorhanden, nicht aktiv, oder Kennwort falsch!',
     'Parse error. Maybe caused by invalid JSON data.' => 'Parsefehler. Möglicherweise verursacht durch ungültige JSON Daten.',
+    'Please enter valid login credentials to proceed' => 'Bitte gültige Anmeldedaten eingeben um fortzufahren',
     'Sorry, there was an error' => 'Entschuldigung, ein Fehler ist aufgetreten',
     'This action is not available' => 'Diese Aktion ist nicht verfügbar',
     'Two step authentication failed!' => 'Zwei-Faktor Authentifizierung fehlgeschlagen!',

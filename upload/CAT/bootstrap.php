@@ -59,6 +59,19 @@ spl_autoload_register(function($class)
 });
 
 //******************************************************************************
+// Start a session
+//******************************************************************************
+if (!defined('SESSION_STARTED'))
+{
+    $session = new CAT_Session();
+    $session->start_session('_cat', (isset($_SERVER['HTTPS']) ? true : false));
+    CAT_Registry::register('SESSION_STARTED', true, true);
+}
+if (defined('ENABLED_ASP') && ENABLED_ASP && !isset($_SESSION['session_started']))
+    $_SESSION['session_started'] = time();
+
+
+//******************************************************************************
 // Register jQuery / JavaScripts base path
 //******************************************************************************
 CAT_Registry::register(
@@ -91,29 +104,6 @@ CAT_Registry::register('CAT_TEMPLATE_DIR',CAT_ENGINE_PATH.'/templates/'.CAT_Regi
 // Set as constants for simpler use
 //******************************************************************************
 CAT_Registry::register('CAT_VERSION'     ,CAT_Registry::get('CAT_VERSION')                                   , true);
-
-//******************************************************************************
-// Start a session
-//******************************************************************************
-if (!defined('SESSION_STARTED'))
-{
-    session_name(CAT_Registry::get('COOKIE_NAME').'sessionid');
-	$cookie_settings = session_get_cookie_params();
-	session_start();
-    // extend the session lifetime on each action
-    setcookie(
-        session_name(),
-        session_id(),
-        time()+ini_get('session.gc_maxlifetime'),
-        $cookie_settings["path"],
-        $cookie_settings["domain"],
-        (strtolower(substr($_SERVER['SERVER_PROTOCOL'], 0, 5)) === 'https'),
-        true
-    );
-    CAT_Registry::register('SESSION_STARTED', true, true);
-}
-if (defined('ENABLED_ASP') && ENABLED_ASP && !isset($_SESSION['session_started']))
-    $_SESSION['session_started'] = time();
 
 //******************************************************************************
 // register some globals

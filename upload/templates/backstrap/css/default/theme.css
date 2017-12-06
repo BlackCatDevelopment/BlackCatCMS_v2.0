@@ -1,12 +1,13 @@
 html,body{height:100%;min-height:100%}
 
+/* top menu */
 .navbar-brand{font-size:1.2em;}
 .navbar{padding:.5rem 1rem;} /* fix for some Bootswatch themes */
 a.nav-item{padding:3px 15px;}
 #navbarMainContent{margin-left:50px;}
 
 /* dark backdrop for session timed out modal */
-modal.fade.dark.show{opacity:.7 !important;background-color:#00;}
+.modal-backdrop.show{opacity:.7 !important;background-color:#00;}
 
 /* detached buttons */
 ol.breadcrumb{padding-left:18.5rem;}
@@ -57,6 +58,7 @@ ul[role="tablist"]{margin-bottom:15px;}
 
 /* fix for Bootstrap v4: Multilevel Vertical Menu - https://www.codeply.com/go/q0b6ILuRyx/bootstrap-4-vertical-menu-with-submenu */
 div#sidebar{min-width:130px;}
+div#sidebar ul{width:100%}
 div#sidebar .nav-link{padding:0}
 
 /* toggle edit link */
@@ -117,3 +119,52 @@ li.card div.card-body.pos-r div.card-icon-wrapper ul.nav.nav-left li span.fa{dis
 .main .page-header {
   margin-top: 0;
 }
+
+
+
+/* https://bootsnipp.com/snippets/gv6Pe */
+.custom-checkbox {
+  min-height: 1rem;
+  padding-left: 0;
+  margin-right: 0;
+  cursor: pointer;
+}
+  .custom-checkbox .custom-control-indicator {
+    content: "";
+    display: inline-block;
+    position: relative;
+    width: 30px;
+    height: 10px;
+    background-color: #818181;
+    border-radius: 15px;
+    margin-right: 10px;
+    -webkit-transition: background .3s ease;
+    transition: background .3s ease;
+    vertical-align: middle;
+    margin: 0 16px;
+    box-shadow: none;
+  }
+    .custom-checkbox .custom-control-indicator:after {
+      content: "";
+      position: absolute;
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background-color: #f1f1f1;
+      border-radius: 21px;
+      box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4);
+      left: -2px;
+      top: -4px;
+      -webkit-transition: left .3s ease, background .3s ease, box-shadow .1s ease;
+      transition: left .3s ease, background .3s ease, box-shadow .1s ease;
+    }
+  .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator {
+    background-image: none;
+    box-shadow: none !important;
+  }
+    .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator:after {
+      left: 15px;
+    }
+  .custom-checkbox .custom-control-input:focus ~ .custom-control-indicator {
+    box-shadow: none !important;
+  }

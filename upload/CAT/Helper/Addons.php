@@ -32,6 +32,17 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          * instance
          **/
         private   static $instance = NULL;
+        /**
+         * for version compare
+         **/
+        private   static $states   = array(
+            '.0' => 'dev',
+            '.1' => 'preview',
+            '.2' => 'alpha',
+            '.5' => 'beta',
+            '.8' => 'rc',
+            '.9' => 'final'
+        );
 
         public function __construct() {}
 
@@ -87,6 +98,27 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
          */
         public static function getAddons($type=NULL,$order='name',$names_only=true,$find_icon=false,$not_installed=false)
         {
+            switch($type) {
+                case 'javascript':
+                    $stmt = self::db()->query(
+                        'SELECT * FROM `:prefix:addons_javascripts`'
+                    );
+                    $data = $stmt->fetchAll();
+                    break;
+                case 'jquery':
+                    $stmt = self::db()->query(
+                        'SELECT * FROM `:prefix:addons_javascripts` WHERE `jquery`="Y"'
+                    );
+                    $data = $stmt->fetchAll();
+                    break;
+                case 'js':
+                case 'css':
+                    $stmt = self::db()->query(
+                        'SELECT * FROM `:prefix:addons_javascripts` WHERE `jquery`="N"'
+                    );
+                    $data = $stmt->fetchAll();
+                    break;
+                default:
             // create query builder
             $q = CAT_Helper_DB::qb()
                 ->select('*')
@@ -158,34 +190,8 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 }
                 return $result;
             }
-
-
-/*
-        if ( count($new) )
-        {
-            foreach( $new as $dir )
-            {
-                // skip paths starting with __ (sometimes used for deactivating addons)
-                if(substr($dir,0,2) == '__') continue;
-                $info = $addon->checkInfo(CAT_PATH.'/'.$type.'/'.$dir);
-                if ( $info )
-                {
-                    $tpl_data['not_installed_addons'][$type][$counter] = array(
-                        'is_installed' => false,
-                        'type'         => $type,
-                        'INSTALL'      => file_exists(CAT_PATH.'/'.$type.'/'.$dir.'/install.php') ? true : false
-                    );
-                    foreach( $info as $key => $value )
-                    {
-                        $tpl_data['not_installed_addons'][$type][$counter][str_ireplace('module_','',$key)] = $value;
-                    }
-                    $counter++;
-                }
-            }
-            $tpl_data['not_installed_addons'][$type] = CAT_Helper_Array::ArraySort($tpl_data['not_installed_addons'][$type],'name','asc',true);
-        }
-
-*/
+                    break;
+            } // end switch()
 
             if($names_only)
                 $data = CAT_Helper_Array::extract($data,'name','directory');
@@ -248,6 +254,57 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             return $info;
         }   // end function getInfo()
         
+        /**
+         * removes/replaces known substrings in version string with their
+         * weights
+         *
+         * @access public
+         * @param  string  $version
+         * @return string
+         */
+        public static function getVersion($version)
+        {
+            $version = strtolower($version);
+
+            // additional version string, f.e. "beta", to "weight"
+            foreach(self::$states as $value => $keys)
+                $version = str_replace($keys, $value, $version);
+            // remove blanks, replace comma
+            $version = str_replace(
+                array(" ",','),
+                array("",''),
+                $version
+            );
+            /**
+             *	Force the version-string to get at least 4 terms.
+             *	E.g. 2.7 will become 2.7.0.0
+             */
+            $temp_array = explode( ".", $version );
+            $n          = count( $temp_array );
+            if($n < 4)
+            {
+                for($i = 0; $i<(4-$n); $i++)
+                    $version = $version . ".0";
+            }
+            // remove letters ('v1.2.3' => '1.2.3')
+            $version = preg_replace('~[a-z]+~i','',$version);
+            return $version;
+        } // end function getVersion()
+        
+        /**
+         * This function performs a comparison of two provided version strings
+         * The versions are first converted into a string following the major.minor.revision
+         * convention; the converted strings are passed to version_compare()
+         *
+         * @access public
+         * @param  string  $version1
+         * @param  string  $version2
+         * @param  string  $operator - default '>='
+         */
+        public static function versionCompare($version1,$version2,$operator='>=')
+        {
+            return version_compare(self::getVersion($version1),self::getVersion($version2),$operator);
+        } // end versionCompare()
 
     } // class CAT_Helper_Addons
 

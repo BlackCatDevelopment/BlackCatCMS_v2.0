@@ -2,18 +2,19 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{$LANGUAGE}" lang="{$LANGUAGE}">
 <head>
 <?php
-    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
-    CAT_Helper_Page::addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
-    CAT_Helper_Page::addCSS('templates/backstrap/css/default/login.css');
-    CAT_Helper_Page::addJS('modules/lib_javascript/jquery-core/jquery-core.min.js','footer');
-    CAT_Helper_Page::addJS('modules/lib_bootstrap/vendor/js/bootstrap.min.js','footer');
-    CAT_Helper_Page::addJS('templates/backstrap/js/login.js','footer');
-    CAT_Helper_Page::addMeta(array('charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8")));
-    CAT_Helper_Page::addMeta(array('http-equiv' => 'X-UA-Compatible', 'content' => 'IE=edge'));
-    CAT_Helper_Page::addMeta(array('name' => 'viewport', 'content' => 'width=device-width, initial-scale=1'));
+    $am = new CAT_Helper_AssetFactory('backend_login');
+    $am->addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
+    $am->addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
+    $am->addCSS('templates/backstrap/css/default/login.css');
+    $am->addJS('modules/lib_javascript/jquery-core/jquery-core.min.js');
+    $am->addJS('modules/lib_bootstrap/vendor/js/bootstrap.min.js');
+    $am->addJS('templates/backstrap/js/login.js');
+    $am->addMeta(array('charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8")));
+    $am->addMeta(array('http-equiv' => 'X-UA-Compatible', 'content' => 'IE=edge'));
+    $am->addMeta(array('name' => 'viewport', 'content' => 'width=device-width, initial-scale=1'));
     //CAT_Helper_Page::addMeta(array('name' => 'description', 'content' => 'BlackCat CMS - '.$pg->lang()->translate('Administration')));
 ?>
-    {get_page_headers(false,true)}
+    {get_page_headers()}
     <title>{translate('Login')}</title>
 </head>
 
@@ -53,14 +54,12 @@
                         </div>
                     </div>
                 </form>
-                <div class="alert alert-danger alert-dismissible" role="alert" id="login-error" style="display:none;">
+                <div class="alert alert-danger alert-dismissible" role="alert" id="login-error" style="{if !$error_message}display:none;{/if}">
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <p></p>
+                    <p>{if isset($error_message)}{$error_message}{/if}</p>
                 </div>
             </div>
         </div>
     </div>
-{get_page_footers("backend",true,true)}
-
 </body>
 </html>
