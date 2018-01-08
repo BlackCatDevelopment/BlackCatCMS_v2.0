@@ -14,17 +14,28 @@
 $mod_footers = array(
     'backend' => array(
         'js' => array(
+            // required by tippy and bootstrap
             '/modules/lib_bootstrap/vendor/v4/js/popper.min.js',
-            '/modules/lib_bootstrap/vendor/v4/js/bootstrap.min.js',
-            '/modules/lib_bootstrap/vendor/js/bootstrap-editable.min.js',
             '/modules/lib_javascript/plugins/tippy/1.4.1/tippy.standalone.js',
+            '/modules/lib_bootstrap/vendor/v4/js/bootstrap.min.js',
+            '/modules/lib_bootstrap/vendor/js/bootstrap-editable.js',
             '/templates/backstrap/js/bootstrap.growl/growl.min.js',
+            // --- aus headers.inc.php verschoben! ---
+            'modules/lib_javascript/plugins/jquery.columns/jquery.columns.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.mark.min.js',
+            'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.bootstrap4.min.js',
+            'modules/lib_javascript/plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js',
+            'CAT/Backend/js/session.js',
+            'templates/backstrap/js/datetimepicker/jquery.datetimepicker.full.js',
+
         )
     )
 );
 
-if(CAT_Backend::getArea() == 'media')
+if(\CAT\Backend::getArea() == 'media')
 {
+/*
     $add_js = array(
         // The Load Image plugin is included for the preview images and image resizing functionality
         CAT_JS_PLUGINS_PATH.'/jquery.fileupload/js/load-image.all.min.js',
@@ -51,8 +62,8 @@ if(CAT_Backend::getArea() == 'media')
         $mod_footers['backend']['js'],
         $add_js
     );
-
-    $am = CAT_Helper_AssetFactory::getInstance('backend_media');
+*/
+    $am = \CAT\Helper\AssetFactory::getInstance('backend_media');
     $am->addJS(
         'templates/backstrap/js/load_datatable.js',
         'footer',

@@ -15,13 +15,12 @@
 
 */
 
-if(!class_exists('CAT_Object',false)) {
-    @include dirname(__FILE__).'/../Object.php';
-}
+namespace CAT\Helper;
+use \CAT\Base as Base;
 
-if(!class_exists('CAT_Helper_Menu',false))
+if(!class_exists('\CAT\Helper\Menu',false))
 {
-	class CAT_Helper_Menu extends CAT_Object
+	class Menu extends Base
 	{
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
         /**
@@ -79,6 +78,8 @@ if(!class_exists('CAT_Helper_Menu',false))
                     array(
                         'id'    => 'page_id',
                         'title' => 'menu_title',
+                        'current' => 'is_current',
+                        'create_level_css' => false,
                     ));
             }
             return self::$list;
@@ -101,14 +102,14 @@ if(!class_exists('CAT_Helper_Menu',false))
             self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu     = array();
             // get the level of the current page
-            $level    = CAT_Helper_Page::properties($pid,'level');
+            $level    = \CAT\Helper\Page::properties($pid,'level');
             // get the path
-            $subpages = array_reverse(CAT_Helper_Page::getPageTrail($pid,false,true));
+            $subpages = array_reverse(\CAT\Helper\Page::getPageTrail($pid,false,true));
             self::log()->debug('level [{level}] pages [{pages}]',array('level'=>$level,'pages'=>print_r($subpages,1)));
             // add the pages to the menu
             foreach($subpages as $id)
             {
-                $pg = CAT_Helper_Page::properties($id);
+                $pg = \CAT\Helper\Page::properties($id);
                 $menu[] = $pg;
             }
             // check if the current page should be shown
@@ -128,7 +129,7 @@ if(!class_exists('CAT_Helper_Menu',false))
             self::log()->debug('pages: '.print_r($menu,1));
 
             // set root id to the root parent to make the listbuilder work
-            #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
+            #$options['root_id'] = \CAT\Helper\Page::getRootParent($pid);
             $options['root_id'] = 0;
             // return the menu
             return self::listbuilder(true)->buildList($menu,$options);
@@ -150,13 +151,13 @@ if(!class_exists('CAT_Helper_Menu',false))
             self::checkOptions($options);
             self::log()->addDebug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
             $menu = $menu_number
-                  ? CAT_Helper_Page::getPagesForMenu($menu_number)
-                  : CAT_Helper_Page::getPages()
+                  ? \CAT\Helper\Page::getPagesForMenu($menu_number)
+                  : \CAT\Helper\Page::getPages()
                   ;
             self::markTrail($pid,$menu);
 // -----------------------------------------------------------------------------
 // ----- !!!FIX ME!!! ----------------------------------------------------------
-            #$options['root_id'] = CAT_Helper_Page::getRootParent($pid);
+            #$options['root_id'] = \CAT\Helper\Page::getRootParent($pid);
             $options['root_id'] = 0;
 // -----------------------------------------------------------------------------
             self::listbuilder(true)->set($options);
@@ -182,14 +183,14 @@ if(!class_exists('CAT_Helper_Menu',false))
             self::log()->addDebug(sprintf('create a siblingsmenu for page with id [%s]',$pid));
             self::log()->addDebug('options:',$options);
             // get the menu number
-            $menu_no  = CAT_Helper_Page::properties($pid,'menu');
+            $menu_no  = \CAT\Helper\Page::properties($pid,'menu');
             // get the level of the current/given page
-            $level    = CAT_Helper_Page::properties($pid,'level');
+            $level    = \CAT\Helper\Page::properties($pid,'level');
             // pages
-            $menu     = CAT_Helper_Page::getPagesForLevel($level,$menu_no);
+            $menu     = \CAT\Helper\Page::getPagesForLevel($level,$menu_no);
             self::log()->addDebug('pages:',$menu);
             // set root id to the parent page to make the listbuilder work
-            $options['root_id'] = CAT_Helper_Page::properties($pid,'parent');
+            $options['root_id'] = \CAT\Helper\Page::properties($pid,'parent');
             // return the menu
             return self::listbuilder(true)->buildList($menu,$options);
         }   // end function siblingsMenu()
@@ -209,9 +210,9 @@ if(!class_exists('CAT_Helper_Menu',false))
             self::checkPageId($pid);
             self::checkOptions($options);
             // get the pages
-            $pages = CAT_Helper_Page::getSubPages($pid);
+            $pages = \CAT\Helper\Page::getSubPages($pid);
             // add current page to menu
-            $menu  = array(CAT_Helper_Page::properties($pid));
+            $menu  = array(\CAT\Helper\Page::properties($pid));
             // we need a fresh copy here...
             $lb    = self::listbuilder(true);
             if(isset($options['levels']))
@@ -222,7 +223,7 @@ if(!class_exists('CAT_Helper_Menu',false))
             }
             // add the pages
             foreach($pages as $sid)
-                $menu[] = CAT_Helper_Page::properties($sid);
+                $menu[] = \CAT\Helper\Page::properties($sid);
             // set the root id to the current page
             $options['root_id'] = $pid;
             // return the menu
@@ -266,8 +267,8 @@ if(!class_exists('CAT_Helper_Menu',false))
          **/
         protected static function checkPageId(&$pid=NULL)
         {
-            if($pid===NULL) $pid = CAT_Page::getID();
-            if($pid===0)    $pid = CAT_Helper_Page::getRootParent($page_id);
+            if($pid===NULL) $pid = \CAT\Page::getID();
+            if($pid===0)    $pid = \CAT\Helper\Page::getRootParent($page_id);
         }   // end function checkPageId()
 
         /**
@@ -278,7 +279,7 @@ if(!class_exists('CAT_Helper_Menu',false))
          **/
         protected static function markTrail($pid, &$menu)
         {
-            $trailpages = array_reverse(CAT_Helper_Page::getPageTrail($pid,false,true));
+            $trailpages = array_reverse(\CAT\Helper\Page::getPageTrail($pid,false,true));
             foreach(array_values($trailpages) as $id)
             {
                 foreach($menu as $i => $item)

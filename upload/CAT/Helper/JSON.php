@@ -15,9 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Helper_JSON'))
+namespace CAT\Helper;
+use \CAT\Base as Base;
+
+if (!class_exists('Json'))
 {
-    class CAT_Helper_JSON 
+    class Json
     {
         /**
          * encodes $data to json; please note that errors are ignored!
@@ -88,7 +91,7 @@ if (!class_exists('CAT_Helper_JSON'))
             );
             $content = (
                 is_scalar($message)
-                ? CAT_Object::lang()->translate($message)
+                ? Base::lang()->translate($message)
                 : $message
             );
             echo json_encode(array(

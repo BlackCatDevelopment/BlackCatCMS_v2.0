@@ -15,14 +15,20 @@
 
 */
 
-if (!class_exists('CAT_Backend', false))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/Object.php';
-    }
+namespace CAT;
+use \CAT\Base as Base;
+use \CAT\Registry as Registry;
+use \CAT\Sections as Sections;
+use \CAT\Backend\Page as BPage;
+use \CAT\Helper\HArray as HArray;
+use \CAT\Helper\Page as HPage;
+use \CAT\Helper\Validate as Validate;
+use \CAT\Helper\FormBuilder as FormBuilder;
+use \CAT\Helper\Json as Json;
 
-    class CAT_Backend extends CAT_Object
+if (!class_exists('Backend', false))
+{
+    class Backend extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         #protected static $loglevel = \Monolog\Logger::DEBUG;
@@ -45,33 +51,33 @@ if (!class_exists('CAT_Backend', false))
                 self::log()->addDebug('creating new backend instance');
                 self::$instance = new self();
                 self::tpl()->setGlobals(array(
-                    'LANGUAGE'      => strtolower(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang())),
-                    'CHARSET'       => CAT_Registry::exists('default_charset') ? CAT_Registry::get('default_charset') : "utf-8",
+                    'LANGUAGE'      => strtolower(Registry::get('language',NULL,self::$instance->lang()->getLang())),
+                    'CHARSET'       => Registry::exists('default_charset') ? Registry::get('default_charset') : "utf-8",
                     'CAT_ADMIN_URL' => CAT_ADMIN_URL,
-                    'WEBSITE_TITLE' => CAT_Registry::get('WEBSITE_TITLE'),
+                    'WEBSITE_TITLE' => Registry::get('WEBSITE_TITLE'),
                 ));
                 self::$instance->initPaths();
-                $current_language = strtoupper(CAT_Registry::get('language',NULL,self::$instance->lang()->getLang()));
+                $current_language = strtoupper(Registry::get('language',NULL,self::$instance->lang()->getLang()));
                 self::$instance->lang()->addFile(
                     $current_language,
                     dirname(__FILE__).'/Backend/languages/'
                 );
-                if(file_exists(CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('default_theme').'/languages/'.$current_language.'.php'))
+                if(file_exists(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_theme').'/languages/'.$current_language.'.php'))
                 {
                     self::$instance->lang()->addFile(
                         $current_language,
-                        CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('default_theme').'/languages/'
+                        CAT_ENGINE_PATH.'/templates/'.Registry::get('default_theme').'/languages/'
                     );
                 }
                 if(self::user()->is_authenticated())
                 {
-                    $add_form   = CAT_Helper_FormBuilder::generateForm('be_page_add');
+                    $add_form   = FormBuilder::generateForm('be_page_add');
                     $add_form->getElement('page_type')->setValue("page");
 
                     // for re-login dialog
                     self::tpl()->setGlobals(array(
-                        'PASSWORD_FIELDNAME' => CAT_Helper_Validate::createFieldname('password_'),
-                        'USERNAME_FIELDNAME' => CAT_Helper_Validate::createFieldname('user_'),
+                        'PASSWORD_FIELDNAME' => Validate::createFieldname('password_'),
+                        'USERNAME_FIELDNAME' => Validate::createFieldname('user_'),
                         'add_page_form'      => $add_form->render(true),
                     ));
                 }
@@ -101,7 +107,7 @@ if (!class_exists('CAT_Backend', false))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 $need_perm = strtolower($router->getFunction());
                 if($router->getFunction() !== 'index')
-                    $router->setController('CAT_Backend_'.ucFirst($router->getFunction()));
+                    $router->setController('\CAT\Backend\\'.ucFirst($router->getFunction()));
                 $router->setFunction(
                     ( ($funcname = $router->getParam(0,true)) !== NULL ? $funcname : 'index' )
                 );
@@ -139,8 +145,8 @@ exit;
                         array(
                             'meta' => array(
                                 'USER'    => self::user()->get(),
-                                'SECTION' => ucfirst(str_replace('CAT_Backend_','',$router->getController())),
-                                'PERMS'   => CAT_User::getInstance()->getPerms()
+                                'SECTION' => ucfirst(str_replace('\CAT\Backend\\','',$router->getController())),
+                                'PERMS'   => User::getInstance()->getPerms()
                             )
                         )
                     );
@@ -155,8 +161,8 @@ exit;
                     }
 
                     // set the page title
-                    $controller = explode('_',$router->getController());
-                    CAT_Helper_Page::setTitle(sprintf(
+                    $controller = explode('\\',$router->getController());
+                    HPage::setTitle(sprintf(
                         'BlackCat CMS Backend / %s',
                         self::lang()->translate($controller[count($controller)-1])
                     ));
@@ -164,9 +170,9 @@ exit;
                     // pages list
                     if(self::user()->hasPerm('pages_list'))
                     {
-                        self::tpl()->setGlobals('pages',CAT_Backend_Page::tree());
-                        self::tpl()->setGlobals('pagelist',CAT_Helper_Page::getPages(1));
-                        self::tpl()->setGlobals('sections',CAT_Sections::getSections());
+                        self::tpl()->setGlobals('pages',BPage::tree());
+                        self::tpl()->setGlobals('pagelist',HPage::getPages(1));
+                        self::tpl()->setGlobals('sections',Sections::getSections());
                     }
                 }
 
@@ -201,7 +207,6 @@ exit;
         {
             if(!self::$menu)
             {
-                $self = CAT_Backend::getInstance();
                 // get backend areas
                 $r    = self::db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY `parent`,`position`');
                 self::$menu = $r->fetchAll(\PDO::FETCH_ASSOC);
@@ -227,7 +232,7 @@ exit;
                         $parents = explode('/',$item['trail']);
                         foreach(array_values($parents) as $pid)
                         {
-                            $path = CAT_Helper_Array::search($pid,self::$menu,'id');
+                            $path = HArray::search($pid,self::$menu,'id');
                             self::$menu[$path[0]]['is_in_trail'] = 1;
                         }
                     }
@@ -251,7 +256,7 @@ exit;
                 // get available settings categories / regions
                 $r       = self::db()->query('SELECT `region` FROM `:prefix:settings` GROUP BY `region`');
                 $regions = $r->fetchAll();
-                $path    = CAT_Helper_Array::search('settings',self::$menu,'name');
+                $path    = HArray::search('settings',self::$menu,'name');
                 $id      = 1000;
                 $set_parent = self::$menu[$path[0]];
                 foreach($regions as $region)
@@ -274,7 +279,7 @@ exit;
             if($parent)
             {
                 $menu = self::$menu;
-                $menu = CAT_Helper_Array::filter($menu,'parent',$parent);
+                $menu = HArray::filter($menu,'parent',$parent);
                 return $menu;
             }
 
@@ -289,7 +294,7 @@ exit;
         public static function index()
         {
             // forward to dashboard
-            //return CAT_Backend_Dashboard::index('backend/dashboard');
+            //return Backend_Dashboard::index('backend/dashboard');
             header('Location: '.CAT_ADMIN_URL.'/dashboard');
         }   // end function index()
         
@@ -315,8 +320,8 @@ exit;
         public static function initPaths()
         {
             $self    = self::getInstance();
-            $theme   = CAT_Registry::get('default_theme');
-            $variant = CAT_Registry::get('default_theme_variant');
+            $theme   = Registry::get('default_theme');
+            $variant = Registry::get('default_theme_variant');
 
             if(!$variant || !strlen($variant)) $variant = 'default';
 
@@ -333,9 +338,9 @@ exit;
          **/
         public static function isBackend()
         {
-            $current_route = CAT_Object::router()->getRoute();
-            $backend_route = defined('CAT_BACKEND_PATH')
-                           ? CAT_BACKEND_PATH
+            $current_route = Base::router()->getRoute();
+            $backend_route = defined('Backend_PATH')
+                           ? Backend_PATH
                            : 'backend';
 
             if(substr($current_route, 0, -1) != '/')
@@ -384,7 +389,7 @@ exit;
                         'sending json result, forward to URL [%s]',
                         CAT_ADMIN_URL.'/dashboard'
                     ));
-                    CAT_Helper_JSON::printData(array(
+                    Json::printData(array(
                         'success' => true,
                         'url'     => CAT_ADMIN_URL.'/dashboard'
                     ));
@@ -402,7 +407,7 @@ exit;
             {
                 self::log()->addDebug('Authentication failed!');
                 if(self::asJSON())
-                    CAT_Helper_JSON::printError('Authentication failed!');
+                    Json::printError('Authentication failed!');
                 else
                     self::printFatalError('Authentication failed!');
             }
@@ -430,11 +435,11 @@ exit;
                         $form->loadFile('forms.inc.php',__dir__.'/forms');
                         $form->setForm('lang_select');
                         $form->getElement('language')->setAttr('options',$langselect);
-                        CAT_Helper_JSON::printSuccess($form->getForm());
+                        Json::printSuccess($form->getForm());
                         break;
                 }
             }
-            echo CAT_Helper_JSON::printSuccess();
+            echo Json::printSuccess();
         }   // end function languages()
 
         /**
@@ -446,15 +451,15 @@ exit;
         public static function login($msg=null)
         {
             // we need this twice!
-            $username_fieldname = CAT_Helper_Validate::createFieldname('username_');
+            $username_fieldname = Validate::createFieldname('username_');
             // for debugging
             $self = self::getInstance();
 			$tpl_data = array(
                 'USERNAME_FIELDNAME'    => $username_fieldname,
-                'PASSWORD_FIELDNAME'    => CAT_Helper_Validate::createFieldname('password_'),
-                'TOKEN_FIELDNAME'       => CAT_Helper_Validate::createFieldname('token_'),
-                'USERNAME'              => CAT_Helper_Validate::sanitizePost($username_fieldname),
-                'ENABLE_TFA'            => CAT_Registry::get('enable_tfa'),
+                'PASSWORD_FIELDNAME'    => Validate::createFieldname('password_'),
+                'TOKEN_FIELDNAME'       => Validate::createFieldname('token_'),
+                'USERNAME'              => Validate::sanitizePost($username_fieldname),
+                'ENABLE_TFA'            => Registry::get('enable_tfa'),
                 'error_message'         => ($msg ? self::lang()->translate($msg) : null),
             );
             self::log()->addDebug('printing login page');
@@ -488,7 +493,7 @@ exit;
 
             // the original list, ordered by parent -> children (if the
             // templates renders the HTML output)
-            $lb = CAT_Object::lb();
+            $lb = Base::lb();
             $lb->set('id','id');
             $lb->set('title','title');
 
@@ -533,7 +538,7 @@ exit;
             // ! Try to get the actual version of the backend-theme from the database
             // ========================================================================
             $backend_theme_version = '-';
-            $theme                 = CAT_Registry::get('DEFAULT_THEME');
+            $theme                 = Registry::get('DEFAULT_THEME');
             if($theme)
             {
                 $backend_theme_version
@@ -580,9 +585,9 @@ exit;
          **/
         public static function tfa()
         {
-            $user = new CAT_User(CAT_Helper_Validate::sanitizePost('user'));
-            echo CAT_Helper_JSON::printSuccess($user->tfa_enabled());
+            $user = new User(Validate::sanitizePost('user'));
+            echo Json::printSuccess($user->tfa_enabled());
         }   // end function tfa()
 
-    }   // end class CAT_Backend
+    }   // end class Backend
 }

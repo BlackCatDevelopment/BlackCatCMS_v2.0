@@ -15,10 +15,13 @@
 
 */
 
+namespace CAT;
+
+use \CAT\Helper\Directory as Directory;
 
 if(!defined('CAT_ENGINE_PATH')) die;
 
-define('CAT_ADMIN_URL',CAT_URL.'/'.CAT_BACKEND_PATH);
+define('CAT_ADMIN_URL',CAT_SITE_URL.'/'.CAT_BACKEND_PATH);
 
 // Composer autoloader
 require __DIR__ . '/vendor/autoload.php';
@@ -37,7 +40,7 @@ spl_autoload_register(function($class)
         $file = str_replace(
             '\\',
             '/',
-            CAT_Helper_Directory::sanitizePath(
+            Directory::sanitizePath(
                 CAT_ENGINE_PATH.'/modules/lib_wblib/'.str_replace(
                     array('\\','_'),
                     array('/','/'),
@@ -52,8 +55,11 @@ spl_autoload_register(function($class)
     {
         $file = '/'.str_replace('_', '/', $class);
         $file = CAT_ENGINE_PATH.'/'.$file.'.php';
+        if(class_exists('\CAT\Helper\Directory',false) && $class!='\CAT\Helper\Directory')
+            $file = \CAT\Helper\Directory::sanitizePath($file);
+#echo "FILE: $file<br />";
         if (file_exists($file))
-            @require_once $file;
+            require_once $file;
     }
     // next in stack
 });
@@ -63,9 +69,9 @@ spl_autoload_register(function($class)
 //******************************************************************************
 if (!defined('SESSION_STARTED'))
 {
-    $session = new CAT_Session();
+    $session = new Session();
     $session->start_session('_cat', (isset($_SERVER['HTTPS']) ? true : false));
-    CAT_Registry::register('SESSION_STARTED', true, true);
+    Registry::register('SESSION_STARTED', true, true);
 }
 if (defined('ENABLED_ASP') && ENABLED_ASP && !isset($_SESSION['session_started']))
     $_SESSION['session_started'] = time();
@@ -74,12 +80,12 @@ if (defined('ENABLED_ASP') && ENABLED_ASP && !isset($_SESSION['session_started']
 //******************************************************************************
 // Register jQuery / JavaScripts base path
 //******************************************************************************
-CAT_Registry::register(
+Registry::register(
     'CAT_JQUERY_PATH',
-    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/lib_javascript/'),
+    Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/lib_javascript/'),
     true
 );
-CAT_Registry::register(
+Registry::register(
     'CAT_JS_PLUGINS_PATH',
     CAT_JQUERY_PATH.'/plugins/',
     true
@@ -88,24 +94,24 @@ CAT_Registry::register(
 //******************************************************************************
 // Get website settings and register as globals
 //******************************************************************************
-CAT_Object::loadSettings();
-if(!CAT_Registry::exists('LANGUAGE') && CAT_Registry::exists('DEFAULT_LANGUAGE'))
+Base::loadSettings();
+if(!Registry::exists('LANGUAGE') && Registry::exists('DEFAULT_LANGUAGE'))
 {
-    CAT_Registry::register('LANGUAGE',CAT_Registry::get('DEFAULT_LANGUAGE'),true);
+    Registry::register('LANGUAGE',Registry::get('DEFAULT_LANGUAGE'),true);
 }
 
 //******************************************************************************
 // Set theme
 //******************************************************************************
-CAT_Registry::register('CAT_THEME_PATH'  ,CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_THEME')   , true);
-CAT_Registry::register('CAT_TEMPLATE_DIR',CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE'), true);
+Registry::register('CAT_THEME_PATH'  ,CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_THEME')   , true);
+Registry::register('CAT_TEMPLATE_DIR',CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE'), true);
 
 //******************************************************************************
 // Set as constants for simpler use
 //******************************************************************************
-CAT_Registry::register('CAT_VERSION'     ,CAT_Registry::get('CAT_VERSION')                                   , true);
+Registry::register('CAT_VERSION'     ,Registry::get('CAT_VERSION')                                   , true);
 
 //******************************************************************************
 // register some globals
 //******************************************************************************
-$parser = CAT_Object::tpl();
+$parser = Base::tpl();

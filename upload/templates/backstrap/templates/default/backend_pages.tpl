@@ -6,7 +6,7 @@
           <div class="handler"><i class="fa fa-fw fa-arrows"></i></div>
           <div>{$item.menu_title}</div>
           <div class="icons">
-            <div><a href="#" id="bs-page-visibility-{$item.page_id}" class="bs-page-visibility" data-type="select" data-pk="1" data-url="/post" data-value="{$item.visibility}" title="{translate('Visibility')}"><i class="fa fa-fw fa-{$item.visibility}" title="{translate('Visibility')}: {translate($item.visibility)}"></i></a></div>
+            <div><a href="#" id="bs-page-visibility-{$item.page_id}" class="bs-page-visibility" data-type="select" data-pk="1" data-url="/post" data-value="{$item.visibility}" title="{translate('Visibility')}: {translate($item.visibility)}"><i class="fa fa-fw fa-{$item.visibility}" title="{translate('Visibility')}: {translate($item.visibility)}"></i></a></div>
             <div><a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}" title="{translate('Edit content')}"><i class="fa fa-fw fa-pencil"></i></a></div>
           </div>
         </div>

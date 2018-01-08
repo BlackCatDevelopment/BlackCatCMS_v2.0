@@ -15,14 +15,18 @@
 
 */
 
-if (!class_exists('CAT_Backend_Addons'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
 
-    class CAT_Backend_Addons extends CAT_Object
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
+use \CAT\Helper\Addons as HAddons;
+use \CAT\Helper\DateTime as DateTime;
+use \CAT\Helper\GitHub as GitHub;
+use \CAT\Helper\Json as Json;
+
+if (!class_exists('\CAT\Backend\Addons'))
+{
+    class Addons extends Base
     {
         protected static $instance = NULL;
 
@@ -46,12 +50,12 @@ if (!class_exists('CAT_Backend_Addons'))
         public static function index()
         {
             $self = self::getInstance();
-            $data = CAT_Helper_Addons::getAddons(NULL,'name',false,true); // all
-            $ftp  = CAT_Helper_Addons::getAddons(NULL,'name',false,true,true);
+            $data = HAddons::getAddons(NULL,'name',false,true); // all
+            $ftp  = HAddons::getAddons(NULL,'name',false,true,true);
             foreach($data as $i => $item)
             {
-                $data[$i]['install_date'] = CAT_Helper_DateTime::getDate($item['installed']);
-                $data[$i]['update_date']  = CAT_Helper_DateTime::getDate($item['upgraded']);
+                $data[$i]['install_date'] = DateTime::getDate($item['installed']);
+                $data[$i]['update_date']  = DateTime::getDate($item['upgraded']);
             }
             $tpl_data = array(
                 'modules'      => $data,
@@ -59,9 +63,9 @@ if (!class_exists('CAT_Backend_Addons'))
                 'notinstalled' => $ftp,
                 'notinstalled_json' => json_encode($ftp, JSON_NUMERIC_CHECK),
             );
-            CAT_Backend::print_header();
+            Backend::print_header();
             $self->tpl()->output('backend_addons', $tpl_data);
-            CAT_Backend::print_footer();
+            Backend::print_footer();
         }   // end function Addons()
 
         /**
@@ -77,7 +81,7 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             $catalog = self::get_catalog();
             // get installed
-            $modules = CAT_Helper_Addons::getAddons(NULL,'name',false); // all
+            $modules = HAddons::getAddons(NULL,'name',false); // all
             // map installed
             $installed = array();
             foreach($modules as $i => $m)
@@ -90,7 +94,7 @@ if (!class_exists('CAT_Backend_Addons'))
 
                 if(isset($installed[$m['directory']]))
                 {
-                    $catalog['modules'][$i]['is_installed']   = true;
+                    $catalog['modules'][$i]['is_installed'] = true;
                     $catalog['modules'][$i]['installed_version'] = $installed[$m['directory']];
                     if(version_compare($m['version'],$installed[$m['directory']],'>'))
                     {
@@ -133,11 +137,11 @@ if (!class_exists('CAT_Backend_Addons'))
          **/
         private static function update_catalog()
         {
-            $ch   = CAT_Helper_GitHub::init_curl(GITHUB_CATALOG_LOCATION);
+            $ch   = GitHub::init_curl(GITHUB_CATALOG_LOCATION);
             $data = curl_exec($ch);
             if(curl_error($ch))
             {
-                CAT_Helper_JSON::printError(trim(curl_error($ch)));
+                Json::printError(trim(curl_error($ch)));
             }
             $fh = fopen(CAT_ENGINE_PATH.'/temp/catalog.json','w');
             if($fh)
@@ -147,11 +151,11 @@ if (!class_exists('CAT_Backend_Addons'))
             }
             else
             {
-                CAT_Helper_JSON::printError('Unable to save file');
+                Json::printError('Unable to save file');
             }
         }
         
 
-    } // class CAT_Helper_Addons
+    } // class Addons
 
 } // if class_exists()

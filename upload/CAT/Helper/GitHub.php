@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Helper_GitHub'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
+use \CAT\Base as Base;
+use \CAT\Registry as Registry;
 
-    class CAT_Helper_GitHub extends CAT_Object
+if (!class_exists('\CAT\Helper\GitHub'))
+{
+    class GitHub extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         private static $ch         = NULL;
@@ -64,10 +63,10 @@ if (!class_exists('CAT_Helper_GitHub'))
             curl_setopt(self::$ch, CURLOPT_SSL_VERIFYPEER, false   );
             curl_setopt(self::$ch, CURLOPT_MAXREDIRS     , 2       );
             curl_setopt(self::$ch, CURLOPT_HTTPHEADER    , $headers);
-            if(CAT_Registry::exists('PROXY'))
-                curl_setopt(self::$ch, CURLOPT_PROXY, CAT_Registry::get('PROXY'));
-            if(CAT_Registry::exists('PROXY_PORT'))
-                curl_setopt(self::$ch, CURLOPT_PROXYPORT, CAT_Registry::get('PROXY_PORT'));
+            if(Registry::exists('PROXY'))
+                curl_setopt(self::$ch, CURLOPT_PROXY, Registry::get('PROXY'));
+            if(Registry::exists('PROXY_PORT'))
+                curl_setopt(self::$ch, CURLOPT_PROXYPORT, Registry::get('PROXY_PORT'));
             return self::$ch;
         }   // end function reset_curl()
 
@@ -240,6 +239,6 @@ if (!class_exists('CAT_Helper_GitHub'))
             self::$curl_error = $error;
         }   // end function setError()
         
-    } // class CAT_Helper_GitHub
+    } // class GitHub
 
 } // if class_exists()

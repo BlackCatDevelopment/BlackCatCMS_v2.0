@@ -15,14 +15,18 @@
 
 */
 
-if (!class_exists('CAT_Backend_Dashboard'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
 
-    class CAT_Backend_Dashboard extends CAT_Object
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
+use \CAT\Helper\Dashboard as HDash;
+use \CAT\Helper\Json as Json;
+use \CAT\Helper\Validate as Validate;
+use \CAT\Helper\Widget as Widget;
+
+if(!class_exists('\CAT\Backend\Dashboard'))
+{
+    class Dashboard extends Base
     {
         protected static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
@@ -50,14 +54,14 @@ if (!class_exists('CAT_Backend_Dashboard'))
         {
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
+                $dash = HDash::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('error');
-            $widget = CAT_Helper_Validate::sanitizePost('widget_id');
-            $result = CAT_Helper_Dashboard::addWidget($widget,$dash);
+            if(!HDash::exists($dash))
+                echo Json::printError('error');
+            $widget = Validate::sanitizePost('widget_id');
+            $result = HDash::addWidget($widget,$dash);
 print_r($result);
-            echo CAT_Helper_JSON::printSuccess('ok');
+            echo Json::printSuccess('ok');
         }   // end function add()
 
         /**
@@ -68,8 +72,8 @@ print_r($result);
         public static function get()
         {
             $self = self::getInstance();
-            $page = CAT_Helper_Validate::sanitizePost('page');
-            CAT_Helper_Dashboard::getDashboard($page);
+            $page = Validate::sanitizePost('page');
+            HDash::getDashboard($page);
         }   // end function getDashboard()
         
         /**
@@ -86,14 +90,14 @@ print_r($result);
             // validate path
             if(!$path)
                 $path = self::router()->getRoute();
-            $dash = CAT_Helper_Dashboard::getDashboardID($path);
+            $dash = HDash::getDashboardID($path);
 
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
+            if(!HDash::exists($dash))
             {
                 if($path)
                 {
-                    CAT_Helper_Dashboard::saveDashboardConfig(
+                    HDash::saveDashboardConfig(
                         NULL,
                         self::user()->getID(),
                         $path,
@@ -116,14 +120,14 @@ print_r($result);
                 if(isset($query_data['widget']))
                 {
                     // check if widget exists
-                    if(CAT_Helper_Widget::exists($query_data['widget']))
+                    if(Widget::exists($query_data['widget']))
                     {
                         // check if widget is visible on current dashboard
-                        if(CAT_Helper_Widget::isOnDashboard($query_data['widget'],$dash))
+                        if(Widget::isOnDashboard($query_data['widget'],$dash))
                         {
                             // forward
-                            $widget = CAT_Helper_Widget::getWidget($query_data['widget']);
-                            CAT_Helper_Widget::handleCall($widget,$query_data);
+                            $widget = Widget::getWidget($query_data['widget']);
+                            Widget::handleCall($widget,$query_data);
                         }
                     }
                 }
@@ -141,16 +145,16 @@ Array
             $tpl_data = array(
                 'dashboard' => array_merge(
                     array(
-                        'widgets' => CAT_Helper_Dashboard::renderDashboard($dash),
+                        'widgets' => HDash::renderDashboard($dash),
                     ),
-                    CAT_Helper_Dashboard::getDashboardConfig($path)
+                    HDash::getDashboardConfig($path)
                 ),
-                'MAIN_MENU' => CAT_Backend::getMainMenu(),
+                'MAIN_MENU' => Backend::getMainMenu(),
             );
 
-            CAT_Backend::print_header();
+            Backend::print_header();
             self::tpl()->output('backend_dashboard', $tpl_data);
-            CAT_Backend::print_footer();
+            Backend::print_footer();
         }   // end function index()
         
         /**
@@ -161,27 +165,26 @@ Array
          **/
         public static function order()
         {
-            $self = self::getInstance();
-            $dash = CAT_Helper_Validate::sanitizePost('dashboard');
-            $id   = CAT_Helper_Validate::sanitizePost('id');
-            $col  = CAT_Helper_Validate::sanitizePost('col');
-            $pos  = CAT_Helper_Validate::sanitizePost('row');
+            $dash = Validate::sanitizePost('dashboard');
+            $id   = Validate::sanitizePost('id');
+            $col  = Validate::sanitizePost('col');
+            $pos  = Validate::sanitizePost('row');
             if(!$col>0) $col = 1;
             if(!$pos>0) $pos = 1;
             
             if($dash)
             {
                 // update position
-                $self->db()->query(
+                self::db()->query(
                     'UPDATE `:prefix:dashboard_has_widgets` SET `column`=?, `position`=? WHERE `dashboard_id`=? AND `widget_id`=?',
                     array($col,$pos,$dash,$id)
                 );
-                $self->log()->addDebug(sprintf(
+                self::log()->addDebug(sprintf(
                     'updated dash [%s] widget [%s] col [%s] pos [%s]',
                     $dash,$id,$col,$pos
                 ));
                 // update order
-                $self->db()->query(
+                self::db()->query(
                       'SET @pos := ?; '
                     . 'UPDATE `:prefix:dashboard_has_widgets` '
                     . 'SET `position` = ( SELECT @pos := @pos + 1 ) '
@@ -190,7 +193,7 @@ Array
                     array($pos,$col,$pos,$id,$dash)
                 );
                 // update order
-                $self->db()->query(
+                self::db()->query(
                       'SET @pos := ?; '
                     . 'UPDATE `:prefix:dashboard_has_widgets` '
                     . 'SET `position` = ( SELECT @pos := @pos - 1 ) '
@@ -198,11 +201,11 @@ Array
                     . 'ORDER BY `position` ASC;',
                     array($pos,$col,$pos,$id,$dash)
                 );
-                $result = CAT_Helper_JSON::printSuccess('ok');
+                $result = Json::printSuccess('ok');
             }
             else {
-                $self->log()->addWarn(sprintf('no such dashboard: [%s]',$dash));
-                $result = CAT_Helper_JSON::printError('not ok');
+                self::log()->addWarn(sprintf('no such dashboard: [%s]',$dash));
+                $result = Json::printError('not ok');
             }
 
             if(self::asJSON())
@@ -221,26 +224,26 @@ Array
                 // remove "reload" from route
                 $route = self::router()->getRoute();
                 $route = preg_replace('~\/reload$~i','',$route);
-                $dash = CAT_Helper_Dashboard::getDashboardID($route);
+                $dash  = HDash::getDashboardID($route);
             }
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('Invalid data')
-                   . (self::$debug ? '(CAT_Backend_Dashboard::reload())' : '');
-            $widget = CAT_Helper_Validate::sanitizePost('widget_id');
+            if(!HDash::exists($dash))
+                echo Json::printError('Invalid data')
+                   . (self::$debug ? '(Backend_Dashboard::reload())' : '');
+            $widget = Validate::sanitizePost('widget_id');
             // check if widget exists
-            if(CAT_Helper_Widget::exists($widget))
+            if(Widget::exists($widget))
             {
                 // check if widget is visible on current dashboard
-                if(CAT_Helper_Widget::isOnDashboard($widget,$dash))
+                if(Widget::isOnDashboard($widget,$dash))
                 {
                     // forward
-                    $widget  = CAT_Helper_Widget::getWidget($widget);
-                    $content = CAT_Helper_Widget::execute($widget,$dash);
+                    $widget  = Widget::getWidget($widget);
+                    $content = Widget::execute($widget,$dash);
                     if(self::asJSON())
                     {
                         echo header('Content-Type: application/json');
-                        echo CAT_Helper_JSON::printSuccess($content);
+                        echo Json::printSuccess($content);
                         return;
                     } else {
 
@@ -259,14 +262,14 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
+                $dash = HDash::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('Invalid data')
-                   . (self::$debug ? '(CAT_Backend_Dashboard::remove())' : '');
-            $widget = CAT_Helper_Validate::sanitizePost('widget_id');
-            CAT_Helper_Dashboard::removeWidget($widget,$dash);
-            echo CAT_Helper_JSON::printSuccess('ok');
+            if(!HDash::exists($dash))
+                echo Json::printError('Invalid data')
+                   . (self::$debug ? '(Backend_Dashboard::remove())' : '');
+            $widget = Validate::sanitizePost('widget_id');
+            HDash::removeWidget($widget,$dash);
+            echo Json::printSuccess('ok');
         }   // end function remove()
 
         /**
@@ -278,11 +281,11 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID(self::router()->getParam(-1));
+                $dash = HDash::getDashboardID(self::router()->getParam(-1));
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('Invalid data')
-                   . (self::$debug ? '(CAT_Backend_Dashboard::reset())' : '');
+            if(!HDash::exists($dash))
+                echo Json::printError('Invalid data')
+                   . (self::$debug ? '(Backend_Dashboard::reset())' : '');
             // remove current settings
             self::db()->query(
                 'DELETE FROM `:prefix:dashboard_has_widgets` WHERE `dashboard_id`=?',
@@ -294,7 +297,7 @@ Array
             );
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printSuccess('success');
+                echo Json::printSuccess('success');
             }
 
         }   // end function reset()
@@ -307,19 +310,19 @@ Array
         public static function toggle()
         {
             $self = self::getInstance();
-            $id   = CAT_Helper_Validate::sanitizePost('id');
-            $vis  = CAT_Helper_Validate::sanitizePost('vis');
-            $dash = CAT_Helper_Validate::sanitizePost('dashboard');
+            $id   = Validate::sanitizePost('id');
+            $vis  = Validate::sanitizePost('vis');
+            $dash = Validate::sanitizePost('dashboard');
             if($dash)
             {
-                $self->db()->query(
+                self::db()->query(
                     'UPDATE `:prefix:dashboard_has_widgets` SET `open`=? WHERE `dashboard_id`=? AND `widget_id`=?',
                     array($vis,$dash,$id)
                 );
-                $result = CAT_Helper_JSON::printSuccess('ok');
+                $result = Json::printSuccess('ok');
             }
             else {
-                $result = CAT_Helper_JSON::printError('not ok');
+                $result = Json::printError('not ok');
             }
             if(self::asJSON())
             {
@@ -341,14 +344,14 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = CAT_Helper_Dashboard::getDashboardID($self->router()->getParam(-1));
+                $dash = HDash::getDashboardID($self->router()->getParam(-1));
             // check if dashboard exists
-            if(!CAT_Helper_Dashboard::exists($dash))
-                echo CAT_Helper_JSON::printError('error');
+            if(!HDash::exists($dash))
+                echo Json::printError('error');
             // get list of widgets the user is allowed to see
-            $all  = CAT_Helper_Widget::getAllowed();
+            $all  = Widget::getAllowed();
             // get list of widgets already an the dashboard
-            $vis  = CAT_Helper_Dashboard::renderDashboard($dash);
+            $vis  = HDash::renderDashboard($dash);
             // filter array $all
             $diff = array_diff(array_column($all,'widget_id'),array_column($vis,'widget_id'));
 
@@ -362,10 +365,10 @@ Array
                     );
                 }
             );
-            echo CAT_Helper_JSON::printSuccess(array_values($result));
+            echo Json::printSuccess(array_values($result));
         }   // end function widgets()
         
         
-    } // class CAT_Helper_Dashboard
+    } // class HDash
 
 } // if class_exists()

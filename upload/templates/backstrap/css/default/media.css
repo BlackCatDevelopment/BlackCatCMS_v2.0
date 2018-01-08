@@ -1,5 +1,10 @@
+@import url(pages.css);
+
 /* all views */
 .nav > li > label {padding-top:13px;}
+
+/* folder view */
+div.treecontainer ul#space0.list-group.space.first-space li.route div.card{min-width:400px}
 
 /* list view */
 table.datatable.compact.dataTable tbody span{display:inline-block;width:16%;}
@@ -17,3 +22,5 @@ div.actions{width:25px;height:100%;float:left;border-right:1px solid #ccc;}
 
 /* upload tab */
 #bsUploadFiles > thead{display:none;}
+
+.deleted{color:#ccc;}

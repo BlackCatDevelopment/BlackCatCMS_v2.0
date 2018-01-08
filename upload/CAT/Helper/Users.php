@@ -15,13 +15,13 @@
 
 */
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
-    @include dirname(__FILE__).'/Object.php';
-}
 
-if ( ! class_exists( 'CAT_Helper_Users', false ) )
+namespace CAT\Helper;
+use \CAT\Base as Base;
+
+if ( ! class_exists( 'Users', false ) )
 {
-	class CAT_Helper_Users extends CAT_Object
+	class Users extends Base
 	{
         // singleton
         private static $instance        = NULL;
@@ -123,7 +123,7 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
             $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
             foreach($data as $i => $user) {
                 if(strlen($user['wysiwyg'])) { // resolve wysiwyg editor
-                    $data[$i]['wysiwyg'] = CAT_Helper_Addons::getDetails($user['wysiwyg'],'name');
+                    $data[$i]['wysiwyg'] = Addons::getDetails($user['wysiwyg'],'name');
                 }
                 if($extended) {
                     $sth = self::db()->query(
@@ -155,7 +155,7 @@ if ( ! class_exists( 'CAT_Helper_Users', false ) )
                . 'ON `t2`.`group_id`=`t3`.`group_id` '
                . 'WHERE `t1`.`user_id`=:id'
                ;
-            $sth = CAT_Helper_DB::getInstance()->query($q,array('id'=>$id));
+            $sth = self::db()->query($q,array('id'=>$id));
             return $sth->fetchAll(\PDO::FETCH_ASSOC);
         }   // end function getUserGroups()
         

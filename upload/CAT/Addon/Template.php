@@ -15,7 +15,9 @@
 
 */
 
-class CAT_Addon_Template extends CAT_Addon_Module
+namespace CAT\Addon;
+
+class Template extends Module implements IAddon
 {
 
 	/**

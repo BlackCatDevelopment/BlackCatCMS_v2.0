@@ -75,6 +75,7 @@ $LANG = array(
     'Progress'        => 'Fortschritt',
     'Remove'          => 'Entfernen',
     'Row'             => 'Zeile',
+    'Save'            => 'Speichern',
     'Save changes'    => 'Speichern',
     'Sections'        => 'Sektionen',
     'Size'            => 'Größe',

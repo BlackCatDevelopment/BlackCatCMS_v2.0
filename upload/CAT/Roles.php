@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Roles'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include __DIR__ . '/Object.php';
-    }
 
-    class CAT_Roles extends CAT_Object
+namespace CAT;
+use \CAT\Base as Base;
+
+if (!class_exists('Roles'))
+{
+    class Roles extends Base
     {
         protected        $roles    = array();
         protected static $instance = NULL;
@@ -57,7 +56,7 @@ if (!class_exists('CAT_Roles'))
          **/
         public function addRole($name,$description)
         {
-            $sth = CAT_Helper_DB::getInstance()->query(
+            $sth = self::db()->query(
                    'INSERT INTO `:prefix:rbac_roles` ( `title`, `description` ) '
                  . 'VALUES ( :name, :desc )',
                 array('name'=>$name,'desc'=>$description)
@@ -122,7 +121,7 @@ if (!class_exists('CAT_Roles'))
          * @param  array   $opt - optional options array
          * @return array
          **/
-        public function getRoles($opt=NULL)
+        public static function getRoles($opt=NULL)
         {
             if(is_array($opt))
             {
@@ -162,8 +161,6 @@ if (!class_exists('CAT_Roles'))
 
                 return $sth->fetchAll(\PDO::FETCH_ASSOC);
             }
-
-            return $this->roles;
         }   // end function getRoles()
 
         /**
@@ -184,7 +181,7 @@ if (!class_exists('CAT_Roles'))
          **/
         public function removeRole($id)
         {
-            $dbh  = CAT_Helper_DB::getInstance();
+            $dbh  = self::db();
             $sth  = $dbh->query(
                 'DELETE FROM `:prefix:rbac_roles` WHERE `role_id`=:id',
                 array('id'=>$id)
@@ -200,7 +197,7 @@ if (!class_exists('CAT_Roles'))
          **/
         public function set($field,$value,$id)
         {
-            $dbh  = CAT_Helper_DB::getInstance();
+            $dbh  = self::db();
             $sth  = $dbh->query(
                 'UPDATE `:prefix:rbac_roles` SET `:fieldname:`=:value WHERE `role_id`=:id',
                 array('fieldname'=>$field,'value'=>$value,'id'=>$id)
@@ -218,13 +215,13 @@ if (!class_exists('CAT_Roles'))
          **/
         protected function initRoles()
         {
-            $dbh  = CAT_Helper_DB::getInstance();
+            $dbh  = self::db();
             $sth  = $dbh->query(
                 'SELECT * FROM `:prefix:rbac_roles`'
             );
             $this->roles = $sth->fetchAll(\PDO::FETCH_ASSOC);
         }   // end function initRoles()
 
-    } // class CAT_Roles
+    } // class Roles
 
 } // if class_exists()

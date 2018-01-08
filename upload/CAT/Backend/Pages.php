@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Backend_Pages'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
 
-    class CAT_Backend_Pages extends CAT_Object
+use \CAT\Base as Base;
+
+if (!class_exists('\CAT\Backend\Pages'))
+{
+    class Pages extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
@@ -47,19 +46,19 @@ if (!class_exists('CAT_Backend_Pages'))
          **/
         public static function index()
         {
-            CAT_Helper_Page::setTitle('BlackCat CMS Backend / Pages');
+            \CAT\Helper\Page::setTitle('BlackCat CMS Backend / Pages');
 
-            $pages      = CAT_Helper_Page::getPages(true);
+            $pages      = \CAT\Helper\Page::getPages(true);
             $pages_list = self::lb()->buildRecursion($pages);
 
-            CAT_Backend::print_header();
+            \CAT\Backend::print_header();
             self::tpl()->output(
                 'backend_pages',
                 array(
                     'pages'         => $pages_list,
                 )
             );
-            CAT_Backend::print_footer();
+            \CAT\Backend::print_footer();
         }   // end function index()
     }
 }

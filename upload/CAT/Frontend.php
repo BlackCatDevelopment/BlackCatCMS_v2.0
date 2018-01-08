@@ -15,16 +15,16 @@
 
 */
 
-if (!class_exists('CAT_Frontend', false))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/Object.php';
-    }
+namespace CAT;
+use \CAT\Base as Base;
+use \CAT\Helper\Assets as Assets;
 
-    class CAT_Frontend extends CAT_Object
+if (!class_exists('Frontend', false))
+{
+    class Frontend extends Base
     {
-        protected static $loglevel    = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel    = \Monolog\Logger::EMERGENCY;
+        protected static $loglevel    = \Monolog\Logger::DEBUG;
         private   static $instance    = array();
         private   static $maintenance = NULL;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -32,6 +32,9 @@ if (!class_exists('CAT_Frontend', false))
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         private   static $asset_paths = array(
             'css','js','images','eot','fonts'
+        );
+        private   static $assets = array(
+            'css','js','eot','svg','ttf','woff','woff2',
         );
 
         public static function getInstance()
@@ -46,31 +49,37 @@ if (!class_exists('CAT_Frontend', false))
          **/
         public static function dispatch()
         {
-            $self   = self::getInstance();
-
             // serve asset files
-            if(($type=$self->router()->match('~^('.implode('|',self::$asset_paths).')~i'))!==false)
-            {
-                parse_str($self->router()->getQuery(),$files);
-                // remove leading / from all files
-                foreach($files as $i => $f) $files[$i] = preg_replace('~^/~','',$f,1);
-                CAT_Helper_Assets::serve($type,$files);
+            $route  = self::router()->getRoute();
+            $suffix = pathinfo($route,PATHINFO_EXTENSION);
+            if(
+                ($type=self::router()->match('~^('.implode('|',self::$asset_paths).')~i'))!==false
+                ||
+                (strlen($suffix) && in_array($suffix,self::$assets))
+            ) {
+                if(strlen($suffix) && in_array($suffix,self::$assets))
+                {
+                    Assets::serve($suffix,$route,true);
+                } else {
+                    parse_str(self::router()->getQuery(),$files);
+                    // remove leading / from all files
+                    foreach($files as $i => $f) $files[$i] = preg_replace('~^/~','',$f,1);
+                    Assets::serve($type,$files);
+                }
                 return;
             }
-
             // forward to modules
-            if($self->router()->match('~^modules/~i'))
+            if(self::router()->match('~^modules/~i') && $suffix=='php')
             {
-                require CAT_ENGINE_PATH.'/'.$self->router()->getRoute();
+                require CAT_ENGINE_PATH.'/'.self::router()->getRoute();
                 return;
             }
 
             // forward to backend router
-            if(CAT_Backend::isBackend())
-                return CAT_Backend::dispatch();
+            if(Backend::isBackend())
+                return Backend::dispatch();
 
             // internally handled route?
-            $route = $self->router()->getRoute();
             $func  = substr($route,0,strpos($route,'/'));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -79,23 +88,24 @@ if (!class_exists('CAT_Frontend', false))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(is_callable(array('self',$func)))
             {
-                $self->router()->setController('CAT_Frontend');
-                $self->router()->setFunction($func);
-                $self->router()->dispatch();
+                self::router()->setController('Frontend');
+                self::router()->setFunction($func);
+                self::router()->dispatch();
             }
-            $page_id = CAT_Page::getID();
+            $page_id = \CAT\Page::getID();
+
             // no page found
             if(!$page_id)
             {
                 ob_start();
-                    $empty_page_bg = CAT_Helper_Assets::serve('images',array("CAT/templates/empty_page_bg.jpg"));
+                    $empty_page_bg = Assets::serve('images',array("CAT/templates/empty_page_bg.jpg"));
                 ob_end_clean();
                 require dirname(__FILE__).'/templates/empty.php';
                 exit;
             }
 
             // get page handler
-            $page   = CAT_Page::getInstance($page_id);
+            $page   = \CAT\Page::getInstance($page_id);
             // hand over to page handler
             $page->show();
         }   // end function dispatch()
@@ -110,14 +120,13 @@ if (!class_exists('CAT_Frontend', false))
         {
             if(!self::$maintenance)
             {
-                $self = self::getInstance();
                 self::$maintenance
-                    = CAT_Registry::get('maintenance_mode') == 'true'
+                    = \CAT\Registry::get('maintenance_mode') == 'true'
                     ? true
                     : false;
             }
             return self::$maintenance;
         }   // end function isMaintenance()
 
-    }   // end class CAT_Frontend
+    }   // end class Frontend
 }

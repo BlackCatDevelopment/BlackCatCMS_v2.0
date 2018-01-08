@@ -15,14 +15,17 @@
 
 */
 
-if (!class_exists('CAT_User'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include __DIR__ . '/Object.php';
-    }
+namespace CAT;
 
-    class CAT_User extends CAT_Object
+use CAT\Base as Base;
+use CAT\Roles as Roles;
+use CAT\Authenticate as Authenticate;
+use CAT\Helper\Validate as Validate;
+use CAT\Helper\Directory as Directory;
+
+if (!class_exists('User'))
+{
+    class User extends Base
     {
         // log level
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
@@ -71,7 +74,7 @@ if (!class_exists('CAT_User'))
         public static function getInstance($id=NULL)
         {
             if(!$id)
-                $id = CAT_Helper_Validate::fromSession('USER_ID','numeric');
+                $id = Validate::fromSession('USER_ID','numeric');
             if(!$id) $id = 2; // guest user
             if(!isset(self::$instances[$id]))
                 self::$instances[$id] = new self($id);
@@ -142,7 +145,7 @@ if (!class_exists('CAT_User'))
          **/
         public function getHomeFolder($relative=false)
         {
-            $default = CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.self::getSetting('media_directory'));
+            $default = Directory::sanitizePath(CAT_PATH.'/'.self::getSetting('media_directory'));
             if($this->is_root())
                 return ($relative ? self::getSetting('media_directory') : $default);
             $home = $this->get('home_folder');
@@ -150,7 +153,7 @@ if (!class_exists('CAT_User'))
                 return (
                       $relative
                     ? $home
-                    : CAT_Helper_Directory::sanitizePath(CAT_PATH.'/'.$home)
+                    : Directory::sanitizePath(CAT_PATH.'/'.$home)
                 );
             return ($relative ? self::getSetting('media_directory') : $default);
         }   // end function getHomeFolder()
@@ -208,8 +211,8 @@ if (!class_exists('CAT_User'))
          **/
         public function login()
         {
-			$field	= CAT_Helper_Validate::sanitizePost('username_fieldname');
-			$user	= htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
+			$field	= Validate::sanitizePost('username_fieldname');
+			$user	= htmlspecialchars(Validate::sanitizePost($field),ENT_QUOTES);
 			$name	= preg_match('/[\;\=\&\|\<\> ]/',$user) ? '' : $user;
 
 			// If no name was given or not allowed chars were sent
@@ -225,15 +228,15 @@ if (!class_exists('CAT_User'))
 				)->fetchColumn();
 
 				// Get fieldname of password and the password itself
-				$field	= CAT_Helper_Validate::sanitizePost('password_fieldname');
-				$passwd	= CAT_Helper_Validate::sanitizePost($field);
-				
+				$field	= Validate::sanitizePost('password_fieldname');
+				$passwd	= Validate::sanitizePost($field);
+
 				// Get the token
-				$field = CAT_Helper_Validate::sanitizePost('token_fieldname');
-				$token = htmlspecialchars(CAT_Helper_Validate::sanitizePost($field),ENT_QUOTES);
+				$field = Validate::sanitizePost('token_fieldname');
+				$token = htmlspecialchars(Validate::sanitizePost($field),ENT_QUOTES);
 
 				// check whether the password is correct
-				if(CAT_Authenticate::authenticate($uid, $passwd, $token))
+				if(Authenticate::authenticate($uid, $passwd, $token))
                 {
                     $this->db()->query(
                         'UPDATE `:prefix:rbac_users` SET `login_when`=?, `login_ip`=? WHERE `user_id`=?',
@@ -319,7 +322,7 @@ if (!class_exists('CAT_User'))
             if($this->is_root()) return true;
             if(!is_numeric($module))
             {
-                $module_data = CAT_Helper_Addons::getDetails($module);
+                $module_data = Addons::getDetails($module);
                 $module      = $module_data['addon_id'];
             }
             return isset($this->modules[$module]);
@@ -463,7 +466,7 @@ if (!class_exists('CAT_User'))
             {
                 $this->log()->addDebug(sprintf('init user with id: [%d]',$id));
                 // read user from DB
-                $get_user = CAT_Helper_DB::getInstance()->query(
+                $get_user = self::db()->query(
                     'SELECT `user_id`, `username`, `display_name`, `email`, `language`, `home_folder`, `tfa_enabled`, `tfa_secret` '.
                     'FROM `:prefix:rbac_users` WHERE `'.$fieldname.'`=:id',
                     array('id'=>$id)
@@ -498,7 +501,7 @@ if (!class_exists('CAT_User'))
          **/
         protected function initRoles()
         {
-            $this->roles = CAT_Roles::getInstance()->getRoles(
+            $this->roles = Roles::getInstance()->getRoles(
                 array('for'=>'user','user'=>$this->user['user_id'])
             );
         }   // end function initRoles()
@@ -622,9 +625,9 @@ $query2
          **/
         protected function initGroups()
         {
-            $this->groups = CAT_Helper_Users::getUserGroups($this->user['user_id']);
+            $this->groups = \CAT\Helper\Users::getUserGroups($this->user['user_id']);
         }   // end function initGroups()
 
-    } // class CAT_User
+    } // class User
 
 } // if class_exists()

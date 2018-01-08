@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -15,14 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Backend_Section'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
+use \CAT\Base as Base;
 
-    class CAT_Backend_Section extends CAT_Object
+if (!class_exists('\CAT\Backend\Section'))
+{
+    class Section extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
@@ -50,17 +48,17 @@ if (!class_exists('CAT_Backend_Section'))
         {
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_add');
-            $addon  = CAT_Helper_Validate::sanitizePost('addon','numeric');
-            if(!CAT_Helper_Addons::exists($addon))
+            $addon  = \CAT\Helper\Validate::sanitizePost('addon','numeric');
+            if(!\CAT\Helper\Addons::exists($addon))
                 self::printFatalError('Invalid data!')
                 . (self::$debug ? '(CAT_Backend_Section::add())' : '');
             else
-                $module = CAT_Helper_Addons::getDetails($addon,'addon_id');
-            $blockID = CAT_Helper_Validate::sanitizePost('block','numeric',1);
-            $result  = CAT_Sections::addSection($pageID,$module,$blockID);
+                $module = \CAT\Helper\Addons::getDetails($addon,'addon_id');
+            $blockID = \CAT\Helper\Validate::sanitizePost('block','numeric',1);
+            $result  = \CAT\Sections::addSection($pageID,$module,$blockID);
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult($result,($result?'Success':'Failed'));
+                echo \CAT\Helper\Json::printResult($result,($result?'Success':'Failed'));
                 return;
             }
         }   // end function add()
@@ -76,13 +74,13 @@ if (!class_exists('CAT_Backend_Section'))
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_delete');
             $sectionID = self::getSectionID();
-            if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data!')
+            if(!\CAT\Sections::exists($sectionID))
+                Base::printFatalError('Invalid data!')
                 . (self::$debug ? '(CAT_Backend_Section::delete())' : '');
-            $result = CAT_Sections::deleteSection($sectionID);
+            $result = \CAT\Sections::deleteSection($sectionID);
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult($result, '');
+                echo \CAT\Helper\Json::printResult($result, '');
                 return;
             }
         }   // end function delete()
@@ -98,19 +96,19 @@ if (!class_exists('CAT_Backend_Section'))
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_move');
             // ...and on target page...
-            $toID = CAT_Helper_Validate::sanitizePost('to');
+            $toID = \CAT\Helper\Validate::sanitizePost('to');
             self::checkPerm($toID,'pages_section_move');
             // get the section ID
             $sectionID = self::getSectionID();
-            if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data! (Section does not exist)');
+            if(!\CAT\Sections::exists($sectionID))
+                Base::printFatalError('Invalid data! (Section does not exist)');
             self::db()->query(
                 'UPDATE `:prefix:pages_sections` SET `page_id`=? WHERE `section_id`=?',
                 array($toID,$sectionID)
             );
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult(
+                echo \CAT\Helper\Json::printResult(
                     (self::db()->isError() ? false : true),
                     ''
                 );
@@ -127,12 +125,12 @@ if (!class_exists('CAT_Backend_Section'))
         {
             $pageID  = self::getPageID();
             self::checkPerm($pageID,NULL);
-            $order = CAT_Helper_Validate::sanitizePost('order');
+            $order = \CAT\Helper\Validate::sanitizePost('order');
             if(is_array($order) && count($order))
             {
                 foreach($order as $i => $id)
                 {
-                    if(!CAT_Sections::exists($id)) continue;
+                    if(!\CAT\Sections::exists($id)) continue;
                     $i++;
                     self::db()->query(
                         'UPDATE `:prefix:pages_sections` SET `position`=? WHERE `section_id`=?',
@@ -141,7 +139,7 @@ if (!class_exists('CAT_Backend_Section'))
                 }
                 if(self::asJSON())
                 {
-                    echo CAT_Helper_JSON::printResult(true, '');
+                    echo \CAT\Helper\Json::printResult(true, '');
                     return;
                 }
             }
@@ -157,12 +155,12 @@ if (!class_exists('CAT_Backend_Section'))
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_publishing');
             $sectionID = self::getSectionID();
-            if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data! (Section does not exist)');
+            if(!\CAT\Sections::exists($sectionID))
+                Base::printFatalError('Invalid data! (Section does not exist)');
             $data = array();
             foreach(array_values(array('publ_start','publ_end','publ_by_time_start','publ_by_time_end')) as $key)
             {
-                $value = CAT_Helper_Validate::sanitizePost($key,'string');
+                $value = \CAT\Helper\Validate::sanitizePost($key,'string');
                 if($value) { // not empty or 0
                     try {
                         $d = new DateTime($value);
@@ -177,10 +175,10 @@ if (!class_exists('CAT_Backend_Section'))
 
             if(count($data))
             {
-                $result = CAT_Sections::updateSection($sectionID, $data);
+                $result = \CAT\Sections::updateSection($sectionID, $data);
                 if(self::asJSON())
                 {
-                    echo CAT_Helper_JSON::printData($data);
+                    echo \CAT\Helper\Json::printData($data);
                     return;
                 }
             }
@@ -198,13 +196,13 @@ if (!class_exists('CAT_Backend_Section'))
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_recover');
             $sectionID = self::router()->getParam();
-            if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data!')
+            if(!\CAT\Sections::exists($sectionID))
+                Base::printFatalError('Invalid data!')
                 . (self::$debug ? '(CAT_Backend_Section::recover())' : '');
-            $result = CAT_Sections::recoverSection($sectionID);
+            $result = \CAT\Sections::recoverSection($sectionID);
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult($result, '');
+                echo \CAT\Helper\Json::printResult($result, '');
                 return;
             }
         }   // end function recover()
@@ -217,10 +215,10 @@ if (!class_exists('CAT_Backend_Section'))
         public static function save()
         {
             $sectionID = self::getSectionID();
-            if(!CAT_Sections::exists($sectionID))
-                CAT_Object::printFatalError('Invalid data! (Section does not exist)');
+            if(!\CAT\Sections::exists($sectionID))
+                Base::printFatalError('Invalid data! (Section does not exist)');
             // get section details
-            $section = CAT_Sections::getSection($sectionID,true);
+            $section = \CAT\Sections::getSection($sectionID,true);
             // get page ID
             $pageID  = $section['page_id'];
             self::checkPerm($pageID,null);
@@ -236,7 +234,7 @@ if (!class_exists('CAT_Backend_Section'))
 
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult($result, '');
+                echo \CAT\Helper\Json::printResult($result, '');
                 return;
             }
         }   // end function save()
@@ -285,19 +283,19 @@ if (!class_exists('CAT_Backend_Section'))
         protected static function getPageID()
         {
             $self    = self::getInstance();
-            $pageID  = CAT_Helper_Validate::sanitizePost('page_id','numeric',NULL);
+            $pageID  = \CAT\Helper\Validate::sanitizePost('page_id','numeric',NULL);
 
             if(!$pageID)
-                $pageID  = CAT_Helper_Validate::sanitizeGet('page_id','numeric',NULL);
+                $pageID  = \CAT\Helper\Validate::sanitizeGet('page_id','numeric',NULL);
 
             if(!$pageID)
                 $pageID = $self->router()->getParam(-1);
 
             if(!$pageID)
-                $pageID = CAT_Sections::getPageForSection(self::getSectionID());
+                $pageID = \CAT\Sections::getPageForSection(self::getSectionID());
 
-            if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
-                CAT_Object::printFatalError('Invalid data')
+            if(!$pageID || !is_numeric($pageID) || !\CAT\Helper\Page::exists($pageID))
+                Base::printFatalError('Invalid data')
                 . (self::$debug ? '(CAT_Backend_Section::getPageID())' : '');
 
             return $pageID;
@@ -311,21 +309,21 @@ if (!class_exists('CAT_Backend_Section'))
         protected static function getSectionID()
         {
             $self    = self::getInstance();
-            $sectID  = CAT_Helper_Validate::sanitizePost('section_id','numeric',NULL);
+            $sectID  = \CAT\Helper\Validate::sanitizePost('section_id','numeric',NULL);
 
             if(!$sectID)
-                $sectID  = CAT_Helper_Validate::sanitizeGet('section_id','numeric',NULL);
+                $sectID  = \CAT\Helper\Validate::sanitizeGet('section_id','numeric',NULL);
 
             if(!$sectID)
                 $sectID = $self->router()->getParam(-1);
 
-            if(!$sectID || !is_numeric($sectID) || !CAT_Sections::exists($sectID))
-                CAT_Object::printFatalError('Invalid data')
+            if(!$sectID || !is_numeric($sectID) || !\CAT\Sections::exists($sectID))
+                Base::printFatalError('Invalid data')
                 . (self::$debug ? '(CAT_Backend_Section::getSectionID())' : '');
 
             return $sectID;
         }   // end function getSectionID()
 
-    } // class CAT_Backend_Section
+    } // class Section
 
 } // if class_exists()

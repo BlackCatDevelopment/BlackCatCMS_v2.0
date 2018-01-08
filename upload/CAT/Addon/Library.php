@@ -15,27 +15,14 @@
 
 */
 
-class CAT_Addon_Library extends CAT_Addon
-{
+namespace CAT\Addon;
 
+use \CAT\Base as Base;
+
+class Library extends Module implements IAddon
+{
 	/**
 	 * @var void
 	 */
 	protected static $type = 'library';
-
-	/**
-	 * @inheritDoc
-	 */
-	public function save()
-	{
-		// TODO: implement here
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function modify()
-	{
-		// TODO: implement here
-	}
 }

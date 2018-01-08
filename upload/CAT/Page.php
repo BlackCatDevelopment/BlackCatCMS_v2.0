@@ -15,24 +15,20 @@
 
 */
 
-if (!class_exists('CAT_Object', false))
-{
-    @include dirname(__FILE__) . '/Object.php';
-}
+namespace CAT;
 
-if (!class_exists('CAT_Page', false))
+use \CAT\Base as Base;
+
+if (!class_exists('\CAT\Page', false))
 {
-    class CAT_Page extends CAT_Object
+    class Page extends Base
     {
         // ID of last instantiated page
         private   static $curr_page  = NULL;
-        // helper handle
-        private   static $helper     = NULL;
         // singleton, but one instance per page_id!
         private   static $instances  = array();
         // loglevel
         protected static $loglevel   = \Monolog\Logger::EMERGENCY;
-
         //
         protected        $page_id    = NULL;
 
@@ -45,12 +41,9 @@ if (!class_exists('CAT_Page', false))
          **/
         public static function getInstance($page_id=NULL)
         {
-            if (!self::$helper)
-                self::$helper = CAT_Helper_Page::getInstance();
-
             if($page_id)
             {
-                self::log()->addDebug(sprintf('CAT_Page::getInstance(%s)',$page_id));
+                self::log()->addDebug(sprintf('\CAT\Page::getInstance(%s)',$page_id));
                 if(!isset(self::$instances[$page_id]))
                 {
                     self::log()->addDebug('creating new instance');
@@ -75,10 +68,10 @@ if (!class_exists('CAT_Page', false))
         {
             if(!self::$curr_page)
             {
-                if(!CAT_Backend::isBackend())
+                if(!\CAT\Backend::isBackend())
                 {
                     // check if the system is in maintenance mode
-                    if(CAT_Frontend::isMaintenance())
+                    if(\CAT\Frontend::isMaintenance())
                     {
                         $result = self::db()->query(
                             'SELECT `value` FROM `:prefix:settings` WHERE `name`="maintenance_page"'
@@ -92,15 +85,15 @@ if (!class_exists('CAT_Page', false))
                         // no route -> get default page
                         if($route == '')
                         {
-                            self::$curr_page = CAT_Helper_Page::getDefaultPage();
+                            self::$curr_page = \CAT\Helper\Page::getDefaultPage();
                         }
                         else // find page by route
                         {
-                            self::$curr_page = CAT_Helper_Page::getPageForRoute($route);
+                            self::$curr_page = \CAT\Helper\Page::getPageForRoute($route);
                         }
                     }
                 } else {
-                    return CAT_Backend_Page::getPageID();
+                    return \CAT\Backend\Page::getPageID();
                 }
             }
             return self::$curr_page;
@@ -126,8 +119,8 @@ if (!class_exists('CAT_Page', false))
             // some content at all
             if(
                    !$page_id                           // no page id
-                || !self::$helper->exists($page_id)    // page does not exist
-                || !self::$helper->isActive($page_id)  // page not active
+                || !\CAT\Helper\Page::exists($page_id)    // page does not exist
+                || !\CAT\Helper\Page::isActive($page_id)  // page not active
             ) {
                 return self::print404();
             }
@@ -137,17 +130,17 @@ if (!class_exists('CAT_Page', false))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             // check if user is allowed to see this page
-            if(!self::$helper->user()->is_root())
+            if(!self::user()->is_root())
             {
                 // global perm
-                if(!self::$helper->user()->hasPagePerm($page_id,'pages_view'))
+                if(!self::user()->hasPagePerm($page_id,'pages_view'))
                 {
-                    self::$helper->printFatalError('You are not allowed to view this page!');
+                    self::printFatalError('You are not allowed to view this page!');
                 }
             }
 
             // get active sections
-            $sections = CAT_Sections::getSections($page_id,$block,true);
+            $sections = \CAT\Sections::getSections($page_id,$block,true);
 
             // in fact, this should never happen, als isActive() does the same
             if(!count($sections)) // no content for this block
@@ -166,15 +159,15 @@ if (!class_exists('CAT_Page', false))
                     // special case
                     if($module=='wysiwyg')
                     {
-                        $output[] = CAT_Addon_WYSIWYG::view($section_id)['content'];
+                        $output[] = \CAT\Addon\WYSIWYG::view($section_id)['content'];
                     }
                     else
                     {
                         // get the module class
-                        $name    = CAT_Helper_Addons::getDetails($module,'name');
+                        $name    = \CAT\Helper\Addons::getDetails($module,'name');
                         $handler = NULL;
                         foreach(array_values(array(str_replace(' ','',$name),$module)) as $classname) {
-                            $filename = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
+                            $filename = \CAT\Helper\Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
                             if(file_exists($filename)) {
                                  $handler = $filename;
                             }
@@ -183,7 +176,7 @@ if (!class_exists('CAT_Page', false))
                         if($handler)
                         {
                             self::log()->addDebug(sprintf('found class file [%s]',$handler));
-                            CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                            Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
                             self::setTemplatePaths($module);
                             include_once $handler;
                             $classname::initialize();
@@ -209,11 +202,11 @@ if (!class_exists('CAT_Page', false))
          **/
         public static function print404()
         {
-            if(CAT_Registry::exists('ERR_PAGE_404'))
+            if(\CAT\Registry::exists('ERR_PAGE_404'))
             {
-                $err_page_id = CAT_Registry::get('ERR_PAGE_404');
+                $err_page_id = \CAT\Registry::get('ERR_PAGE_404');
                 header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
-                header('Location: '.CAT_Helper_Page::getLink($err_page_id));
+                header('Location: '.\CAT\Helper\Page::getLink($err_page_id));
             }
             else
             {
@@ -236,22 +229,22 @@ if (!class_exists('CAT_Page', false))
                 $prop = $this->getProperties();
                 // page has it's own template
                 if(isset($prop['template']) && $prop['template'] != '') {
-                    if(file_exists(CAT_PATH.'/templates/'.$prop['template'].'/index.php')) {
-                        CAT_Registry::register('TEMPLATE', $prop['template'], true);
+                    if(file_exists(\CAT\PATH.'/templates/'.$prop['template'].'/index.php')) {
+                        \CAT\Registry::register('TEMPLATE', $prop['template'], true);
                     } else {
-                        CAT_Registry::register('TEMPLATE', CAT_Registry::get('DEFAULT_TEMPLATE'), true);
+                        \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
                     }
                 // use global default
                 } else {
-                    CAT_Registry::register('TEMPLATE', CAT_Registry::get('DEFAULT_TEMPLATE'), true);
+                    \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
                 }
             }
             $dir = '/templates/'.TEMPLATE;
             // Set the template dir (which is, in fact, the URL, but for backward
             // compatibility, we have to keep this irritating name)
-            CAT_Registry::register('TEMPLATE_DIR', CAT_URL.$dir, true);
+            \CAT\Registry::register('TEMPLATE_DIR', CAT_URL.$dir, true);
             // This is the REAL dir
-            CAT_Registry::register('CAT_TEMPLATE_DIR', CAT_PATH.$dir, true);
+            \CAT\Registry::register('CAT_TEMPLATE_DIR', CAT_PATH.$dir, true);
 */
         }   // end function setTemplate()
 
@@ -264,7 +257,7 @@ if (!class_exists('CAT_Page', false))
         public function show()
         {
             // send appropriate header
-            if(CAT_Frontend::isMaintenance() || CAT_Registry::get('maintenance_page') == $this->page_id)
+            if(\CAT\Frontend::isMaintenance() || \CAT\Registry::get('maintenance_page') == $this->page_id)
             {
                 $this->log()->addDebug('Maintenance mode is enabled');
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
@@ -286,6 +279,6 @@ if (!class_exists('CAT_Page', false))
             echo $output;
         }   // end function show()
 
-    } // end class CAT_Page
+    } // end class \CAT\Page
 
 }

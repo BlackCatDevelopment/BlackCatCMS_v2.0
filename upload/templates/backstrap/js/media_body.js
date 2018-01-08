@@ -11,6 +11,7 @@ $(function() {
             case "list":
                 $(target).find('tbody > tr').not(':hidden').remove();
                 var appendto = $(target).find('tbody');
+                var toclone  = tablerow;
                 var tables = $('table.datatable').DataTable();
                 tables.table(0).clear().draw();
                 break;
@@ -22,9 +23,10 @@ $(function() {
         }
 
         if(!data.files || !data.files.length) {
-            //$(target).html('<div class="alert alert-info">No files</div>');
+            $(target).html('<div class="alert alert-info">No files</div>');
         } else {
-
+alert('HUHU');
+            var base_url = data.media_url;
             $.each(data.files, function(index,file) {
                 var item = $(toclone).clone();
 
@@ -40,7 +42,8 @@ $(function() {
                     // show preview
                     if(file.mime_type.indexOf('image/') == 0) {
                         var src = $(item).find('[data-field="preview"]');
-                        src.attr('src',src.attr('src')+file.url);
+alert(base_url+'/'+file.filename);
+                        src.attr('src',base_url+'/'+file.filename);
                     } else {
                         $(item).find('[data-field="preview"]').remove();
                         $(item).find('.fa-file-movie-o').removeAttr('hidden');
@@ -119,7 +122,7 @@ $(function() {
                                 if(file.mime_type) {
                                     // show preview
                                     if(file.mime_type.indexOf('image/') == 0) {
-                                        $('img.thumb',row).attr("src",data.media_url + file.url).removeAttr('hidden');
+                                        $('img.thumb',row).attr("src",data.media_url+'/'+file.filename).removeAttr('hidden');
                                     }
                                 }
                                 $('span.filename',row).text(file.filename);
@@ -166,6 +169,7 @@ $(function() {
     // #########################################################################
     // handle file upload
     // #########################################################################
+/*
     $('#fileupload').fileupload({
         url: url,
         dataType: 'json',
@@ -252,4 +256,5 @@ $(function() {
         });
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
+*/
 });

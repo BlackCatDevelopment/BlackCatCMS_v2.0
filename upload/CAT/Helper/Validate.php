@@ -15,14 +15,14 @@
 
 */
 
-if (!class_exists('CAT_Helper_Validate'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
 
-    class CAT_Helper_Validate extends CAT_Object
+use CAT\Base as Base;
+use \CAT\Helper\Directory as Directory;
+
+if (!class_exists('Validate'))
+{
+    class Validate extends Base
     {
         private   static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
@@ -60,7 +60,7 @@ if (!class_exists('CAT_Helper_Validate'))
         {
             $func = 'is_'.$as;
             if (!function_exists($func))
-                CAT_Object::printFatalError('No such validation method: '.$as);
+                Base::printFatalError('No such validation method: '.$as);
             if (!$func($value))
                 return false;
             return $value;
@@ -157,7 +157,7 @@ if (!class_exists('CAT_Helper_Validate'))
          * @return void
          **/
         public function dump() {
-            echo "<h2>CAT_Helper_Validate DUMP</h2>",
+            echo "<h2>Validate DUMP</h2>",
                  "<h3>\$_GET Array</h3>";
             var_dump($_GET);
             echo "<h3>\$_POST Array</h3>";
@@ -179,7 +179,7 @@ if (!class_exists('CAT_Helper_Validate'))
         {
             return str_ireplace(
                 self::sanitize_url(self::getURI(CAT_URL)),
-                CAT_Helper_Directory::sanitizePath(CAT_PATH),
+                Directory::sanitizePath(CAT_PATH),
                 self::sanitize_url($url)
             );
         }   // end function uri2path(()
@@ -195,14 +195,14 @@ if (!class_exists('CAT_Helper_Validate'))
         {
             return str_ireplace(
                 array(
-                    CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH),
-                    CAT_Helper_Directory::sanitizePath(CAT_PATH),
+                    Directory::sanitizePath(CAT_ENGINE_PATH),
+                    Directory::sanitizePath(CAT_PATH),
                 ),
                 array(
                     self::sanitize_url(self::getURI(CAT_URL)),
                     self::sanitize_url(self::getURI(CAT_URL)),
                 ),
-                CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($path))
+                Directory::getName(Directory::sanitizePath($path))
             );
         }   // end function path2uri(()
 
@@ -341,7 +341,9 @@ if (!class_exists('CAT_Helper_Validate'))
             if(!isset($rel_parsed['path']) || $rel_parsed['path'] == '') return '';
             $path       = $rel_parsed['path'];
             $path       = preg_replace('~/\./~', '/', $path); // bla/./bloo ==> bla/bloo
-            if(!isset($rel_parsed['host']) ) $rel_parsed['host'] = CAT_URL;
+            // remove trailing /
+            $path       = preg_replace('~\/+$~','',$path);
+            if(!isset($rel_parsed['host']) ) $rel_parsed['host'] = CAT_SITE_URL;
             // resolve /../
             // loop through all the parts, popping whenever there's a .., pushing otherwise.
             $parts      = array();
@@ -356,9 +358,10 @@ if (!class_exists('CAT_Helper_Validate'))
                  . $rel_parsed['host']
                  . ( isset($rel_parsed['port']) ? ':'.$rel_parsed['port'] : NULL )
                  . "/" . implode("/", $parts);
-echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( array($url, utf8_decode($url)) );
-echo "</textarea>";
+
+#echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+#print_r( array($url, utf8_decode($url)) );
+#echo "</textarea>";
 return utf8_decode($url);
             return $url;
         }   // end function sanitize_url()

@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Helper_Directory'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
 
-    class CAT_Helper_Directory extends CAT_Object
+use \CAT\Base as Base;
+
+if (!class_exists('\CAT\Helper\Directory'))
+{
+    class Directory extends Base
     {
         /**
          * IMPORTANT: Enabling debugging here causes endless loop! DON'T!!!
@@ -92,8 +91,8 @@ if (!class_exists('CAT_Helper_Directory'))
         public static function createDirectory($dir_name, $dir_mode=NULL, $createIndex=false)
         {
             if(!$dir_mode) {
-                $dir_mode = CAT_Registry::exists('OCTAL_DIR_MODE')
-                          ? CAT_Registry::get('OCTAL_DIR_MODE')
+                $dir_mode = Registry::exists('OCTAL_DIR_MODE')
+                          ? Registry::get('OCTAL_DIR_MODE')
                           : (int) octdec(self::defaultDirMode());
             }
             $dir_name = self::sanitizePath($dir_name);
@@ -223,6 +222,7 @@ if (!class_exists('CAT_Helper_Directory'))
                 'recurse'       => false,   // recurse or not
                 'remove_prefix' => false,   // remove prefix or not
                 'ignore'        => array(), // folders to ignore
+                'as_tree'       => false,
             ), $options);
 
             $options['curr_depth']++;
@@ -237,9 +237,19 @@ if (!class_exists('CAT_Helper_Directory'))
                 if(substr($file,0,1)=='.') continue;
                 $curr_item = self::getName(self::sanitizePath($dir.'/'.$file));
                 if(is_dir($curr_item)) {
-                    $directories[] = str_ireplace($options['remove_prefix'],'',$curr_item);
+                    $name = str_ireplace($options['remove_prefix'],'',$curr_item);
                     if($options['recurse']===true && $options['curr_depth']<$options['max_depth']) {
-                        $directories = array_merge($directories, self::findDirectories($curr_item,$options));
+                        if($options['as_tree']==false) {
+$directories[] = $name;
+                            $directories = array_merge($directories, self::findDirectories($curr_item,$options));
+                        } else {
+                            $sub_opt     = $options;
+                            $sub_opt['remove_prefix'] .= "$name/";
+                            $subdirs     = self::findDirectories($curr_item,$sub_opt);
+                            $directories[$name] = $subdirs;
+                        }
+                    } else {
+$directories[] = $name;
                     }
                 }
             }

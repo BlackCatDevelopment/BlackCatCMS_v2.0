@@ -15,9 +15,17 @@
 
 */
 
-if(!class_exists('CAT_Helper_AssetFactory'))
+namespace CAT\Helper;
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
+use \CAT\Registry as Registry;
+use \CAT\Helper\Assets as Assets;
+use \CAT\Helper\Page as HPage;
+use \CAT\Helper\Validate as Validate;
+
+if(!class_exists('AssetFactory'))
 {
-    class CAT_Helper_AssetFactory
+    class AssetFactory
 	{
         private static $ids = array();
         private $id   = null;
@@ -25,6 +33,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
         private $css  = array();
         private $meta = array();
         private $cond = array();
+        private $code = array('header'=>array(),'footer'=>array());
         private $jq   = false;
         private $ui   = false;
 
@@ -75,10 +84,37 @@ if(!class_exists('CAT_Helper_AssetFactory'))
         public function addAsset($file,$parm)
         {
             $type = pathinfo($file,PATHINFO_EXTENSION);
-            if($type=='css') $this->addCSS(CAT_Helper_Validate::path2uri($file));
-            if($type=='js')  $this->addJS(CAT_Helper_Validate::path2uri($file),$parm);
-            if($type=='php') CAT_Helper_Assets::addInclude($file,$parm);
+            if($type=='css') $this->addCSS(Validate::path2uri($file));
+            if($type=='js')  $this->addJS(Validate::path2uri($file),$parm);
+            if($type=='php') Assets::addInclude($file,$parm);
         }   // end function addAsset()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function addCode($code,$pos='header',$after=null)
+        {
+            $index = null;
+            if(!strlen($pos))
+                $pos = 'footer';
+            if(!isset($this->code[$pos]))
+                $this->code[$pos] = array();
+/*
+            if($after)
+            {
+                $index = array_search($after,$this->js[$pos]);
+#echo "INDEX: $index<br />";
+                if($index) {
+                    array_splice($this->js[$pos],$index,0,$file);
+                    return;
+                }
+            }
+*/
+            $this->code[$pos][] = $code;
+        }   // end function addCode()
+
 
         /**
          *
@@ -130,7 +166,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
             {
                 if($after)
                 {
-                    $index = array_search($file,$this->js[$pos]);
+                    $index = array_search($after,$this->js[$pos]);
 #echo "INDEX: $index<br />";
                     if($index) {
                         array_splice($this->js[$pos],$index,0,$file);
@@ -199,16 +235,14 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                     {
                         $file = $files[$i];
                         $files[$i] = preg_replace('~^/~','',$file); // remove leading /
-                        $files[$i] = preg_replace('~^/~','',$file); // remove leading /
                         if(isset($this->cond[$file])) {
                             $files_with_conditions[$this->cond[$file]][] = $file;
                             unset($files[$i]);
                         }
                     }
-
                     $line = str_replace(
                         array('%%condition_open%%','%%file%%','%%media%%','%%condition_close%%'),
-                        array('',CAT_Helper_Assets::serve('css',$files),$media,''),
+                        array('',Assets::serve('css',$files),$media,''),
                         self::$css_tpl
                     );
                     if(isset($this->cond[$file]))
@@ -226,7 +260,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                             array('%%condition_open%%','%%file%%','%%media%%','%%condition_close%%'),
                             array(
                                 '<!--[if '.$cond.']>',
-                                CAT_Helper_Assets::serve('css',$files),
+                                Assets::serve('css',$files),
                                 $media,
                                 '<![endif]-->'
                             ),
@@ -255,8 +289,8 @@ if(!class_exists('CAT_Helper_AssetFactory'))
             if($pos=='header')
             {
                 // add static js
-                $header_js = array('var CAT_URL = "'.CAT_URL.'";');
-                if(CAT_Backend::isBackend())
+                $header_js = array('var CAT_URL = "'.CAT_SITE_URL.'";');
+                if(Backend::isBackend())
                 {
                     array_push(
                         $header_js,
@@ -282,7 +316,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                     array('%%condition_open%%','%%file%%','%%code%%','%%condition_close%%'),
                     array(
                         ( isset($this->cond[$file]) ? '<!--[if '.$this->cond[$file].']>' : '' ),
-                        CAT_Helper_Assets::serve('js',$files),
+                        Assets::serve('js',$files),
                         '',
                         ( isset($this->cond[$file]) ? '<![endif]-->' : '' ),
                     ),
@@ -290,6 +324,14 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                 );
                 $output[] = $line;
             }
+
+            if(count($this->code) && isset($this->code[$pos]) && count($this->code[$pos]))
+            {
+                $output[] = "<script type=\"text/javascript\">\n"
+                          . implode("\n",$this->code[$pos])
+                          . "</script>\n";
+            }
+
             return implode("\n",$output);
         }   // end function renderJS()
 
@@ -301,6 +343,8 @@ if(!class_exists('CAT_Helper_AssetFactory'))
         public function renderMeta()
         {
             $output = array();
+            $title  = null;
+
             if(count($this->meta))
             {
                 foreach($this->meta as $el)
@@ -318,7 +362,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
             // Frontend only: get page properties
             if(is_numeric($this->id))
             {
-                $properties = CAT_Helper_Page::properties($this->id);
+                $properties = HPage::properties($this->id);
 
                 // droplets may override page title and description and/or
                 // add meta tags
@@ -326,7 +370,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                 // check page title
                 if(isset($droplets_config['page_title']))
                     $title = $droplets_config['page_title'];
-                elseif(null!=($t=CAT_Helper_Page::getTitle()))
+                elseif(null!=($t=HPage::getTitle()))
                     $title = $t;
                 elseif(defined('WEBSITE_TITLE'))
                     $title = WEBSITE_TITLE . (isset($properties['page_title']) ? ' - ' . $properties['page_title'] : '' );
@@ -341,7 +385,7 @@ if(!class_exists('CAT_Helper_AssetFactory'))
                 elseif(isset($properties['description']) && $properties['description'] != '' )
                     $description = $properties['description'];
                 else
-                    $description = CAT_Registry::get('WEBSITE_DESCRIPTION');
+                    $description = Registry::get('WEBSITE_DESCRIPTION');
 
                 // check other meta tags set by droplets
                 if(isset($droplets_config['meta']))
@@ -352,8 +396,8 @@ if(!class_exists('CAT_Helper_AssetFactory'))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             }
             else {
-                $description = CAT_Registry::get('WEBSITE_DESCRIPTION');
-                if(null!=($t=CAT_Helper_Page::getTitle()))
+                $description = Registry::get('WEBSITE_DESCRIPTION');
+                if(null!=($t=HPage::getTitle()))
                     $title = $t;
             }
 

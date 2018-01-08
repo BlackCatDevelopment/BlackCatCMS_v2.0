@@ -15,7 +15,9 @@
 
 */
 
-class CAT_Addon_Settings extends CAT_Addon_Module
+namespace CAT\Addon;
+
+class Settings extends Module implements IAddon
 {
 
 	/**

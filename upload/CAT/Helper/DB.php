@@ -15,12 +15,18 @@
 
 */
 
-use Doctrine\Common\ClassLoader;
+namespace CAT\Helper;
+
+use \CAT\Base as Base;
+use \CAT\Helper\Directory as Directory;
+use \CAT\Helper\DB\CPDOExceptionHandler as CPDOExceptionHandler;
+
+use Doctrine\Common\ClassLoader as ClassLoader;
 require dirname(__FILE__).'/../../modules/lib_doctrine/Doctrine/Common/ClassLoader.php';
 
-if ( !class_exists( 'CAT_Helper_DB' ) )
+if(!class_exists('DB'))
 {
-    class CAT_Helper_DB extends PDO
+    class DB extends \PDO
     {
         public  static $exc_trace = true;
 
@@ -117,7 +123,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
             if(!self::$conn)
             {
                 $config = new \Doctrine\DBAL\Configuration();
-                $config->setSQLLogger(new Doctrine\DBAL\Logging\DebugStack());
+                $config->setSQLLogger(new \Doctrine\DBAL\Logging\DebugStack());
                 if(!defined('CAT_DB_NAME') && ( !count($opt) || !isset($opt['DB_NAME']) ) )
                 {
                     $opt = self::getConfig($opt);
@@ -145,7 +151,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                 catch( \PDO\PDOException $e )
                 {
                     $this->setError($e->message);
-                    CAT_Object::printFatalError($e->message);
+                    Base::printFatalError($e->message);
                 }
                 if(function_exists('xdebug_enable') && $xdebug_state)
                     xdebug_enable();
@@ -267,7 +273,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
                             return $this->getError();
                         else
                             throw new \PDOException($this->getError());
-                            #CAT_Object::printFatalError($this->getError());
+                            #Base::printFatalError($this->getError());
                     }
                 }
             }
@@ -351,10 +357,10 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         {
             // find file
             // note: .bc.php as suffix filter does not work!
-            $configfiles = CAT_Helper_Directory::findFiles(dirname(__FILE__).'/DB',array('extension'=>'.php'));
+            $configfiles = Directory::findFiles(dirname(__FILE__).'/DB',array('extension'=>'.php'));
 
             if(!is_array($configfiles) || !count($configfiles))
-                CAT_Object::printFatalError('Missing database configuration');
+                Base::printFatalError('Missing database configuration');
 
             // the first file with suffix .bc.php will be used
             foreach($configfiles as $file)
@@ -369,7 +375,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
             $configuration = parse_ini_file($file);
 
             if(!is_array($configuration) || !count($configuration))
-                CAT_Object::printFatalError('Database configuration error');
+                Base::printFatalError('Database configuration error');
 
             foreach($configuration as $key => $value)
                 if(!isset($opt['DB_'.$key]))
@@ -494,7 +500,7 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
         public function getError()
         {
             // show detailed error message only to global admin
-            #if(CAT_User::is_authenticated() && CAT_User::is_root())
+            #if(User::is_authenticated() && User::is_root())
             return $this->lasterror;
             #else
             #    return "An internal error occured. We're sorry for inconvenience.";
@@ -561,8 +567,8 @@ if ( !class_exists( 'CAT_Helper_DB' ) )
          **/
         protected static function setExceptionHandler()
         {
-            $prevhandler = set_exception_handler(array("CAT_PDOExceptionHandler", "exceptionHandler"));
-            if(isset($prevhandler[0]) && $prevhandler[0] == 'CAT_PDOExceptionHandler')
+            $prevhandler = set_exception_handler(array("\CAT\Helper\DB\CPDOExceptionHandler", "exceptionHandler"));
+            if(isset($prevhandler[0]) && $prevhandler[0] == 'CPDOExceptionHandler')
                 restore_exception_handler();
         }   // end function setExceptionHandler()
 
@@ -625,20 +631,26 @@ class CAT_PDOStatementDecorator
     }
 }
 
-class CAT_PDOExceptionHandler
+namespace CAT\Helper\DB;
+
+use \CAT\Base as Base;
+use \CAT\Helper\DB as DB;
+
+class CPDOExceptionHandler
 {
+
     public function __call($method, $args)
     {
         return call_user_func_array(array($this, $method), $args);
     }
     /**
      * exception handler; allows to remove paths from error messages and show
-     * optional stack trace if CAT_Helper_DB::$trace is true
+     * optional stack trace if DB::$trace is true
      **/
     public static function exceptionHandler($exception)
     {
 
-        if(CAT_Helper_DB::$exc_trace === true)
+        if(DB::$exc_trace === true)
         {
             $traceline = "#%s %s(%s): %s(%s)";
             $msg   = "Uncaught exception '%s' with message '%s'<br />"
@@ -666,7 +678,7 @@ class CAT_PDOExceptionHandler
                 );
             }
             // trace always ends with {main}
-            $result[] = '#' . ++$key . ' {main}';
+            #$result[] = '#' . ++$key . ' {main}';
             // write tracelines into main template
             $msg = sprintf(
                 $msg,
@@ -693,7 +705,7 @@ class CAT_PDOExceptionHandler
         }
 
         try {
-            $logger = CAT_Object::log();
+            $logger = Base::log();
             $logger->emergency(sprintf(
                 'Exception with message [%s] emitted in [%s] line [%s]',
                 $exception->getMessage(),$exception->getFile(),$exception->getLine()
@@ -702,6 +714,6 @@ class CAT_PDOExceptionHandler
         } catch ( Exception $e ) {}
 
         // log or echo as you please
-        CAT_Object::printFatalError($msg);
+        Base::printFatalError($msg);
     }
 }

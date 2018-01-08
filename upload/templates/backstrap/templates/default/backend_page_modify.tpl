@@ -186,7 +186,7 @@
   </div>{* END col *}
 </div>{* END row *}
 
-<div class="hidden" id="publishing">
+<div hidden aria-hidden="true" id="publishing">
   <p>{translate('You can set a date and time period in which this content section will be visible.')}
      {translate('Expired sections will not be deleted, but they will no longer appear in the Frontend.')}</p>
   <ul class="nav nav-tabs" role="tablist">{* Tabs *}

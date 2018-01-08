@@ -15,14 +15,13 @@
 
 */
 
-if ( ! class_exists( 'CAT_Helper_Array' ) )
-{
 
-    if ( ! class_exists( 'CAT_Object', false ) ) {
-	    @include dirname(__FILE__).'/../Object.php';
-	}
-	
-	class CAT_Helper_Array extends CAT_Object
+namespace CAT\Helper;
+use \CAT\Base as Base;
+
+if(!class_exists('\CAT\Helper\HArray'))
+{
+	class HArray extends Base
 	{
 
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
@@ -129,7 +128,7 @@ if ( ! class_exists( 'CAT_Helper_Array' ) )
             if(!is_array($array) || !count($array)) return array();
 
             $filterby = array_shift($arguments);
-            $result   = new stdClass();
+            $result   = new \stdClass();
 
             if(!$filterby)
             {

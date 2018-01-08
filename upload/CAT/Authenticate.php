@@ -15,13 +15,15 @@
 
 */
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
-    @include dirname(__FILE__).'/Object.php';
-}
+namespace CAT;
+use \CAT\Base as Base;
+use \CAT\Registry as Registry;
+use \CAT\Helper\CQRCode as CQRCode;
+use \CAT\Helper\CQRCodeProvider as CQRCodeProvider;
 
-if ( ! class_exists( 'CAT_Authenticate', false ) )
+if(!class_exists('Authenticate',false))
 {
-    class CAT_Authenticate extends CAT_Object
+    class Authenticate extends Base
     {
         // log level
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
@@ -185,8 +187,8 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         {
             // TFA enabled globally?
             if(
-                   !CAT_Registry::exists('TFA_ENABLED')
-                || (CAT_Registry::get('TFA_ENABLED')===false)
+                   !Registry::exists('TFA_ENABLED')
+                || (Registry::get('TFA_ENABLED')===false)
             ) {
                 return true;
             }
@@ -228,8 +230,8 @@ if ( ! class_exists( 'CAT_Authenticate', false ) )
         private function getTFAObject()
         {
             if ( is_object($this->tfa) ) return $this->tfa;
-            $ignore        = new CAT_Helper_QRCode(); // just to make sure the helper is loaded
-            $mp            = new CAT_Helper_QRCodeProvider(); // needed for image creation
+            $ignore    = new CQRCode(); // just to make sure the helper is loaded
+            $mp        = new CQRCodeProvider(); // needed for image creation
             $this->tfa    = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
             return $this->tfa;
         }   // end function getTFAObject()

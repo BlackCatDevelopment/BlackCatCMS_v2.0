@@ -15,14 +15,11 @@
 
 */
 
-if (!class_exists('CAT_Session', false))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/Object.php';
-    }
+namespace CAT;
 
-    class CAT_Session extends CAT_Object implements SessionHandlerInterface
+if (!class_exists('Session', false))
+{
+    class Session extends Base implements \SessionHandlerInterface
     {
         #protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $loglevel = \Monolog\Logger::DEBUG;
@@ -32,6 +29,7 @@ if (!class_exists('CAT_Session', false))
         private $gc_stmt     = null;
         private $key_stmt    = null;
         private $data_stmt   = null;
+        private static $hash = null;
 
         private static $openssl_preferred = array(
             'aes-256-ctr',
@@ -77,6 +75,7 @@ if (!class_exists('CAT_Session', false))
             {
                 if (in_array($session_hash, hash_algos())) {
                     ini_set('session.hash_function', $session_hash);
+                    self::$hash = $session_hash;
                     break;
                 }
             }
@@ -281,7 +280,7 @@ if (!class_exists('CAT_Session', false))
                 $dx     = '';
                 // Salt the key(32) and iv(16) = 48
                 while (strlen($salted) < 32+$ivlen) {
-                    $dx = hash('sha256', $dx.$key.$salt, true);
+                    $dx = hash(self::$hash, $dx.$key.$salt, true);
                     $salted .= $dx;
                 }
                 $key = substr($salted, 0, 32);
@@ -290,7 +289,7 @@ if (!class_exists('CAT_Session', false))
                 $encrypted = base64_encode($salt . $encrypted);
             } elseif (extension_loaded('mcrypt')) {
                 $salt = 'cH!swe!retReGu7W6bEDRup7usuDUh9THeD2CHeGE*ewr4n39=E@rAsp7c-Ph@pH';
-                $key = substr(hash('sha256', $salt.$key.$salt), 0, 32);
+                $key = substr(hash(self::$hash, $salt.$key.$salt), 0, 32);
                 $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
                 $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
                 $encrypted = base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $data, MCRYPT_MODE_ECB, $iv));
@@ -317,10 +316,10 @@ if (!class_exists('CAT_Session', false))
                 $rounds = 3; // depends on key length
                 $data00 = $key.$salt;
                 $hash = array();
-                $hash[0] = hash('sha256', $data00, true);
+                $hash[0] = hash(self::$hash, $data00, true);
                 $result = $hash[0];
                 for ($i = 1; $i < $rounds; $i++) {
-                    $hash[$i] = hash('sha256', $hash[$i - 1].$data00, true);
+                    $hash[$i] = hash(self::$hash, $hash[$i - 1].$data00, true);
                     $result .= $hash[$i];
                 }
                 $key = substr($result, 0, 32);
@@ -328,7 +327,7 @@ if (!class_exists('CAT_Session', false))
                 $decrypted = openssl_decrypt($ct, $cipher, $key, true, $iv);
             } elseif (extension_loaded('mcrypt')) {
                 $salt = 'cH!swe!retReGu7W6bEDRup7usuDUh9THeD2CHeGE*ewr4n39=E@rAsp7c-Ph@pH';
-                $key = substr(hash('sha256', $salt.$key.$salt), 0, 32);
+                $key = substr(hash(self::$hash, $salt.$key.$salt), 0, 32);
                 $iv = random_bytes(32);
                 $decrypted = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, base64_decode($data), MCRYPT_MODE_ECB, $iv);
                 $decrypted = rtrim($decrypted, "\0");

@@ -40,14 +40,13 @@
         <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
         {if user_has_perm('groups_add')}
+        <h3>{translate('Create new group')}</h3>
         <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/groups/create">
-            {translate('Create new group')}
-            <div class="form-group">
-                <input type="text" placeholder="{translate('Title')}" class="form-control" name="group_name" id="group_name" />
-            </div>
-            <div class="form-group">
-                <input type="text" placeholder="{translate('Description')}" class="form-control" name="group_description" id="group_description" />
-            </div>
+            <label class="sr-only" for="group_name">{translate('Name')}</label>
+                <input type="text" placeholder="{translate('Name')}" class="form-control mb-2 mr-sm-2 mb-sm-0" id="group_name" name="group_name" />
+            <label class="sr-only" for="group_description">{translate('Description')}</label>
+                <input type="text" placeholder="{translate('Description')}" class="form-control mb-2 mr-sm-2 mb-sm-0" name="group_description" id="group_description" />
+
             <input type="submit" class="btn btn-primary" />
             <input type="reset" class="btn btn-link" type="button" />
         </form>

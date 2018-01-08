@@ -1,4 +1,4 @@
-$(function() {
+(function($) {
     jQuery.ajaxSetup({
         error: function( x, e )
         {
@@ -108,14 +108,11 @@ $(function() {
     // convert fieldsets to tabs
     $('form.tabbed').fieldset_to_tabs();
 
-    // add X-Editable to elements with 'editable' class
-    if(typeof editable != 'undefined') {
-        $('.editable').editable();
-    }
-
     // tooltips
     if(typeof tippy != 'undefined') {
         tippy(document.querySelectorAll('*:not([title=""])'),{arrow:true,theme:'light'});
+    } else {
+        alert('no tippy');
     }
 /**
     // page tree hover tooltips
@@ -168,4 +165,4 @@ $(function() {
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());
     CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');
 
-});
+})(jQuery);

@@ -15,9 +15,18 @@
 
 */
 
-if(!class_exists('CAT_Object',false))
+namespace CAT;
+
+use CAT\Helper\DB as DB;
+use CAT\Helper\Directory as Directory;
+use CAT\Helper\Template as Template;
+use CAT\Helper\Router as Router;
+use CAT\Helper\Addons as Addons;
+use \CAT\Helper\Json as Json;
+
+if(!class_exists('Base',false))
 {
-    class CAT_Object
+    class Base
     {
         /**
          * log level
@@ -35,6 +44,10 @@ if(!class_exists('CAT_Object',false))
          * current error state; default 500 (Internal server error)
          **/
         protected static $errorstate = 500;
+        /**
+         * current site
+         **/
+        protected static $site       = null;
         /**
          * known HTTP status
          **/
@@ -98,9 +111,11 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function db()
         {
-            if(!isset(CAT_Object::$objects['db']) || !is_object(CAT_Object::$objects['db']) )
-               self::storeObject('db',CAT_Helper_DB::getInstance());
-            return CAT_Object::$objects['db'];
+            if(!isset(Base::$objects['db']) || !is_object(Base::$objects['db']))
+            {
+               self::storeObject('db',DB::getInstance());
+            }
+            return Base::$objects['db'];
         }   // end function db()
 
         /**
@@ -110,12 +125,12 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function fileinfo()
         {
-            if(!isset(CAT_Object::$objects['getid3']) || !is_object(CAT_Object::$objects['getid3']))
+            if(!isset(Base::$objects['getid3']) || !is_object(Base::$objects['getid3']))
             {
                 require_once CAT_ENGINE_PATH.'/modules/lib_getid3/getid3/getid3.php';
-        	    CAT_Object::$objects['getid3'] = new getID3;
+        	    Base::$objects['getid3'] = new \getID3;
             }
-            return CAT_Object::$objects['getid3'];
+            return Base::$objects['getid3'];
         }   // end function fileinfo()
 
         /**
@@ -126,23 +141,23 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function form()
         {
-            if(!isset(CAT_Object::$objects['formbuilder']) || !is_object(CAT_Object::$objects['formbuilder']))
+            if(!isset(Base::$objects['formbuilder']) || !is_object(Base::$objects['formbuilder']))
             {
-                CAT_Object::$objects['formbuilder'] = \wblib\wbForms::getInstance();
-                $init = CAT_Helper_Directory::sanitizePath(
-                    CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get(
-                        (CAT_Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')
+                Base::$objects['formbuilder'] = \wblib\wbForms::getInstance();
+                $init = Directory::sanitizePath(
+                    CAT_ENGINE_PATH.'/templates/'.Registry::get(
+                        (Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')
                     ).'/forms.init.php'
                 );
                 if(file_exists($init))
                     require $init;
-                CAT_Object::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/languages');
-                if(CAT_Backend::isBackend())
+                Base::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/languages');
+                if(Backend::isBackend())
                 {
-                    CAT_Object::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/'.CAT_BACKEND_PATH.'/languages');
+                    Base::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/'.Backend_PATH.'/languages');
                 }
             }
-            return CAT_Object::$objects['formbuilder'];
+            return Base::$objects['formbuilder'];
         }   // end function form()
         
         /**
@@ -153,11 +168,11 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function lang()
         {
-            if(!isset(CAT_Object::$objects['lang']) || !is_object(CAT_Object::$objects['lang']) )
+            if(!isset(Base::$objects['lang']) || !is_object(Base::$objects['lang']) )
             {
-                self::storeObject('lang',\wblib\wbLang::getInstance(CAT_Registry::get('LANGUAGE',NULL,NULL)));
+                self::storeObject('lang',\wblib\wbLang::getInstance(Registry::get('LANGUAGE',NULL,NULL)));
             }
-            return CAT_Object::$objects['lang'];
+            return Base::$objects['lang'];
         }   // end function lang()
 
         /**
@@ -168,14 +183,14 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function lb()
         {
-            if(!isset(CAT_Object::$objects['list']) || !is_object(CAT_Object::$objects['list']) )
+            if(!isset(Base::$objects['list']) || !is_object(Base::$objects['list']) )
                 self::storeObject('list', new \wblib\wbList(array(
                     'id'    => 'page_id',
                     'title' => 'menu_title',
                     // for page selects
                     'value' => 'page_id',
                 )));
-            return CAT_Object::$objects['list'];
+            return Base::$objects['list'];
         }   // end function list()
         
 
@@ -185,11 +200,11 @@ if(!class_exists('CAT_Object',false))
         public static function log($reset=false)
         {
             // global logger
-            if(!isset(CAT_Object::$objects['logger']) || !is_object(CAT_Object::$objects['logger']) )
+            if(!isset(Base::$objects['logger']) || !is_object(Base::$objects['logger']) )
             {
                 // default logger; will set the log level to the global default
-                // set in CAT_Object
-                $logger = new CAT_Object_LoggerDecorator(new \Monolog\Logger('CAT'));
+                // set in Base
+                $logger = new Base_LoggerDecorator(new \Monolog\Logger('CAT'));
 
                 $bubble = false;
                 $errorStreamHandler = new \Monolog\Handler\StreamHandler(
@@ -206,37 +221,37 @@ if(!class_exists('CAT_Object',false))
 
                 self::storeObject('logger',$logger);
 
-                CAT_Registry::set('CAT.logger.CAT_Object',$logger);
+                Registry::set('CAT.logger.Base',$logger);
             }
             // specific logger
             $class    = get_called_class();
             $loglevel = self::getLogLevel();
 
-            if($loglevel != CAT_Object::$loglevel || $loglevel == \Monolog\Logger::DEBUG)
+            if($loglevel != Base::$loglevel || $loglevel == \Monolog\Logger::DEBUG)
             {
-                $logger  = CAT_Registry::get('CAT.logger.'.$class);
+                $logger  = Registry::get('CAT.logger.'.$class);
                 $logfile = 'core_'.$class.'_'.date('m-d-Y').'.log';
                 if($reset && file_exists(CAT_ENGINE_PATH.'/temp/logs/'.$logfile))
                     unlink(CAT_ENGINE_PATH.'/temp/logs/'.$logfile);
                 if(!$logger)
                 {
-                    $logger = new CAT_Object_LoggerDecorator(new \Monolog\Logger('CAT.'.$class));
+                    $logger = new Base_LoggerDecorator(new \Monolog\Logger('CAT.'.$class));
                     $stream = new \Monolog\Handler\StreamHandler(
                         CAT_ENGINE_PATH.'/temp/logs/'.$logfile,
                         $class::$loglevel,
                         false
                     );
                     $stream->setFormatter(new \Monolog\Formatter\LineFormatter(
-                        "[%datetime%] [%channel%.%level_name%]  %message%  [%extra%]\n"
+                        "[%datetime%] [%channel%.%level_name%]  %message%  %context% %extra%\n"
                     ));
                     $logger->pushHandler($stream);
                     $logger->pushProcessor(new \Monolog\Processor\PsrLogMessageProcessor());
-                    CAT_Registry::set('CAT.logger.'.$class,$logger);
+                    Registry::set('CAT.logger.'.$class,$logger);
                 }
                 return $logger;
             }
             else {
-                return CAT_Object::$objects['logger'];
+                return Base::$objects['logger'];
             }
         }   // end function log ()
 
@@ -248,9 +263,9 @@ if(!class_exists('CAT_Object',false))
          **/
         public function perms()
         {
-            if(!isset(CAT_Object::$objects['perms']) || !is_object(CAT_Object::$objects['perms']) )
+            if(!isset(Base::$objects['perms']) || !is_object(Base::$objects['perms']) )
                 self::storeObject('perms',CAT_Permissions::getInstance());
-            return CAT_Object::$objects['perms'];
+            return Base::$objects['perms'];
         }   // end function perms()
 
         /**
@@ -261,9 +276,9 @@ if(!class_exists('CAT_Object',false))
          **/
         public function roles()
         {
-            if(!isset(CAT_Object::$objects['roles']) || !is_object(CAT_Object::$objects['roles']) )
+            if(!isset(Base::$objects['roles']) || !is_object(Base::$objects['roles']) )
                 self::storeObject('roles',CAT_Roles::getInstance());
-            return CAT_Object::$objects['roles'];
+            return Base::$objects['roles'];
         }   // end function roles()
 
         /**
@@ -273,10 +288,28 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function router()
         {
-            if(!isset(CAT_Object::$objects['router']) || !is_object(CAT_Object::$objects['router']) )
-                self::storeObject('router',CAT_Helper_Router::getInstance());
-            return CAT_Object::$objects['router'];
+            if(!isset(Base::$objects['router']) || !is_object(Base::$objects['router']) )
+                self::storeObject('router',Router::getInstance());
+            return Base::$objects['router'];
         }   // end function router()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function site()
+        {
+            if(!Base::$site)
+            {
+                $stmt = self::db()->query(
+                    'SELECT * FROM `:prefix:sites` WHERE `site_id`=?',
+                    array(CAT_SITE_ID)
+                );
+                Base::$site = $stmt->fetch();
+            }
+            return Base::$site;
+        }   // end function site()
 
         /**
          * accessor to current template object
@@ -286,19 +319,19 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function tpl()
         {
-            if(!isset(CAT_Object::$objects['tpl']) || !is_object(CAT_Object::$objects['tpl']) )
+            if(!isset(Base::$objects['tpl']) || !is_object(Base::$objects['tpl']) )
             {
-                CAT_Object::$objects['tpl'] = CAT_Helper_Template::getInstance('Dwoo');
-                CAT_Object::$objects['tpl']->setGlobals(array(
-                    'WEBSITE_DESCRIPTION' => CAT_Registry::get('WEBSITE_DESCRIPTION'),
+                Base::$objects['tpl'] = Template::getInstance('Dwoo');
+                Base::$objects['tpl']->setGlobals(array(
+                    'WEBSITE_DESCRIPTION' => Registry::get('WEBSITE_DESCRIPTION'),
                     'CAT_CORE'            => 'BlackCat CMS',
-                    'CAT_VERSION'         => CAT_Registry::get('CAT_VERSION'),
-                    'CAT_BUILD'           => CAT_Registry::get('CAT_BUILD'),
-                    'CAT_DATE_FORMAT'     => CAT_Registry::get('CAT_DATE_FORMAT'),
-                    'LANGUAGE'            => CAT_Registry::get('LANGUAGE'),
+                    'CAT_VERSION'         => Registry::get('CAT_VERSION'),
+                    'CAT_BUILD'           => Registry::get('CAT_BUILD'),
+                    'CAT_DATE_FORMAT'     => Registry::get('CAT_DATE_FORMAT'),
+                    'LANGUAGE'            => Registry::get('LANGUAGE'),
                 ));
             }
-            return CAT_Object::$objects['tpl'];
+            return Base::$objects['tpl'];
         }   // end function tpl()
 
         /**
@@ -309,9 +342,9 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function user()
         {
-            if(!isset(CAT_Object::$objects['user']) || !is_object(CAT_Object::$objects['user']) )
-                self::storeObject('user',CAT_User::getInstance());
-            return CAT_Object::$objects['user'];
+            if(!isset(Base::$objects['user']) || !is_object(Base::$objects['user']) )
+                self::storeObject('user',User::getInstance());
+            return Base::$objects['user'];
         }   // end function user()
 
 // =============================================================================
@@ -326,11 +359,11 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function addLangFile($path)
         {
-            $langfile   = CAT_Helper_Directory::sanitizePath($path.'/'.CAT_Registry::get('LANGUAGE').'.php');
+            $langfile   = Directory::sanitizePath($path.'/'.Registry::get('LANGUAGE').'.php');
             // load language file (if exists and is valid)
             if(file_exists($langfile) && self::lang()->checkFile($langfile,'LANG',true))
             {
-                self::lang()->addFile(CAT_Registry::get('LANGUAGE').'.php', $path);
+                self::lang()->addFile(Registry::get('LANGUAGE').'.php', $path);
             }
         }   // end function addLangFile()
         
@@ -381,7 +414,7 @@ if(!class_exists('CAT_Object',false))
          *
          * if $langs_only is true (default), only the list of available langs
          * will be returned; if set to false, the complete result of
-         * CAT_Helper_Addons::getAddons will be returned
+         * Addons::getAddons will be returned
          *
          * @access public
          * @param  boolean  $langs_only
@@ -390,8 +423,8 @@ if(!class_exists('CAT_Object',false))
         public static function getLanguages($langs_only=true)
         {
             if($langs_only)
-                return CAT_Helper_Addons::getAddons('language');
-            return CAT_Helper_Addons::getAddons('language','name',false,true);
+                return Addons::getAddons('language');
+            return Addons::getAddons('language','name',false,true);
         }   // end function getLanguages()
 
         /**
@@ -457,7 +490,7 @@ if(!class_exists('CAT_Object',false))
                      . 'ON `t1`.`name`=`t2`.`name` AND `t2`.`site_id`=? '
                      . 'ORDER BY `t1`.`name`';
 
-                if($stmt = CAT_Helper_DB::getInstance()->query($sql,array(CAT_SITE_ID)))
+                if($stmt = DB::getInstance()->query($sql,array(CAT_SITE_ID)))
                 {
                     $rows = $stmt->fetchAll();
                     foreach($rows as $row)
@@ -473,14 +506,14 @@ if(!class_exists('CAT_Object',false))
                         else
                             $value = $row['value'];
                         $temp_name = strtoupper($row['name']);
-                        CAT_Registry::register($temp_name, $value);
+                        Registry::register($temp_name, $value);
                         self::$settings[$row['name']] = $value;
                     }
                     unset($row);
                 }
                 else
                 {
-                    CAT_Object::printFatalError("No settings found in the database, please check your installation!");
+                    Base::printFatalError("No settings found in the database, please check your installation!");
                 }
             }
             return self::$settings;
@@ -493,7 +526,7 @@ if(!class_exists('CAT_Object',false))
          **/
         public static function setTemplatePaths($name,$type='module')
         {
-            $base = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'s/'.$name.'/templates');
+            $base = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'s/'.$name.'/templates');
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Varianten
@@ -512,10 +545,10 @@ if(!class_exists('CAT_Object',false))
                 return;
             }
 /*
-            if (file_exists(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE'))))
+            if (file_exists(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.Registry::get('DEFAULT_TEMPLATE'))))
             {
-                self::tpl()->setFallbackPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
-                self::tpl()->setPath(CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE')));
+                self::tpl()->setFallbackPath(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
+                self::tpl()->setPath(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.Registry::get('DEFAULT_TEMPLATE')));
             }
 */
         }   // end function setTemplatePaths()
@@ -564,7 +597,7 @@ if(!class_exists('CAT_Object',false))
             else
             {
                 self::log()->addDebug('resetting loglevel to default for class {class}',array('class'=>$class));
-                $class::$loglevel = CAT_Object::$loglevel;
+                $class::$loglevel = Base::$loglevel;
             }
         }   // end function debug()
 
@@ -616,8 +649,8 @@ echo "level now: ", $class::$loglevel, "<br />";
         public static function errorstate($id=NULL)
         {
             if($id)
-                CAT_Object::$errorstate = $id;
-            return CAT_Object::$errorstate;
+                Base::$errorstate = $id;
+            return Base::$errorstate;
         }   // end function errorstate()
 
         /**
@@ -641,37 +674,37 @@ echo "level now: ", $class::$loglevel, "<br />";
 
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printError($message,true);
+                echo Json::printError($message,true);
                 exit; // should never be reached
             }
 
-            $message = CAT_Object::lang()->translate($message);
-            $errinfo = CAT_Object::lang()->t(self::$state[self::errorstate()]);
+            $message = Base::lang()->translate($message);
+            $errinfo = Base::lang()->t(self::$state[self::errorstate()]);
 
             $print_footer = false;
             if(!headers_sent() && $print_header)
             {
                 $print_footer = true; // print header also means print footer
                 if (
-                       !isset(CAT_Object::$objects['tpl'])
-                    || !is_object(CAT_Object::$objects['tpl'])
-                    || ( !CAT_Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
+                       !isset(Base::$objects['tpl'])
+                    || !is_object(Base::$objects['tpl'])
+                    || ( !Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
                 ) {
                     self::err_page_header();
                 }
             }
 
             if (
-                   !isset(CAT_Object::$objects['tpl'])
-                || !is_object(CAT_Object::$objects['tpl'])
-                || CAT_Backend::isBackend()
+                   !isset(Base::$objects['tpl'])
+                || !is_object(Base::$objects['tpl'])
+                || Backend::isBackend()
             )
-            //if (!is_object(CAT_Object::$objects['tpl']) || ( !CAT_Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE')) )
+            //if (!is_object(Base::$objects['tpl']) || ( !Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE')) )
             {
                 require dirname(__FILE__).'/templates/error_content.php';
             }
 
-            if ($print_footer && (!isset(CAT_Object::$objects['tpl']) || !is_object(CAT_Object::$objects['tpl'])))
+            if ($print_footer && (!isset(Base::$objects['tpl']) || !is_object(Base::$objects['tpl'])))
             {
                 self::err_page_footer();
             }
@@ -687,7 +720,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          * @return void
          **/
         public static function printFatalError($message=NULL, $link='index.php', $print_header=true, $args=NULL) {
-            CAT_Object::printError($message, $link, $print_header, $args);
+            Base::printError($message, $link, $print_header, $args);
             exit;
         }   // end function printFatalError()
 
@@ -703,18 +736,16 @@ echo "level now: ", $class::$loglevel, "<br />";
          */
     	public static function printMsg($message, $redirect='index.php', $auto_footer=true, $auto_exit=true)
     	{
-            $self = self::getInstance();
-
     		if (true === is_array($message))
     			$message = implode("<br />", $message);
 
-    		$self->tpl()->setPath(CAT_THEME_PATH.'/templates');
-    		$self->tpl()->setFallbackPath(CAT_THEME_PATH.'/templates');
+    		self::tpl()->setPath(CAT_THEME_PATH.'/templates');
+    		self::tpl()->setFallbackPath(CAT_THEME_PATH.'/templates');
 
-    		$self->tpl()->output('success',array(
-                'MESSAGE'        => CAT_Object::lang()->translate($message),
+    		self::tpl()->output('success',array(
+                'MESSAGE'        => Base::lang()->translate($message),
                 'REDIRECT'       => $redirect,
-                'REDIRECT_TIMER' => CAT_Registry::get('REDIRECT_TIMER'),
+                'REDIRECT_TIMER' => Registry::get('REDIRECT_TIMER'),
             ));
 
     		if ($auto_footer == true)
@@ -748,7 +779,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          **/
         public static function storeObject($name,$obj)
         {
-            CAT_Object::$objects[$name] = $obj;
+            Base::$objects[$name] = $obj;
         }   // end function storeObject()
         
 
@@ -829,9 +860,9 @@ echo "level now: ", $class::$loglevel, "<br />";
  * This class adds the old logging method names to the new Monolog logger
  * used since BlackCat version 2.0
  **/
-if(!class_exists('CAT_Object_LoggerDecorator',false))
+if(!class_exists('Base_LoggerDecorator',false))
 {
-    class CAT_Object_LoggerDecorator extends \Monolog\Logger
+    class Base_LoggerDecorator extends \Monolog\Logger
     {
         private $logger = NULL;
         public function __construct(\Monolog\Logger $logger) {

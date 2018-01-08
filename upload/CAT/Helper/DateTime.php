@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Helper_DateTime'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
+use \CAT\Base as Base;
+use \CAT\Registry as Registry;
 
-    class CAT_Helper_DateTime extends CAT_Object
+if (!class_exists('\CAT\Helper\DateTime'))
+{
+    class DateTime extends Base
     {
         private static $instance;
 
@@ -51,14 +50,14 @@ if (!class_exists('CAT_Helper_DateTime'))
         public static function checkDateformat($date_format)
         {
             $date_format_key	= str_replace(' ', '|', $date_format);
-            $date_formats       = CAT_Helper_DateTime::getDateFormats();
+            $date_formats       = \CAT\Helper\DateTime::getDateFormats();
             return array_key_exists( $date_format_key, $date_formats );
         }   // end function checkDateformat()
 
         public static function checkTimeformat($time_format)
         {
             $time_format_key	= str_replace(' ', '|', $time_format);
-            $time_formats       = CAT_Helper_DateTime::getTimeFormats();
+            $time_formats       = \CAT\Helper\DateTime::getTimeFormats();
             return array_key_exists($time_format_key, $time_formats);
         }   // end function checkTimeformat()
 
@@ -72,7 +71,7 @@ if (!class_exists('CAT_Helper_DateTime'))
          **/
         public static function checkTZ($tz)
         {
-            $timezone_table     = CAT_Helper_DateTime::getTimezones();
+            $timezone_table     = \CAT\Helper\DateTime::getTimezones();
             if ( in_array($tz, $timezone_table) )
             	return true;
             return false;
@@ -131,7 +130,7 @@ if (!class_exists('CAT_Helper_DateTime'))
          **/
         public static function getTimezone()
         {
-            $tz = CAT_Helper_Validate::getInstance()->fromSession('TIMEZONE_STRING');
+            $tz = \CAT\Helper\Validate::fromSession('TIMEZONE_STRING');
             return
                 isset($tz)
                 ? $tz
@@ -231,7 +230,7 @@ if (!class_exists('CAT_Helper_DateTime'))
             global $language_time;
             // user defined format
             if ( isset ($_SESSION['TIME_FORMAT']) ) return $_SESSION['TIME_FORMAT'];
-            return CAT_Registry::get('time_format');
+            return Registry::get('time_format');
         }   // end function getDefaultTimeFormat()
 
         /**
@@ -244,7 +243,7 @@ if (!class_exists('CAT_Helper_DateTime'))
             global $language_date_short;
             // user defined format
             if(isset($_SESSION['DATE_FORMAT'])) return $_SESSION['DATE_FORMAT'];
-            return CAT_Registry::get('date_format');
+            return Registry::get('date_format');
         }   // end function getDefaultDateFormatShort()
 
         /**
@@ -253,7 +252,7 @@ if (!class_exists('CAT_Helper_DateTime'))
         public static function getDefaultDateFormatLong()
         {
             global $language_date_long;
-            $format = CAT_Registry::get('date_format');
+            $format = Registry::get('date_format');
             $format .= ' ' . self::getDefaultTimeFormat();
             return $format;
         }   // end function getDefaultDateFormatLong()

@@ -15,14 +15,18 @@
 
 */
 
-if(!class_exists('Dwoo',false))
+namespace CAT\Helper\Template;
+
+use \CAT\Base as Base;
+
+if(!class_exists('\Dwoo',false))
 {
     include_once CAT_ENGINE_PATH.'/modules/lib_dwoo/dwoo/dwooAutoload.php';
 }
 
-if(!class_exists('CAT_Helper_Template_DwooDriver',false))
+if(!class_exists('DwooDriver',false))
 {
-    class CAT_Helper_Template_DwooDriver extends Dwoo
+    class DwooDriver extends \Dwoo
     {
 
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
@@ -40,11 +44,11 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
             if (!file_exists($compiled_path)) mkdir($compiled_path, 0755, true);
             parent::__construct($compiled_path, $cache_path);
             // we need our own logger instance here as the driver does not
-            // inherit from CAT_Object
-            $this->logger = CAT_Object::log();
+            // inherit from Base
+            $this->logger = Base::log();
         }   // end function __construct()
 
-        public function output($_tpl, $data = array(), Dwoo_ICompiler $compiler = NULL)
+        public function output($_tpl, $data = array(), \Dwoo_ICompiler $compiler = NULL)
         {
             echo $this->get($_tpl,$data,$compiler);
         }   // end function output()
@@ -77,7 +81,7 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
             {
                 if(!file_exists($_tpl) || is_dir($_tpl))
                 {
-                    $file = CAT_Object::tpl()->findTemplate($_tpl);
+                    $file = Base::tpl()->findTemplate($_tpl);
                     $this->logger->addDebug(sprintf('Template file [%s]',$file));
                     if($file)
                     {
@@ -99,5 +103,5 @@ if(!class_exists('CAT_Helper_Template_DwooDriver',false))
             }
         }   // end function get()
 
-    }   // end class CAT_Helper_Template_DwooDriver
+    }   // end class DwooDriver
 }

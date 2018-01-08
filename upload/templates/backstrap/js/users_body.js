@@ -46,7 +46,7 @@ $(function() {
 console.log(data);
                     $(".modal-title").text($.cattranslate("Edit user",undefined,undefined,"BE"));
                     $(".modal-body").html(data.form);
-                    $('form').fieldset_to_tabs();
+                    //$('form').fieldset_to_tabs();
                     $('div.fbbuttonline').remove();
                     $('div.form-group').addClass('row');
                     $('form').find('br').remove();

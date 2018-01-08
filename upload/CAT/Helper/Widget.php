@@ -15,14 +15,14 @@
 
 */
 
-if (!class_exists('CAT_Helper_Widget'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
 
-    class CAT_Helper_Widget extends CAT_Object
+use \CAT\Base as Base;
+
+
+if (!class_exists('\CAT\Helper\Widget'))
+{
+    class Widget extends Base
     {
         private   static $instance;
         //protected static $loglevel = \Monolog\Logger::EMERGENCY;
@@ -196,7 +196,7 @@ Array
                   . 'LEFT OUTER JOIN `:prefix:dashboard_widget_data` AS `t2` '
                   . 'ON `t1`.`widget_id`=`t2`.`widget_id` '
                   . 'WHERE `t1`.`widget_id`=?';
-            $sth  = self::getInstance()->db()->query(
+            $sth  = self::db()->query(
                  $sql, array($id)
             );
             $data = $sth->fetch();

@@ -15,7 +15,12 @@
 
 */
 
-class CAT_Addon_Widget extends CAT_Addon_Module
+namespace CAT\Addon;
+
+use \CAT\Base as Base;
+
+
+class Widget extends Module implements IAddon
 {
 
 	/**

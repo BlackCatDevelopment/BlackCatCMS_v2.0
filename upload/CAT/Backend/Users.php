@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -15,14 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Backend_Users'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
+use \CAT\Base as Base;
 
-    class CAT_Backend_Users extends CAT_Object
+if (!class_exists('\CAT\Backend\Users'))
+{
+    class Users extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
@@ -51,9 +49,9 @@ if (!class_exists('CAT_Backend_Users'))
         public static function bygroup()
         {
             if(!self::user()->hasPerm('users_membership'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                \CAT\Helper\Json::printError('You are not allowed for the requested action!');
             $id   = self::router()->getParam();
-            $data = CAT_Groups::getInstance()->getMembers($id);
+            $data = \CAT\Groups::getInstance()->getMembers($id);
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
@@ -70,14 +68,14 @@ if (!class_exists('CAT_Backend_Users'))
         public static function edit()
         {
             if(!self::user()->hasPerm('user_delete'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                \CAT\Helper\Json::printError('You are not allowed for the requested action!');
             $userID = self::getUserID();
-            $form   = self::renderForm(CAT_Helper_Users::getDetails($userID));
+            $form   = self::renderForm(\CAT\Helper\Users::getDetails($userID));
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
                 echo json_encode(array(
-                    'form' => $form->getForm(),
+                    'form' => $form,
                 ),true);
                 return;
             }
@@ -91,13 +89,13 @@ if (!class_exists('CAT_Backend_Users'))
         public static function delete()
         {
             if(!self::user()->hasPerm('user_delete'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                \CAT\Helper\Json::printError('You are not allowed for the requested action!');
             $id   = self::router()->getParam();
-            if(CAT_Helper_Users::deleteUser($id)!==true)
+            if(\CAT\Helper\Users::deleteUser($id)!==true)
             {
                 if(self::asJSON())
                 {
-                    echo CAT_Helper_JSON::printError('Unable to delete the user');
+                    echo \CAT\Helper\Json::printError('Unable to delete the user');
                 } else {
                     self::printFatalError('Unable to delete the user');
                 }
@@ -106,7 +104,7 @@ if (!class_exists('CAT_Backend_Users'))
             {
                 if(self::asJSON())
                 {
-                    echo CAT_Helper_JSON::printSuccess('User successfully deleted');
+                    echo \CAT\Helper\Json::printSuccess('User successfully deleted');
                 } else {
                     self::printMsg('User successfully deleted');
                 }
@@ -120,12 +118,12 @@ if (!class_exists('CAT_Backend_Users'))
          **/
         public static function index()
         {
-            $data  = CAT_Helper_Users::getUsers();
+            $data  = \CAT\Helper\Users::getUsers();
             if(count($data))
             {
                 foreach($data as $i => $user)
                 {
-                    $data[$i]['groups'] = CAT_Helper_Users::getUserGroups($user['user_id']);
+                    $data[$i]['groups'] = \CAT\Helper\Users::getUserGroups($user['user_id']);
                 }
             }
             if(self::asJSON())
@@ -135,11 +133,12 @@ if (!class_exists('CAT_Backend_Users'))
                 return;
             }
             $tpl_data = array(
-                'users' => $data
+                'users' => $data,
+                'userform' => self::renderForm($data),
             );
-            CAT_Backend::print_header();
+            \CAT\Backend::print_header();
             self::tpl()->output('backend_users', $tpl_data);
-            CAT_Backend::print_footer();
+            \CAT\Backend::print_footer();
         }   // end function index()
 
         /**
@@ -150,9 +149,9 @@ if (!class_exists('CAT_Backend_Users'))
         public static function notingroup()
         {
             if(!self::user()->hasPerm('users_membership'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                \CAT\Helper\Json::printError('You are not allowed for the requested action!');
             $id    = self::router()->getParam();
-            $users = CAT_Helper_Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
+            $users = \CAT\Helper\Users::getUsers(array('group_id'=>$id,'not_in_group'=>true));
             if(self::asJSON())
             {
                 echo header('Content-Type: application/json');
@@ -169,7 +168,7 @@ if (!class_exists('CAT_Backend_Users'))
         public static function tfa()
         {
             if(!self::user()->hasPerm('users_edit'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                \CAT\Helper\Json::printError('You are not allowed for the requested action!');
             $id   = self::router()->getParam();
             $user = new CAT_User($id);
             $tfa  = $user->get('tfa_enabled');
@@ -180,11 +179,11 @@ if (!class_exists('CAT_Backend_Users'))
             );
             if(self::db()->isError())
             {
-                echo CAT_Helper_JSON::printError('Unable to save');
+                echo \CAT\Helper\Json::printError('Unable to save');
             }
             else
             {
-                echo CAT_Helper_JSON::printSuccess('Success');
+                echo \CAT\Helper\Json::printSuccess('Success');
             }
         }   // end function tfa()
 
@@ -198,7 +197,7 @@ if (!class_exists('CAT_Backend_Users'))
                 $data = self::db()->query(
                     'SELECT * FROM `:prefix:rbac_user_settings` AS `t1` '
                     . 'JOIN `:prefix:forms_fieldtypes` AS `t2` '
-                    . 'ON `t1`.`fieldtype`=`t2`.`id` '
+                    . 'ON `t1`.`fieldtype`=`t2`.`type_id` '
                     . 'WHERE `is_editable`=? '
                     . 'ORDER BY `fieldset` ASC, `position` ASC',
                     array('Y')
@@ -225,17 +224,17 @@ if (!class_exists('CAT_Backend_Users'))
          **/
         protected static function getUserID()
         {
-            $userID  = CAT_Helper_Validate::sanitizePost('user_id','numeric',NULL);
+            $userID  = \CAT\Helper\Validate::sanitizePost('user_id','numeric',NULL);
 
             if(!$userID)
-                $userID  = CAT_Helper_Validate::sanitizeGet('user_id','numeric',NULL);
+                $userID  = \CAT\Helper\Validate::sanitizeGet('user_id','numeric',NULL);
 
             if(!$userID)
                 $userID = self::router()->getParam(-1);
 
-            if(!$userID || !is_numeric($userID) || !CAT_Helper_Users::exists($userID))
-                CAT_Object::printFatalError('Invalid data')
-                . (self::$debug ? '(CAT_Backend_Users::getUserID())' : '');;
+            if(!$userID || !is_numeric($userID) || !\CAT\Helper\Users::exists($userID))
+                Base::printFatalError('Invalid data')
+                . (self::$debug ? '(\CAT\Backend\Users::getUserID())' : '');;
 
             return $userID;
         }   // end function getUserID()
@@ -247,13 +246,13 @@ if (!class_exists('CAT_Backend_Users'))
          **/
         protected static function renderForm($data)
         {
-            return CAT_Helper_FormBuilder::generate(
+            return \CAT\Helper\FormBuilder::generate(
                 'edit_user',
                 self::getSettings(),
                 $data
-            );
+            )->render(1);
         }   // end function renderForm()
 
-    } // class CAT_Helper_Users
+    } // class \CAT\Helper\Users
 
 } // if class_exists()

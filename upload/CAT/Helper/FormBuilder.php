@@ -15,19 +15,19 @@
 
 */
 
-use wblib\wbForms\Form;
-use wblib\wbForms\Element;
+namespace CAT\Helper;
+
+use \CAT\Base as Base;
+use \CAT\Helper\Page as HPage;
+
+use \wblib\wbForms\Form;
+use \wblib\wbForms\Element;
 
 require CAT_ENGINE_PATH.'/modules/lib_wblib/wblib/wbForms/autoload.php';
 
-if (!class_exists('CAT_Helper_FormBuilder'))
+if (!class_exists('FormBuilder'))
 {
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
-
-    class CAT_Helper_FormBuilder extends CAT_Object
+    class FormBuilder extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $forms    = array();
@@ -44,7 +44,7 @@ if (!class_exists('CAT_Helper_FormBuilder'))
                 {
                     if(isset($item['fieldset']) && $lastlabel != $item['fieldset'])
                     {
-                        $form->addElement(new wblib\wbForms\Element\Fieldset(
+                        $form->addElement(new \wblib\wbForms\Element\Fieldset(
                             self::lang()->translate(self::humanize($item['fieldset'])),
                             self::lang()->translate(self::humanize($item['fieldset']))
                         ));
@@ -82,11 +82,11 @@ if (!class_exists('CAT_Helper_FormBuilder'))
                 }
 
                 // buttons
-                $form->addElement(new wblib\wbForms\Element\Button(
+                $form->addElement(new \wblib\wbForms\Element\Button(
                     self::lang()->translate('Save'),
                     self::lang()->translate('Save')
                 ));
-                $form->addElement(new wblib\wbForms\Element\Button(
+                $form->addElement(new \wblib\wbForms\Element\Button(
                     self::lang()->translate('Cancel'),
                     self::lang()->translate('Cancel')
                 ));
@@ -125,5 +125,5 @@ if (!class_exists('CAT_Helper_FormBuilder'))
             //    return self::$forms[$name];
             //}
         }   // end function generateForm()
-    } // class CAT_Helper_FormBuilder
+    } // class FormBuilder
 } // if class_exists()

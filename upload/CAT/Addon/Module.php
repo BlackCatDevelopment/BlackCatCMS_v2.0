@@ -15,20 +15,15 @@
 
 */
 
+namespace CAT\Addon;
 
-if (!class_exists('CAT_Addon_Module', false))
+use \CAT\Base as Base;
+use \CAT\Helper\Addons as Addons;
+use \CAT\Helper\Directory as Directory;
+
+if (!class_exists('\CAT\Addon\Module', false))
 {
-	if (!interface_exists('CAT_Addon_Module_Int', false))
-	{
-		interface CAT_Addon_Module_Int {
-			public static function save($section_id);
-			public static function modify($section_id);
-			public static function install();
-			public static function uninstall();
-			public static function upgrade();
-		}
-	}
-	abstract class CAT_Addon_Module extends CAT_Addon implements CAT_Addon_Module_Int
+	abstract class Module extends Base implements IAddon
 	{
 		/**
 		 *
@@ -41,6 +36,29 @@ if (!class_exists('CAT_Addon_Module', false))
 		{
 			parent::__destruct();
 		}
+
+        /**
+         * gets the details of an addon
+         *
+         * @access public
+         * @param  string  $value - required info item
+         * @return string
+         */
+        public static function getInfo($value=NULL)
+        {
+            if($value)
+                return static::$$value;
+            // get 'em all
+            $info = array();
+            foreach(array_values(array(
+                'name', 'directory', 'version', 'author', 'license', 'description', 'guid', 'home', 'platform', 'type'
+            )) as $key) {
+                if(isset(static::$$key) && strlen(static::$$key)) {
+                    $info[$key] = static::$$key;
+                }
+            }
+            return $info;
+        }
 
         /**
          *
@@ -58,22 +76,29 @@ if (!class_exists('CAT_Addon_Module', false))
 		 */
 		public static function install()
 		{
-			// static::$directory needs to be checked if this works
-			$errors	= self::sqlProcess(CAT_PATH . '/modules/' . static::$directory . '/inc/install.sql');
-
-			$addons_helper = new CAT_Helper_Addons();
-			foreach(
-				array(
-					'save.php'
-				)
-				as $file
-			) {
-				if ( false === $addons_helper->sec_register_file( static::$directory, $file ) )
-				{
-					 error_log( "Unable to register file -$file-!" );
-				}
-			}
+            $errors  = array();
+            $sqlfile = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/inc/install.sql');
+            if(file_exists($sqlfile))
+                $errors	= self::sqlProcess();
 			return $errors;
+		}
+
+		/**
+		 * Default modify routine
+		 */
+		public static function modify($section_id)
+		{
+			self::setIDs();
+            $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
+            if(is_dir($tpl_path))
+                self::tpl()->setPath($tpl_path);
+            $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/default');
+            if(is_dir($def_path))
+                self::tpl()->setFallbackPath($def_path);
+			self::tpl()->output(
+				self::$template,
+				array() //self::getParserValue()
+			);
 		}
 
 		/**
@@ -81,39 +106,21 @@ if (!class_exists('CAT_Addon_Module', false))
 		 */
 		public static function uninstall()
 		{
-			$errors	= self::sqlProcess($CAT_PATH . '/modules/' . static::$directory . '/inc/uninstall.sql');
+            $errors  = array();
+            $sqlfile = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/inc/uninstall.sql');
+            if(file_exists($sqlfile))
+                $errors	= self::sqlProcess();
 			return $errors;
 		}
 
 		/**
 		 *
 		 */
-		public abstract static function upgrade();
+		public static function upgrade() {}
 		/**
 		 *
 		 */
-		public abstract static function save($section_id);
-
-		/**
-		 * Default modify routine
-		 */
-		public static function modify($section_id)
-		{
-			global $parser;
-
-			self::setIDs();
-
-			// Should be moved to the Object
-			//self::setParserValue();
-
-			$parser->setPath(CAT_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
-			$parser->setFallbackPath(CAT_PATH.'/modules/'.static::$directory.'/templates/default');
-
-			$parser->output(
-				self::$template,
-				array() //self::getParserValue()
-			);
-		}
+		public static function save($section_id) {}
 
 	}
 }

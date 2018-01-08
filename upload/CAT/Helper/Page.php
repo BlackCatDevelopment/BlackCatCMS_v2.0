@@ -15,14 +15,14 @@
 
 */
 
-if (!class_exists('CAT_Helper_Page'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
 
-    class CAT_Helper_Page extends CAT_Object
+namespace CAT\Helper;
+use \CAT\Base as Base;
+use \CAT\Registry as Registry;
+
+if (!class_exists('Page'))
+{
+    class Page extends Base
     {
         /**
          * log level
@@ -130,7 +130,7 @@ if (!class_exists('CAT_Helper_Page'))
             // for all pages with level 0...
             $root    = array();
             $now     = time();
-            $ordered = CAT_Helper_Array::sort(self::$pages,'position');
+            $ordered = HArray::sort(self::$pages,'position');
 
             foreach($ordered as $page)
             {
@@ -139,7 +139,7 @@ if (!class_exists('CAT_Helper_Page'))
                     && $page['visibility'] == 'public'
                     && self::isActive($page['page_id'])
                 ) {
-                    if(!CAT_Registry::get('PAGE_LANGUAGES')===true || $page['language'] == CAT_Registry::get('LANGUAGE'))
+                    if(!Registry::get('PAGE_LANGUAGES')===true || $page['language'] == Registry::get('LANGUAGE'))
                     {
                         return $page['page_id'];
                     }
@@ -169,7 +169,7 @@ if (!class_exists('CAT_Helper_Page'))
         {
             $data = array(); //'js'=>array(),'css'=>array(),'code'=>''
             $q    = 'SELECT * FROM `:prefix:pages_headers` WHERE `page_id`=:page_id';
-            $r    = CAT_Object::db()->query($q,array('page_id'=>$page_id));
+            $r    = Base::db()->query($q,array('page_id'=>$page_id));
             $data = $r->fetchAll();
 
             foreach($data as $i => $row)
@@ -202,7 +202,7 @@ if (!class_exists('CAT_Helper_Page'))
 
             // Check for :// in the link (used in URL's) as well as mailto:
             if (strstr($link, '://') == '' && substr($link, 0, 7) != 'mailto:')
-                return CAT_URL.$link.CAT_Registry::get('PAGE_EXTENSION');
+                return CAT_SITE_URL.$link.Registry::get('PAGE_EXTENSION');
             else
                 return $link;
 
@@ -246,9 +246,9 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         public static function getPageForRoute($route)
         {
-            if(CAT_Backend::isBackend()) return 0;
+            if(\CAT\Backend::isBackend()) return 0;
             // remove suffix from route
-            $route  = str_ireplace(CAT_Registry::get('PAGE_EXTENSION'), '', $route);
+            $route  = str_ireplace(Registry::get('PAGE_EXTENSION'), '', $route);
             // remove trailing /
             $route  = rtrim($route,"/");
             // add / to front
@@ -260,7 +260,7 @@ if (!class_exists('CAT_Helper_Page'))
             );
             $data   = $result->fetch();
             if(!$data || !is_array($data) || !count($data))
-                CAT_Page::print404();
+                \CAT\Page::print404();
             else
                 return $data['page_id'];
         }   // end function getPageForRoute()
@@ -355,7 +355,7 @@ if (!class_exists('CAT_Helper_Page'))
             {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Achtung: isVisible() funktioniert nicht richtig, wenn der Benutzer im BE
-// angemeldet ist, jedoch per AJAX z.B. CAT_Backend::list() aufgerufen wird
+// angemeldet ist, jedoch per AJAX z.B. \CAT\Backend::list() aufgerufen wird
 // Daher erst mal zum Testen auskommentiert
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if($pg['language']==$lang) // && self::isVisible($pg['page_id']) )
@@ -393,7 +393,7 @@ if (!class_exists('CAT_Helper_Page'))
         public static function getPageTemplate($page_id)
         {
             $tpl = self::properties($page_id,'template');
-            return ( $tpl != '' ) ? $tpl : CAT_Registry::get('DEFAULT_TEMPLATE');
+            return ( $tpl != '' ) ? $tpl : Registry::get('DEFAULT_TEMPLATE');
         }   // end function getPageTemplate()
 
         /**
@@ -504,7 +504,7 @@ if (!class_exists('CAT_Helper_Page'))
         {
             if(self::isDeleted($page_id))
                 return false;
-            $sections = CAT_Sections::getSections($page_id,null,true);
+            $sections = \CAT\Sections::getSections($page_id,null,true);
             if(count($sections))
                 return true;
             return false;
@@ -551,24 +551,24 @@ if (!class_exists('CAT_Helper_Page'))
                     break;
                 // hidden - shown if called, but not in menu; skip intro page (selectPage(true))
                 case 3:
-                    if(CAT_Page::getID()==$page_id)
+                    if(\CAT\Page::getID()==$page_id)
                         $show_it = true;
                     break;
                 // private, registered - shown if user is allowed
                 case 2:
                 case 6:
-                    if (CAT_User::getInstance()->is_authenticated() == true)
+                    if (\CAT\User::getInstance()->is_authenticated() == true)
                     {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: ANPASSEN FUER NEUES BERECHTIGUNGSZEUGS
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 /*
                         // check language
-                        if(CAT_Registry::get('PAGE_LANGUAGES')=='false'||(self::properties($page_id,'language')==''||self::properties($page_id,'language')==LANGUAGE))
+                        if(Registry::get('PAGE_LANGUAGES')=='false'||(self::properties($page_id,'language')==''||self::properties($page_id,'language')==LANGUAGE))
                         $show_it = (
-                               CAT_Users::is_group_match(CAT_Users::get_groups_id(), $page['viewing_groups'])
-                            || CAT_Users::is_group_match(CAT_Users::get_user_id(), $page['viewing_users'])
-                            || CAT_Users::is_root()
+                               \CAT\Users::is_group_match(\CAT\Users::get_groups_id(), $page['viewing_groups'])
+                            || \CAT\Users::is_group_match(\CAT\Users::get_user_id(), $page['viewing_users'])
+                            || \CAT\Users::is_root()
                         );
 */
                     }
@@ -592,9 +592,9 @@ if (!class_exists('CAT_Helper_Page'))
         public static function properties($page_id=NULL,$key=NULL)
         {
             if(!$page_id)
-                $page_id = CAT_Page::getID();
+                $page_id = \CAT\Page::getID();
 
-            if(!count(self::$pages) && !CAT_Registry::exists('CAT_HELPER_PAGE_INITIALIZED'))
+            if(!count(self::$pages) && !Registry::exists('CAT_HELPER_PAGE_INITIALIZED'))
                 self::init();
 
             // get page data
@@ -640,21 +640,26 @@ if (!class_exists('CAT_Helper_Page'))
          **/
         private static function init($force=false)
         {
-            if(CAT_Registry::exists('CAT_HELPER_PAGE_INITIALIZED') && !$force)
+            if(Registry::exists('CAT_HELPER_PAGE_INITIALIZED') && !$force)
                 return;
-
-            if(!self::$instance) self::getInstance(true);
 
             // fill pages array
             if(count(self::$pages)==0 || $force)
             {
-                $result = self::$instance->db()->query(
+                $result = self::db()->query(
                       'SELECT `t1`.*, `t2`.`vis_name` AS `visibility` '
                     . 'FROM `:prefix:pages` AS `t1` '
                     . 'JOIN `:prefix:visibility` AS `t2` '
                     . 'ON `t1`.`vis_id`=`t2`.`vis_id` '
-                    . 'ORDER BY `level` ASC, `position` ASC'
+                    . 'WHERE `site_id`=? '
+                    . 'ORDER BY `level` ASC, `position` ASC',
+                    array(CAT_SITE_ID)
                 );
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Das fuehrt zu einer Endlos-Schleife, wenn die Default-Page gesucht wird!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                #$curr = \CAT\Page::getID();
+                $curr = 0;
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO:
 //     Infos zu is_in_trail etc fehlen noch
@@ -665,12 +670,14 @@ if (!class_exists('CAT_Helper_Page'))
                 {
                     // note: order is important! $id_to_index first!
                     self::$id_to_index[$page['page_id']] = $index;
-                    self::$pages[$index]['href'] = self::getLink($page['page_id']);
+                    self::$pages[$index]['href']       = self::getLink($page['page_id']);
+                    self::$pages[$index]['is_current'] = ($curr==$page['page_id'] ? true : false);
+                    self::$pages[$index]['is_in_trail'] = true;
                 }
             }
 
-            CAT_Registry::register('CAT_HELPER_PAGE_INITIALIZED',true);
+            Registry::register('CAT_HELPER_PAGE_INITIALIZED',true);
         }   // end function init()
         
-    }   // end class CAT_Helper_Page
+    }   // end class Page
 }

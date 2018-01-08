@@ -10,7 +10,7 @@
  *
  */
 
-$val  = CAT_Helper_Validate::getInstance();
+$val  = \CAT\Helper\Validate::getInstance();
 $attr = $val->get('_REQUEST','attr');
 $msg  = $val->get('_REQUEST','msg');
 $mod  = $val->get('_REQUEST','mod');
@@ -26,12 +26,12 @@ else
     $attr = htmlspecialchars($attr, ENT_XHTML, 'UTF-8');
 }
 
-if(CAT_Backend::isBackend() || $mod = 'BE')
+if(\CAT\Backend::isBackend() || $mod = 'BE')
 {
-    $h   = CAT_Backend::getInstance();
+    $h   = \CAT\Backend::getInstance();
     $mod = NULL;
 } else {
-    $h   = CAT_Frontend::getInstance();
+    $h   = \CAT\Frontend::getInstance();
 }
 
 if($mod)

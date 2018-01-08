@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -15,14 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Helper_Media'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
+use \CAT\Base as Base;
 
-    class CAT_Helper_Media extends CAT_Object
+if (!class_exists('\CAT\Helper\Media'))
+{
+    class Media extends Base
     {
         private static $instance;
         private static $tag_map = array(
@@ -37,10 +35,10 @@ if (!class_exists('CAT_Helper_Media'))
                 'warning',
             ),
             'EXIF' => array(
-                'ExposureTime',
-                'ISOSpeedRatings',
-                'ShutterSpeedValue',
-                'FocalLength',
+#                'ExposureTime',
+#                'ISOSpeedRatings',
+#                'ShutterSpeedValue',
+#                'FocalLength',
                 'ExifImageWidth',
                 'ExifImageLength',
                 'DateTimeOriginal',
@@ -87,17 +85,54 @@ if (!class_exists('CAT_Helper_Media'))
                 {
                     $attr[$item['attribute']] = $item['value'];
                 }
-                $attr['hfilesize'] = CAT_Helper_Directory::humanize($attr['filesize']);
+                $attr['hfilesize'] = \CAT\Helper\Directory::humanize($attr['filesize']);
                 $attr['path']      = $data[0]['path'];
                 $attr['filename']  = $data[0]['filename'];
                 $attr['is_image']  = (substr($attr['mime_type'],0,6) == 'image/')
                                    ? true
                                    : false;
-                $attr['url']       = CAT_Helper_Validate::path2uri($attr['path'].'/'.$attr['filename']);
+                #$attr['url']       = \CAT\Helper\Validate::path2uri($attr['path'].'/'.$attr['filename']);
             }
             return $attr;
         }   // end function getAttributes()
-        
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getFolderID($dir)
+        {
+            $path = str_ireplace(CAT_PATH.'/'.\CAT\Registry::get('media_directory').'/','',$dir);
+            #if(empty($path)) $path = '[root]';
+            $sth  = self::db()->query(
+                  'SELECT `dir_id` FROM `:prefix:media_dirs` AS `t1` '
+                . 'WHERE `path`=? AND `site_id`=?',
+                array($path,CAT_SITE_ID)
+            );
+            $data = $sth->fetch();
+            if(is_array($data) && isset($data['dir_id'])) return $data['dir_id'];
+            return null;
+        }   // end function getFolderID()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getFolders($skip_deleted=false)
+        {
+            $sth = self::db()->query(
+                  'SELECT * FROM `:prefix:media_dirs` AS `t1` '
+                . 'WHERE `t1`.`site_id`=? '
+                . ($skip_deleted ? 'AND (`t1`.`deleted` IS NULL OR `t1`.`deleted`=0) ' : '')
+                . 'ORDER BY `path` ASC',
+                array(CAT_SITE_ID)
+            );
+            $dbfolders = $sth->fetchAll();
+            return $dbfolders;
+        }   // end function getFolders()
+
         /**
          *
          * @access public
@@ -105,23 +140,42 @@ if (!class_exists('CAT_Helper_Media'))
          **/
         public static function getMediaFromDir($dir,$filter=NULL)
         {
+            self::updateFiles($dir,$filter);
+
+        }   // end function getMediaFromDir()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function updateFiles($dir,$filter=NULL,$recurse=false)
+        {
+            // first, make sure the directory exists, and is already present in
+            // the database
+            if(!is_dir($dir)) return false;
+            self::updateFolderData($dir);
+
+            // get the ID
+            $id       = self::getFolderID($dir);
             $data     = array();
             $suffixes = array();
 
             if($filter)
             {
-                $suffixes = CAT_Helper_Mime::getAllowedFileSuffixes($filter);
+                $suffixes = \CAT\Helper\Mime::getAllowedFileSuffixes($filter);
                 if(!count($suffixes))
                     return false;
             }
-
-            $files = CAT_Helper_Directory::findFiles($dir,array('extension'=>$suffixes));
+            $files = \CAT\Helper\Directory::findFiles(
+                $dir,array('extension'=>$suffixes,'recurse'=>$recurse)
+            );
 
             // load file data from database
             $sth = self::db()->query(
-                  'SELECT * FROM `:prefix:media` AS `t1` '
-                . 'WHERE `path`=?',
-                array(CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($dir)))
+                  'SELECT * FROM `:prefix:media_files` AS `t1` '
+                . 'WHERE `t1`.`dir_id`=?',
+                array($id)
             );
             $dbdata  = $sth->fetchAll();
             $dbfiles = array();
@@ -133,36 +187,90 @@ if (!class_exists('CAT_Helper_Media'))
                 }
             }
 
-            foreach($files as $index => $filename)
+            // add missing files
+            if(is_array($files) && count($files)>0)
             {
-                $data[] = array();
-                end($data);
-                $index = key($data);
-
-                // convert UTF8
-                $decoded_filename = CAT_Helper_Directory::getName(pathinfo($filename,PATHINFO_BASENAME));
-
-                // add info to db
-                if(!is_dir($filename) && !isset($dbfiles[$decoded_filename]))
+                foreach($files as $file)
                 {
-                    self::db()->query(
-                          'INSERT INTO `:prefix:media` ( `site_id`, `path`, `filename`, `checksum` ) '
-                        . 'VALUES (?, ?, ?, ? )',
-                        array(1, CAT_Helper_Directory::getName(CAT_Helper_Directory::sanitizePath($dir)), $decoded_filename, sha1_file($filename))
-                    );
-                    $data[$index]['media_id'] = self::db()->lastInsertId();
-                    $data[$index]['url']      = CAT_Helper_Validate::path2uri($filename);
-                    $data[$index] = self::analyzeFile(self::db()->lastInsertId(),$filename);
-                } else {
-                    $data[$index] = self::getAttributes($dbfiles[$decoded_filename]['media_id']);
-                    $data[$index]['media_id'] = $dbfiles[$decoded_filename]['media_id'];
+                    $decoded_filename = \CAT\Helper\Directory::getName(pathinfo($file,PATHINFO_BASENAME));
+                    if(!array_key_exists($decoded_filename,$dbfiles))
+                    {
+                        self::db()->query(
+                              'INSERT INTO `:prefix:media_files` ( `site_id`, `dir_id`, `filename`, `checksum` ) '
+                            . 'VALUES (?, ?, ?, ? )',
+                            array(CAT_SITE_ID, $id, $decoded_filename, sha1_file($file))
+                        );
+                    }
                 }
-
-                $data[$index]['filename'] = $decoded_filename;
             }
 
-            return $data;
-        }   // end function getMediaFromDir()
+            // mark missing files
+            if(is_array($dbfiles) && count($dbfiles)>0)
+            {
+                foreach($dbfiles as $item)
+                {
+                    if(!in_array($dir.$item['filename'],$files))
+                    {
+                        self::db()->query(
+                              'UPDATE `:prefix:media_files` '
+                            . 'SET `deleted`=1 WHERE `filename`=?',
+                            array($item['filename'])
+                        );
+                    }
+                }
+            }
+
+        }   // end function updateFiles()
+        
+        /**
+         * scan for new folders and mark removed folders as "deleted"
+         *
+         * @access public
+         * @return
+         **/
+        public static function updateFolderData($dir)
+        {
+            $subfolders = \CAT\Helper\Directory::findDirectories(
+                $dir, array('recurse'=>true)
+            );
+            $dbfolders = self::getFolders();
+
+            if(is_array($subfolders) && count($subfolders)>0)
+            {
+                $lookup1 = array_flip($subfolders);
+                $lookup2 = array();
+                if(is_array($dbfolders) && count($dbfolders)>0) {
+                    foreach($dbfolders as $item) {
+                        $lookup2[$item['path']] = 1;
+                    }
+                }
+                // add folders to db
+                foreach($subfolders as $folder)
+                {
+                    if(!array_key_exists($folder,$lookup2))
+                    {
+                        self::db()->query(
+                            'INSERT INTO `:prefix:media_dirs` (`site_id`,`path`) VALUES (?,?)',
+                            array(CAT_SITE_ID,$folder)
+                        );
+                    }
+                }
+            }
+
+            // mark deleted folders
+            if(is_array($dbfolders) && count($dbfolders)>0) {
+                foreach($dbfolders as $item) {
+                    if($item['path']!='' && !array_key_exists($item['path'],$lookup1)) {
+                        self::db()->query(
+                            'UPDATE `:prefix:media_dirs` SET `deleted`=1 WHERE `path`=?',
+                            array($item['path'])
+                        );
+                    }
+                }
+            }
+
+        }   // end function updateFolderData()
+        
 
         /**
          *
@@ -172,7 +280,6 @@ if (!class_exists('CAT_Helper_Media'))
         protected static function analyzeFile($id,$filename)
         {
             $self = self::getInstance();
-
             $info = $self->fileinfo()->analyze($filename);
             $data = array();
 
@@ -191,7 +298,7 @@ if (!class_exists('CAT_Helper_Media'))
                     }
                 }
 
-                if($data[$attr])
+                if($attr!='warning' && $data[$attr] && isset($data[$attr]) && $data[$attr]!='?')
                 {
                     self::db()->query(
                           'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
@@ -204,7 +311,7 @@ if (!class_exists('CAT_Helper_Media'))
             // file size
             if(isset($data['filesize']) && $data['filesize'] != 'n/a')
             {
-                $data['hfilesize'] = CAT_Helper_Directory::humanize($data['filesize']);
+                $data['hfilesize'] = \CAT\Helper\Directory::humanize($data['filesize']);
                 self::db()->query(
                       'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
                     . 'VALUES(?, ?, ?)',
@@ -213,7 +320,7 @@ if (!class_exists('CAT_Helper_Media'))
             }
 
             // modification time
-            $data['moddate'] = CAT_Helper_DateTime::getDateTime(CAT_Helper_Directory::getModdate($filename));
+            $data['moddate'] = \CAT\Helper\DateTime::getDateTime(\CAT\Helper\Directory::getModdate($filename));
             self::db()->query(
                   'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
                 . 'VALUES(?, ?, ?)',
@@ -232,7 +339,7 @@ if (!class_exists('CAT_Helper_Media'))
                     case 'image':
                         if($type == 'jpeg') $type = 'jpg';
                         $data['image']    = true;
-                        $data['url']      = CAT_Helper_Validate::path2uri($filename);
+                        $data['url']      = \CAT\Helper\Validate::path2uri($filename);
                         break;
                 }
 
@@ -280,5 +387,5 @@ if (!class_exists('CAT_Helper_Media'))
         
         
 
-    }   // ----- class CAT_Helper_Media -----
+    }   // ----- class \CAT\Helper\Media -----
 }

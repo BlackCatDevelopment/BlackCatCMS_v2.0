@@ -15,7 +15,12 @@
 
 */
 
-abstract class CAT_Addon_Tool extends CAT_Addon_Module
+namespace CAT\Addon;
+
+use \CAT\Base as Base;
+
+
+abstract class Tool extends Module implements IAddon
 {
 
 	/**

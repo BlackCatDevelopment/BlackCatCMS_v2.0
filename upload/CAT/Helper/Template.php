@@ -15,14 +15,18 @@
 
 */
 
-if (!class_exists('CAT_Helper_Template'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper;
 
-    class CAT_Helper_Template extends CAT_Object
+use \CAT\Base As Base;
+use \CAT\Registry as Registry;
+use \CAT\Helper\Addons as Addons;
+use \CAT\Helper\Page as HPage;
+use \CAT\Helper\Directory as Directory;
+use \CAT\Helper\Template\DriverDecorator as DriverDecorator;
+
+if (!class_exists('\CAT\Helper\Template'))
+{
+    class Template extends Base
     {
 
         protected static $loglevel       = \Monolog\Logger::EMERGENCY;
@@ -54,11 +58,11 @@ if (!class_exists('CAT_Helper_Template'))
          **/
         public static function getBlocks($template=null)
         {
-            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
+            if(!$template) $template = Registry::get('DEFAULT_TEMPLATE');
             // include info.php for template info
 			$template_location = ( $template != '' ) ?
 				CAT_ENGINE_PATH.'/templates/'.$template.'/info.php' :
-				CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php';
+				CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE').'/info.php';
 			if(file_exists($template_location))
             {
 				require $template_location;
@@ -80,15 +84,15 @@ if (!class_exists('CAT_Helper_Template'))
 
             if(!file_exists(dirname(__FILE__).'/Template/'.$driver.'.php'))
             {
-                CAT_Object::printFatalError('No such template driver: ['.$driver.']');
+                Base::printFatalError('No such template driver: ['.$driver.']');
             }
             self::$_driver = $driver;
             if(!isset(self::$_drivers[$driver]) || !is_object(self::$_drivers[$driver]))
             {
                 require_once dirname(__FILE__).'/Template/DriverDecorator.php';
                 require_once dirname(__FILE__).'/Template/'.$driver.'.php';
-                $driver = 'CAT_Helper_Template_'.$driver;
-                self::$_drivers[$driver] = new CAT_Helper_Template_DriverDecorator(new $driver());
+                $driver = '\CAT\Helper\Template\\'.$driver;
+                self::$_drivers[$driver] = new DriverDecorator(new $driver());
                 foreach(array_values(array('CAT_URL','CAT_ADMIN_URL','CAT_ENGINE_PATH')) as $item)
                 {
                     if(defined($item))
@@ -138,7 +142,7 @@ if (!class_exists('CAT_Helper_Template'))
 // TODO: Rechte beruecksichtigen!
 //******************************************************************************
             $templates = array();
-            $addons = CAT_Helper_Addons::getAddons(
+            $addons = Addons::getAddons(
                 (($for=='backend') ? 'theme' : 'template')
             );
             return $addons;
@@ -156,16 +160,16 @@ if (!class_exists('CAT_Helper_Template'))
             $paths    = array();
 
             if(!$for)
-                $for = CAT_Backend::isBackend()
+                $for = Backend::isBackend()
                      ? CAT_Registry::get('DEFAULT_THEME')
                      : CAT_Registry::get('DEFAULT_TEMPLATE');
 
             if(is_numeric($for)) // assume page_id
-                $tpl_path = CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($for).'/templates/';
+                $tpl_path = CAT_ENGINE_PATH.'/templates/'.HPage::getPageTemplate($for).'/templates/';
             else
                 $tpl_path = CAT_ENGINE_PATH.'/templates/'.$for.'/templates/';
 
-            $paths = CAT_Helper_Directory::findDirectories($tpl_path,array('remove_prefix'=>true));
+            $paths = Directory::findDirectories($tpl_path,array('remove_prefix'=>true));
 
             if(count($paths))
                 $variants = array_merge($variants,$paths);
@@ -239,5 +243,5 @@ if (!class_exists('CAT_Helper_Template'))
             }
     	}   // end function get_template_menus()
 
-    }   // end class CAT_Helper_Template
+    }   // end class Template
 }

@@ -15,14 +15,15 @@
 
 */
 
-if (!class_exists('CAT_Helper_Template_DriverDecorator'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Helper\Template;
 
-    class CAT_Helper_Template_DriverDecorator extends CAT_Helper_Template
+use \CAT\Helper\Template as Template;
+use \CAT\Helper\Directory as Directory;
+use \CAT\Backend as Backend;
+
+if (!class_exists('DriverDecorator'))
+{
+    class DriverDecorator extends Template
     {
         protected static $loglevel     = \Monolog\Logger::EMERGENCY;
 
@@ -50,8 +51,8 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
             $callstack = debug_backtrace();
             $this->te->paths['workdir']
                 = ( isset( $callstack[0] ) && isset( $callstack[0]['file'] ) )
-                ? CAT_Helper_Directory::sanitizePath(realpath(dirname($callstack[0]['file'])))
-                : CAT_Helper_Directory::sanitizePath(realpath(dirname(__FILE__)));
+                ? Directory::sanitizePath(realpath(dirname($callstack[0]['file'])))
+                : Directory::sanitizePath(realpath(dirname(__FILE__)));
 
             if (file_exists( $this->te->paths['workdir'].'/templates' ))
             {
@@ -93,7 +94,7 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
          **/
         public function resetPath($context='frontend')
         {
-            if(CAT_Backend::isBackend()) $context = 'backend';
+            if(Backend::isBackend()) $context = 'backend';
             $this->log()->logDebug(sprintf('resetting path to [%s], context [%s]',$this->last,$context));
             if(!$this->last) return;
             $this->te->paths[$context]  = $this->last;
@@ -113,8 +114,8 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
          **/
          public function setPath($path,$context='frontend')
          {
-            if(CAT_Backend::isBackend()) $context = 'backend';
-            $path = CAT_Helper_Directory::sanitizePath($path);
+            if(Backend::isBackend()) $context = 'backend';
+            $path = Directory::sanitizePath($path);
             $this->last = NULL;
             $this->log()->logDebug(sprintf('context [%s] path [%s]',$context,$path));
             if(file_exists($path))
@@ -145,7 +146,7 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
          **/
         public function setFallbackPath($path,$context='frontend')
         {
-            $path = CAT_Helper_Directory::sanitizePath($path);
+            $path = Directory::sanitizePath($path);
             $this->log()->logDebug(sprintf('context [%s] fallback path [%s]', $context, $path ));
             if ( file_exists( $path ) ) {
                 $this->te->paths[$context.'_fallback'] = $path;
@@ -264,7 +265,7 @@ if (!class_exists('CAT_Helper_Template_DriverDecorator'))
                 }
                 else
                 {
-                    $file = CAT_Helper_Directory::findFiles($dir,array('filename'=>$_tpl,'extensions'=>array('tpl','htt')));
+                    $file = Directory::findFiles($dir,array('filename'=>$_tpl,'extensions'=>array('tpl','htt')));
                 }
                 if(is_array($file) && count($file)>0)
                 {

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -15,14 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Object', false))
-{
-    @include dirname(__FILE__) . '/Object.php';
-}
+namespace CAT;
+use \CAT\Base as Base;
 
-if (!class_exists('CAT_Registry', false))
+if (!class_exists('\CAT\Registry', false))
 {
-    class CAT_Registry extends CAT_Object
+    class Registry extends Base
     {
         // singleton
         private   static $instance = NULL;
@@ -38,9 +36,9 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function getInstance()
         {
-            if (!CAT_Registry::$instance)
-                CAT_Registry::$instance = new CAT_Registry();
-            return CAT_Registry::$instance;
+            if (!Registry::$instance)
+                Registry::$instance = new Registry();
+            return Registry::$instance;
         }   // end function getInstance()
 
         /**
@@ -52,7 +50,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function defined($key)
         {
-            return CAT_Registry::exists($key);
+            return Registry::exists($key);
         }   // end function defined()
 
         /**
@@ -63,8 +61,8 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function dump()
         {
-            var_dump(CAT_Registry::$REGISTRY);
-        }
+            var_dump(Registry::$REGISTRY);
+        }   // end function dump()
 
         /**
          * check if a global var exists; same as defined()
@@ -77,13 +75,13 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function exists($key,$empty_allowed=true)
         {
-            if(isset(CAT_Registry::$REGISTRY[$key]) || defined($key))
+            if(isset(Registry::$REGISTRY[$key]) || defined($key))
             {
                 if(
                        ! $empty_allowed
                     && (
                             (
-                              isset(CAT_Registry::$REGISTRY[$key]) && CAT_Registry::$REGISTRY[$key] == ''
+                              isset(Registry::$REGISTRY[$key]) && Registry::$REGISTRY[$key] == ''
                             )
                          ||
                             (
@@ -110,11 +108,11 @@ if (!class_exists('CAT_Registry', false))
         public static function get($key, $validate=NULL, $default=NULL)
         {
             $return_value = NULL;
-            if(isset(CAT_Registry::$REGISTRY[$key]))
+            if(isset(Registry::$REGISTRY[$key]))
                 if($validate)
-                    $return_value = CAT_Helper_Validate::check(CAT_Registry::$REGISTRY[$key],$validate);
+                    $return_value = Validate::check(Registry::$REGISTRY[$key],$validate);
                 else
-                    $return_value = CAT_Registry::$REGISTRY[$key];
+                    $return_value = Registry::$REGISTRY[$key];
 
             // try to get the value from the settings table
             if(!$return_value)
@@ -139,11 +137,11 @@ if (!class_exists('CAT_Registry', false))
                                     : $row['default_value'] )
                              );
                     if($validate)
-                        $return_value = CAT_Helper_Validate::check($value,$validate);
+                        $return_value = Validate::check($value,$validate);
                     else
                         $return_value = $value;
                     if($return_value)
-                        CAT_Registry::$REGISTRY[$key] = $value;
+                        Registry::$REGISTRY[$key] = $value;
                 }
             }
 
@@ -169,8 +167,8 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function define($key, $value=NULL)
         {
-            return CAT_Registry::register($key,$value,true,true);
-        }
+            return Registry::register($key,$value,true,true);
+        }   // end function define()
 
         /**
          * register globally stored data
@@ -193,7 +191,7 @@ if (!class_exists('CAT_Registry', false))
             }
             foreach ( $key as $name => $value )
             {
-                CAT_Registry::$REGISTRY[$name] = $value;
+                Registry::$REGISTRY[$name] = $value;
                 if($as_const && ! defined($name)) define($name,$value);
                 if($is_set) self::$GLOBALS[$name] = $value;
             }
@@ -204,7 +202,7 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function set($key,$value=NULL,$as_const=false)
         {
-            return CAT_Registry::register($key,$value,$as_const);
+            return Registry::register($key,$value,$as_const);
         }   // end function set()
 
         /**
@@ -214,8 +212,8 @@ if (!class_exists('CAT_Registry', false))
          **/
         public static function getSettings()
         {
-            return CAT_Registry::$GLOBALS;
+            return Registry::$GLOBALS;
         }   // end function getSettings()
 
-    }   // end class CAT_Registry
+    }   // end class Registry
 }

@@ -1,5 +1,11 @@
 <ul class="nav nav-tabs nav-fill" role="tablist">{* Tabs *}
     <li class="nav-item">
+        <a class="nav-link" href="#folders" aria-controls="folders" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
+          <span class="fa fa-fw fa-folder"></span>
+          {translate('Folders')}
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" href="#list" aria-controls="list" role="tab" data-toggle="tab" data-url="{$CAT_ADMIN_URL}/media/index">
           <span class="fa fa-fw fa-bars"></span>
           {translate('List')}
@@ -26,7 +32,7 @@
         <select id="root_folder" name="root_folder">
             <option value="">[{translate('Root folder')}]</option>
             {foreach $dirs item}
-            <option value="{$item}"{if $__.curr_folder == $item} selected="selected"{/if}>{$item}</option>
+            <option value="{$item.path}"{if $__.curr_folder == $item.path} selected="selected"{/if}>{$item.path}</option>
             {/foreach}
         </select>
     </li>
@@ -34,6 +40,16 @@
 </ul>
 
 <div class="tab-content">{* Tab panes *}
+
+{* -------------------- START #folders tab-pane -------------------- *}
+      <div role="tabpanel" class="tab-pane" id="folders">
+        {* the content will be loaded via AJAX *}
+        <div class="fa fa-fw fa-3x text-center" style="width:100%"></div><span class="sr-only">Loading...</span>
+        <div class="alert alert-danger" style="display:none;">
+            {translate('Unable to load the tab!')}
+        </div>
+        {include file="backend_media_folderstab.tpl"}
+      </div>{* END #folders tab-pane *}
 
 {* -------------------- START #list tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane" id="list">
@@ -43,7 +59,7 @@
             {translate('Unable to load the tab!')}
         </div>
         {include file="backend_media_listtab.tpl"}
-      </div>{* END #config tab-pane *}
+      </div>{* END #list tab-pane *}
 
 {* -------------------- START #grid tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane" id="grid">
@@ -82,33 +98,3 @@
     var CAT_ASSET_URL = "{cat_asset_url($file,'js')}";
 //]]>
 </script>
-
-
-<pre style="display:none">
-mime_type = 'image/jpeg'
-filesize = 1563209
-filepath = 'P:/BlackCat2/cat_engine/media'
-filename = 'Firebird (002).jpg'
-filenamepath = 'P:/BlackCat2/cat_engine/media/Firebird (002).jpg'
-encoding = 'UTF-8'
-error = 'n/a'
-warning = 'n/a'
-hfilesize = '1.49 MB'
-moddate = '22-04-2016 12:39'
-image = true
-preview = '/media/Firebird (002).jpg'
-exif (array):
-    ExposureTime = 0.030303030303030304
-    ISOSpeedRatings = 320
-    ShutterSpeedValue = 5.0599999999999996
-    FocalLength = 4.1500000000000004
-    ExifImageWidth = 3264
-    ExifImageLength = 2448
-    DateTimeOriginal = '2016:04:22 11:45:04'
-    Make = 'Apple'
-    Model = 'iPhone 6'
-    Orientation = 1
-    XResolution = 72
-    YResolution = 72
-    FileDateTime = 1461328763
-</pre>

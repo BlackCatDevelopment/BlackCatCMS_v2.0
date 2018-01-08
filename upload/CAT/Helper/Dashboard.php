@@ -15,9 +15,14 @@
 
 */
 
-if (!class_exists('CAT_Helper_Dashboard'))
+namespace CAT\Helper;
+
+use \CAT\Base as Base;
+use \CAT\Helper\Widget as Widget;
+
+if (!class_exists('Dashboard'))
 {
-    class CAT_Helper_Dashboard extends CAT_Object
+    class Dashboard extends Base
     {
         private   static $instance;
         //protected static $loglevel = \Monolog\Logger::EMERGENCY;
@@ -38,7 +43,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
         public static function addWidget($id,$dash)
         {
             // check if widget exists
-            if(CAT_Helper_Widget::exists($id))
+            if(Widget::exists($id))
             {
                 // check if widget is already an the dashboard
                 $sth = self::db()->query(
@@ -49,7 +54,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                 );
                 if(!$sth->rowCount())
                 {
-                    $widget = CAT_Helper_Widget::getWidget($id);
+                    $widget = Widget::getWidget($id);
                     $pos    = self::db()->query(
                         'SELECT max(`position`) AS `position` FROM `:prefix:dashboard_has_widgets`'
                     )->fetch();
@@ -83,7 +88,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
             $sql = 'SELECT `id` FROM `:prefix:dashboards` WHERE ';
             if(is_numeric($dash)) $sql .= '`id`=?';
             else                  $sql .= '`path`=?';
-            $sth  = self::getInstance()->db()->query(
+            $sth  = self::db()->query(
                  $sql,array($dash)
             );
             $data = $sth->fetch();
@@ -121,7 +126,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
             if(!$path) $path = self::router()->getRoute(); // global
             $sql  = 'SELECT `id`, `columns` FROM `:prefix:dashboards` WHERE `user_id`=? AND `path`=?';
             $sth  = self::db()->query(
-                 $sql, array(self::getInstance()->user()->get('user_id'),$path)
+                 $sql, array(self::user()->get('user_id'),$path)
             );
             $config = $sth->fetch();
             return $config;
@@ -153,8 +158,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function getID($user,$path)
         {
-            $self = self::getInstance();
-            $sth  = $self->db()->query(
+            $sth  = self::db()->query(
                 'SELECT `id` FROM `:prefix:dashboards` WHERE `user_id`=? AND `path`=?',
                 array($user,$path)
             );
@@ -180,7 +184,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                   . 'LEFT OUTER JOIN `:prefix:dashboard_widget_data` AS `t3` '
                   . 'ON `t2`.`widget_id`=`t3`.`widget_id` '
                   . 'WHERE `t1`.`dashboard_id`=?';
-            $sth  = self::getInstance()->db()->query(
+            $sth  = self::db()->query(
                  $sql, array($dash)
             );
             $widgets = $sth->fetchAll();
@@ -194,11 +198,10 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function removeWidget($id,$dash)
         {
-            $self = self::getInstance();
             // check if widget exists
-            if(CAT_Helper_Widget::exists($id))
+            if(Widget::exists($id))
             {
-                $self->db()->query(
+                self::db()->query(
                       'DELETE FROM `:prefix:dashboard_has_widgets` '
                     . 'WHERE `widget_id`=? AND `dashboard_id`=?',
                     array($id,$dash)
@@ -234,7 +237,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                         if(isset($w['widget_module']) && strlen($w['widget_module']))
                         {
                             $funcname .= $w['widget_module'].'_';
-                            CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$w['widget_module'].'/languages/');
+                            Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$w['widget_module'].'/languages/');
                         }
                         $funcname .= $name;
                         if(function_exists($funcname))
@@ -244,7 +247,7 @@ if (!class_exists('CAT_Helper_Dashboard'))
                     }
                     else
                     {
-                        $widgets[$i]['content'] = CAT_Helper_Widget::execute($w,$id);
+                        $widgets[$i]['content'] = Widget::execute($w,$id);
                     }
                 }
             }
@@ -258,24 +261,23 @@ if (!class_exists('CAT_Helper_Dashboard'))
          **/
         public static function saveDashboardConfig($id,$user,$path,$cols)
         {
-            $self = self::getInstance();
             if(!self::exists($id))
             {
                 $sql = 'INSERT INTO `:prefix:dashboards` ( `user_id`, `path`, `columns` ) VALUES (?,?,?)';
-                $sth = $self->db()->query(
+                $sth = self::db()->query(
                     $sql, array($user,$path,$cols)
                 );
             }
             else
             {
                 $sql = 'UPDATE `:prefix:dashboards` SET `columns`=? WHERE `user_id`=? AND `path`=?';
-                $sth = $self->db()->query(
+                $sth = self::db()->query(
                     $sql, array($cols,$user,$path)
                 );
             }
         }   // end function saveDashboardConfig()
         
 
-    } // class CAT_Helper_Dashboard
+    } // class Dashboard
 
 } // if class_exists()

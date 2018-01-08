@@ -1,8 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{$LANGUAGE}" lang="{$LANGUAGE}">
 <head>
 <?php
-    $am = new CAT_Helper_AssetFactory('backend_login');
+    $am = \CAT\Helper\AssetFactory::getInstance('backend_login');
     $am->addCSS('modules/lib_bootstrap/vendor/css/default/bootstrap.min.css');
     $am->addCSS('modules/lib_bootstrap/vendor/css/font-awesome.min.css');
     $am->addCSS('templates/backstrap/css/default/login.css');
@@ -12,7 +12,6 @@
     $am->addMeta(array('charset' => (defined('DEFAULT_CHARSET') ? DEFAULT_CHARSET : "utf-8")));
     $am->addMeta(array('http-equiv' => 'X-UA-Compatible', 'content' => 'IE=edge'));
     $am->addMeta(array('name' => 'viewport', 'content' => 'width=device-width, initial-scale=1'));
-    //CAT_Helper_Page::addMeta(array('name' => 'description', 'content' => 'BlackCat CMS - '.$pg->lang()->translate('Administration')));
 ?>
     {get_page_headers()}
     <title>{translate('Login')}</title>

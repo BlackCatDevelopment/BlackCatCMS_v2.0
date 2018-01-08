@@ -15,9 +15,15 @@
 
 */
 
-if(!class_exists('CAT_Helper_Router',false))
+namespace CAT\Helper;
+
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
+use \CAT\Helper\Directory as Directory;
+
+if(!class_exists('Router',false))
 {
-    class CAT_Helper_Router extends CAT_Object
+    class Router extends Base
     {
         // log level
         #public    static $loglevel   = \Monolog\Logger::EMERGENCY;
@@ -72,7 +78,7 @@ if(!class_exists('CAT_Helper_Router',false))
                 $function = 'index';
             }
             // controller class name
-            $this->controller = 'CAT_' . ucfirst($controller);
+            $this->controller = '\CAT\\' . ucfirst($controller);
             // function name
             $this->func       = $function;
         }   // end function __construct()
@@ -101,9 +107,9 @@ if(!class_exists('CAT_Helper_Router',false))
                     'Routing error: User [{user}] tried to access [{func}] in controller [{controller}]',
                     array('user'=>$this->user()->get('username'),'func'=>$function,'controller'=>$controller)
                 );
-                return CAT_Backend::login(
+                return Backend::login(
                     'Please enter valid login credentials to proceed<br />'
-                  . sprintf('(CAT_Backend_Router::dispatch#1) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
+                  . sprintf('(Backend_Router::dispatch#1) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
                 );
             }
             // check if controller exists
@@ -113,9 +119,9 @@ if(!class_exists('CAT_Helper_Router',false))
                     'Routing error: No such controller [%s] (%s) or function not callable [%s] (%s)',
                     $controller, class_exists($controller), $function, is_callable(array($controller,$function))
                 ));
-                return CAT_Backend::login(
+                return Backend::login(
                     'Please enter valid login credentials to proceed<br />'
-                  . sprintf('(CAT_Backend_Router::dispatch#2) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
+                  . sprintf('(Backend_Router::dispatch#2) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
                 );
             }
 
@@ -333,14 +339,17 @@ if(!class_exists('CAT_Helper_Router',false))
             if(stripos($route,'?'))
                 list($route,$ignore) = explode('?',$route,2);
 
+            // remove site subfolder
+            $route = preg_replace('~^\/'.self::site()['subfolder'].'\/~i','',$route);
+
             $path_prefix = str_ireplace(
-                CAT_Helper_Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
+                Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
                 '',
-                CAT_Helper_Directory::sanitizePath(CAT_PATH)
+                Directory::sanitizePath(CAT_PATH)
             );
 
             // remove leading /
-            if(!strpos($route,'/',0))
+            if(substr($route,0,1)=='/')
                 $route = substr($route,1,strlen($route));
 
             // if there's a prefix to remove (needed for backend paths)

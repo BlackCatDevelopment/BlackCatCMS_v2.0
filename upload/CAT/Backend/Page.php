@@ -15,14 +15,21 @@
 
 */
 
-if (!class_exists('CAT_Backend_Page'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../../Object.php';
-    }
+namespace CAT\Backend;
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
+use \CAT\Registry as Registry;
+use \CAT\Helper\Addons as Addons;
+use \CAT\Helper\Directory as Directory;
+use \CAT\Helper\Page as HPage;
+use \CAT\Helper\FormBuilder as FormBuilder;
+use \CAT\Helper\Json as Json;
+use \CAT\Helper\Validate as Validate;
+use \CAT\Helper\Template as Template;
 
-    class CAT_Backend_Page extends CAT_Object
+if (!class_exists('Page'))
+{
+    class Page extends Base
     {
         protected static $loglevel    = \Monolog\Logger::EMERGENCY;
         protected static $instance    = NULL;
@@ -37,9 +44,7 @@ if (!class_exists('CAT_Backend_Page'))
         public static function getInstance()
         {
             if(!is_object(self::$instance))
-            {
                 self::$instance = new self();
-            }
             return self::$instance;
         }   // end function getInstance()
 
@@ -56,7 +61,7 @@ if (!class_exists('CAT_Backend_Page'))
 
             $pageID   = NULL;
 
-            $add_form = CAT_Helper_FormBuilder::generateForm('be_page_add');
+            $add_form = FormBuilder::generateForm('be_page_add');
             if($add_form->isValid())
             {
                 $data   = $add_form->getData();
@@ -72,7 +77,7 @@ if (!class_exists('CAT_Backend_Page'))
                 // expected data
                 $title  = isset($data['page_title'])  ? htmlspecialchars($data['page_title']) : '*please add a title*';
                 $parent = isset($data['page_parent']) ? intval($data['page_parent']) : 0;
-                $lang   = isset($data['page_language']) ? $data['page_language'] : CAT_Registry::get('default_language');
+                $lang   = isset($data['page_language']) ? $data['page_language'] : Registry::get('default_language');
 
                 // set menu title = page title for now
                 $query->setValue('page_title',$query->createNamedParameter($title));
@@ -85,7 +90,7 @@ if (!class_exists('CAT_Backend_Page'))
                 if($parent>0)
                 {
                     // get details for parent page
-                    $parent_page = CAT_Helper_Page::properties($parent);
+                    $parent_page = HPage::properties($parent);
 
                     // set root parent
                     $query->setValue('root_parent',$query->createNamedParameter($parent_page['page_id']));
@@ -144,15 +149,15 @@ if (!class_exists('CAT_Backend_Page'))
 
             if(self::asJSON())
             {
-                echo CAT_Helper_JSON::printResult($tpl_data);
+                echo Json::printResult($tpl_data);
                 exit;
             }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            CAT_Backend::print_header();
+            Backend::print_header();
             self::tpl()->output('backend_page_add', $tpl_data);
-            CAT_Backend::print_footer();
+            Backend::print_footer();
         }   // end function add()
 
         /**
@@ -175,9 +180,9 @@ if (!class_exists('CAT_Backend_Page'))
                 echo json_encode($tpl_data,1);
                 exit;
             }
-            CAT_Backend::print_header();
+            Backend::print_header();
             self::tpl()->output('backend_pages', $tpl_data);
-            CAT_Backend::print_footer();
+            Backend::print_footer();
         }   // end function index()
 
         /**
@@ -194,15 +199,17 @@ if (!class_exists('CAT_Backend_Page'))
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 self::printFatalError('You are not allowed for the requested action!');
 
+            if(!$pageID || !is_numeric($pageID)) return;
+
             // get sections; format: $sections[array_of_blocks[array_of_sections]]
-            $sections = CAT_Sections::getSections($pageID,NULL,false);
+            $sections = \CAT\Sections::getSections($pageID,NULL,false);
 
             // addable addons
-            $addable  = CAT_Helper_Addons::getAddons('page','name',false);
+            $addable  = Addons::getAddons('page','name',false);
 
             $tpl_data = array(
-                'page'    => CAT_Helper_Page::properties($pageID),
-                'linked'  => CAT_Helper_Page::getLinkedByLanguage($pageID),
+                'page'    => HPage::properties($pageID),
+                'linked'  => HPage::getLinkedByLanguage($pageID),
                 'blocks'  => NULL,
                 'addable' => $addable,
             );
@@ -233,16 +240,16 @@ if (!class_exists('CAT_Backend_Page'))
                         // special case
                         if($module=='wysiwyg')
                         {
-                            CAT_Addon_WYSIWYG::initialize();
-                            $content = CAT_Addon_WYSIWYG::modify($section_id);
+                            \CAT\Addon\WYSIWYG::initialize();
+                            $content = \CAT\Addon\WYSIWYG::modify($section_id);
                         }
                         else
                         {
                             // get the module class
-                            $name    = CAT_Helper_Addons::getDetails($module,'directory');
+                            $name    = Addons::getDetails($module,'directory');
                             $handler = NULL;
                             foreach(array_values(array(str_replace(' ','',$name),$module)) as $classname) {
-                                $filename = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
+                                $filename = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
                                 if(file_exists($filename)) {
                                      $handler = $filename;
                                 }
@@ -251,7 +258,7 @@ if (!class_exists('CAT_Backend_Page'))
                             if ($handler)
                             {
                                 self::log()->addDebug(sprintf('found class file [%s]',$handler));
-                                CAT_Object::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                                Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
                                 self::setTemplatePaths($module);
                                 include_once $handler;
                                 $classname::initialize($section_id);
@@ -273,14 +280,14 @@ if (!class_exists('CAT_Backend_Page'))
                 exit;
             }
 
-            CAT_Helper_Page::setTitle(sprintf(
+            HPage::setTitle(sprintf(
                 'BlackCat CMS Backend / %s / %s',
                 self::lang()->translate('Page'),
                 self::lang()->translate('Edit')
             ));
-            CAT_Backend::print_header();
+            Backend::print_header();
             self::tpl()->output('backend_page_modify', $tpl_data);
-            CAT_Backend::print_footer();
+            Backend::print_footer();
         }   // end function edit()
 
         /**
@@ -297,15 +304,15 @@ if (!class_exists('CAT_Backend_Page'))
          **/
         public static function getPageID()
         {
-            $pageID  = CAT_Helper_Validate::sanitizePost('page_id','numeric',NULL);
+            $pageID  = Validate::sanitizePost('page_id','numeric',NULL);
 
             if(!$pageID)
-                $pageID  = CAT_Helper_Validate::sanitizeGet('page_id','numeric',NULL);
+                $pageID  = Validate::sanitizeGet('page_id','numeric',NULL);
 
             if(!$pageID)
                 $pageID = self::router()->getParam(-1);
 
-            if(!$pageID || !is_numeric($pageID) || !CAT_Helper_Page::exists($pageID))
+            if(!$pageID || !is_numeric($pageID) || !HPage::exists($pageID))
                 $pageID = NULL;
 
             return $pageID;
@@ -324,22 +331,22 @@ if (!class_exists('CAT_Backend_Page'))
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
-                CAT_Object::printFatalError('You are not allowed for the requested action!');
+                Base::printFatalError('You are not allowed for the requested action!');
 
             // get current files
-            $headerfiles = CAT_Helper_Page::getExtraHeaderFiles($pageID);
+            $headerfiles = HPage::getExtraHeaderFiles($pageID);
 
             // get registered javascripts
-            $plugins     = CAT_Helper_Addons::getAddons('javascript');
+            $plugins     = Addons::getAddons('javascript');
 
             // find javascripts in template directory
-            $tpljs       = CAT_Helper_Directory::findFiles(
-                CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($pageID),
+            $tpljs       = Directory::findFiles(
+                CAT_ENGINE_PATH.'/templates/'.HPage::getPageTemplate($pageID),
                 array(
                     'extension' => 'js',
                     'recurse' => true
                 )
-                                );
+            );
 
 /*
 Array
@@ -384,8 +391,8 @@ Array
 
 */
             // find css files in template directory
-            $tplcss = CAT_Helper_Directory::findFiles(
-                CAT_ENGINE_PATH.'/templates/'.CAT_Helper_Page::getPageTemplate($pageID),
+            $tplcss = Directory::findFiles(
+                CAT_ENGINE_PATH.'/templates/'.HPage::getPageTemplate($pageID),
                 array(
                     'extension' => 'css',
                     'recurse' => true,
@@ -394,20 +401,20 @@ Array
             );
 
             // already assigned
-            $headerfiles = CAT_Helper_Page::getAssets('header',$pageID,false,false);
-            $footerfiles = CAT_Helper_Page::getAssets('footer',$pageID,false,false);
+            $headerfiles = HPage::getAssets('header',$pageID,false,false);
+            $footerfiles = HPage::getAssets('footer',$pageID,false,false);
             $files       = array('js'=>array(),'css'=>array());
 
             if(count($headerfiles['js'])) {
                 foreach($headerfiles['js'] as $file) {
                     $files['js'][] = array('file'=>$file,'pos'=>'header');
-                            }
-                        }
+                }
+            }
             if(count($footerfiles['js'])) {
                 foreach($footerfiles['js'] as $file) {
                     $files['js'][] = array('file'=>$file,'pos'=>'footer');
-                    }
                 }
+            }
 echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">$pageID\n";
 print_r($headerfiles);
 #print_r($tpljs);
@@ -416,14 +423,14 @@ echo "</textarea>";
 
             if(self::asJSON())
             {
-                CAT_Helper_JSON::printSuccess();
+                Json::printSuccess();
             } else {
-                CAT_Backend::print_header();
+                Backend::print_header();
                 self::tpl()->output('backend_page_headerfiles', array(
                     'files'  => $files,
                     'tplcss' => $tplcss,
                 ));
-                CAT_Backend::print_footer();
+                Backend::print_footer();
             }
 return;
 
@@ -443,9 +450,9 @@ return;
          **/
         public static function header()
         {
-            $pageID  = CAT_Helper_Validate::sanitizePost('page_id');
+            $pageID  = Validate::sanitizePost('page_id');
 
-            if(($plugin = CAT_Helper_Validate::sanitizePost('jquery_plugin')) !== false)
+            if(($plugin = Validate::sanitizePost('jquery_plugin')) !== false)
             {
                 $success = true;
                 // find JS files
@@ -456,7 +463,7 @@ return;
                 {
                     if(($result=self::addHeaderComponent('js',$plugin.'/'.$file,$pageID)) !== true)
                     {
-                        echo CAT_Helper_JSON::printError($result);
+                        echo Json::printError($result);
                         exit;
                     }
                 }
@@ -464,7 +471,7 @@ return;
                 {
                     if(($result=self::addHeaderComponent('css',$plugin.'/'.$file,$pageID)) !== true)
                     {
-                        CAT_Helper_JSON::printError($result);
+                        Json::printError($result);
                     }
                 }
                 $ajax    = array(
@@ -485,19 +492,19 @@ return;
         public static function list($as_array=false)
         {
             if(!self::user()->hasPerm('pages_list'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                Json::printError('You are not allowed for the requested action!');
 
-            $pages = CAT_Helper_Page::getPages(true);
+            $pages = HPage::getPages(true);
 
             $lang  = self::router()->getRoutePart(-1);
             if($lang && !in_array($lang,array('page','index','list')))
             {
-                $addon = CAT_Helper_Addons::getDetails($lang);
+                $addon = Addons::getDetails($lang);
                 if(!$addon || !is_array($addon) || !isset($addon['type']) || !$addon['type'] == 'language')
                 {
-                    self::printFatalError('Invalid data! (CAT_Backend_Page::list())');
+                    self::printFatalError('Invalid data! (Page::list())');
                 }
-                $pages = CAT_Helper_Page::getPagesForLanguage($lang);
+                $pages = HPage::getPagesForLanguage($lang);
             }
 
             if(!$as_array && self::asJSON())
@@ -521,7 +528,7 @@ return;
                         // page moved? (reorder)
                         if(isset($data['page_position']) && $old_position!=$data['page_position'])
                         {
-                            //CAT_Helper_DB::reorder('pages',$pageID,$data['page_position'],'position','page_id');
+                            //DB::reorder('pages',$pageID,$data['page_position'],'position','page_id');
                             $page['position'] = $data['page_position'];
                         }
 */
@@ -556,30 +563,30 @@ return;
             // the user needs to have the global pages_settings permission plus
             // permissions for the current page
             if(!self::user()->hasPerm('pages_settings') || !self::user()->hasPagePerm($pageID,'pages_settings'))
-                CAT_Object::printFatalError('You are not allowed for the requested action!');
+                Base::printFatalError('You are not allowed for the requested action!');
 
-            $page       = CAT_Helper_Page::properties($pageID);
-            $form       = CAT_Helper_FormBuilder::generateForm('be_page_settings',$page);
+            $page       = HPage::properties($pageID);
+            $form       = FormBuilder::generateForm('be_page_settings',$page);
             $form->setAttribute('action',CAT_ADMIN_URL.'/page/settings/'.$pageID);
 
             // template select
             $templates = array(''=>self::lang()->translate('System default'));
-            if(is_array(($tpls=CAT_Helper_Addons::getAddons('template'))))
+            if(is_array(($tpls=Addons::getAddons('template'))))
                 foreach(array_values($tpls) as $dir => $name)
                     $templates[$dir] = $name;
             $form->getElement('page_template')->setData($templates);
 
             // set current value for template select
-            $curr_tpl   = CAT_Helper_Page::getPageTemplate($pageID);
+            $curr_tpl   = HPage::getPageTemplate($pageID);
             $form->getElement('page_template')->setValue($curr_tpl);
 
             // remove variant select if no variants are available
-            $variants   = CAT_Helper_Template::getVariants($curr_tpl);
+            $variants   = Template::getVariants($curr_tpl);
             if(!$variants) $form->removeElement('template_variant');
             else           $form->getElement('template_variant')->setData($variants);
 
             // remove menu select if there's only one menu block
-            $menus      = CAT_Helper_Template::get_template_menus($curr_tpl);
+            $menus      = Template::get_template_menus($curr_tpl);
             if(!$menus) $form->removeElement('page_menu');
             else {
                 $form->getElement('page_menu')->setData($menus);
@@ -657,7 +664,7 @@ echo "</textarea>";
                         if(isset($data['page_parent']) && $old_parent!=intval($data['page_parent']))
                         {
                             // new position (add to end)
-                            $page['position'] = CAT_Helper_DB::getNext(
+                            $page['position'] = self::db()->getNext(
                                 'pages',
                                 intval($data['page_parent'])
                             );
@@ -666,11 +673,11 @@ echo "</textarea>";
                         // Work out level and root parent
                         if(intval($data['page_parent'])!='0')
                         {
-                            $page['level'] = CAT_Helper_Page::properties(intval($data['page_parent']),'level') + 1;
+                            $page['level'] = HPage::properties(intval($data['page_parent']),'level') + 1;
                             $page['root_parent']
                                 = ($page['level'] == 1)
                                 ? $page['parent']
-                                : CAT_Helper_Page::getRootParent($page['parent'])
+                                : HPage::getRootParent($page['parent'])
                                 ;
                         }
 /*
@@ -690,14 +697,14 @@ echo "</textarea>";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(self::asJSON())
             {
-                CAT_Helper_JSON::printSuccess($form->render(true));
+                Json::printSuccess($form->render(true));
             } else {
-                CAT_Backend::print_header();
+                Backend::print_header();
                 self::tpl()->output('backend_page_settings', array(
                     'form' => $form->render(true),
-                    'page' => CAT_Helper_Page::properties($pageID),
+                    'page' => HPage::properties($pageID),
                 ));
-                CAT_Backend::print_footer();
+                Backend::print_footer();
             }
         }   // end function settings()
 
@@ -711,16 +718,16 @@ echo "</textarea>";
             $pageID  = self::getPageID();
             if(self::asJSON())
             {
-                CAT_Helper_JSON::printSuccess($form->getForm());
+                Json::printSuccess($form->getForm());
             } else {
-                CAT_Backend::print_header();
+                Backend::print_header();
                 self::tpl()->output('backend_page_sections', array(
-                    'page'     => CAT_Helper_Page::properties($pageID),
-                    'sections' => CAT_Sections::getSections($pageID,NULL,false),
-                    'blocks'   => CAT_Helper_Template::getBlocks(),
-                    'addable'  => CAT_Helper_Addons::getAddons('page','name',false),
+                    'page'     => HPage::properties($pageID),
+                    'sections' => \CAT\Sections::getSections($pageID,NULL,false),
+                    'blocks'   => Template::getBlocks(),
+                    'addable'  => Addons::getAddons('page','name',false),
                 ));
-                CAT_Backend::print_footer();
+                Backend::print_footer();
             }
         }   // end function sections()
 
@@ -732,9 +739,9 @@ echo "</textarea>";
         public static function tree()
         {
             if(!self::user()->hasPerm('pages_list'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                Json::printError('You are not allowed for the requested action!');
 
-            $pages = CAT_Helper_Page::getPages(true);
+            $pages = HPage::getPages(true);
             $pages = self::lb()->buildRecursion($pages);
 
             if(self::asJSON())
@@ -758,16 +765,16 @@ echo "</textarea>";
         public static function unlink()
         {
             $pageID   = self::getPageID();
-            $unlinkID = CAT_Helper_Validate::sanitizePost('unlink');
+            $unlinkID = Validate::sanitizePost('unlink');
 
             // the user needs to have the global pages_edit permission plus
             // permissions for the current page
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
-                CAT_Object::printFatalError('You are not allowed for the requested action!');
+                Base::printFatalError('You are not allowed for the requested action!');
 
             // check data
-            if(!CAT_Helper_Page::exists($pageID) || !CAT_Helper_Page::exists($unlinkID))
-                CAT_Object::printFatalError('Invalid data!');
+            if(!HPage::exists($pageID) || !HPage::exists($unlinkID))
+                Base::printFatalError('Invalid data!');
 
             self::db()->query(
                 'DELETE FROM `:prefix:pages_langs` WHERE `page_id`=? AND `link_page_id`=?',
@@ -776,7 +783,7 @@ echo "</textarea>";
 
             if(self::asJSON())
             {
-                echo CAT_Object::json_result(
+                echo Base::json_result(
                     ( self::db()->isError() ? false : true ),
                     ''
                 );
@@ -794,16 +801,16 @@ echo "</textarea>";
         public static function visibility()
         {
             if(!self::user()->hasPerm('pages_edit'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+                Json::printError('You are not allowed for the requested action!');
             $params  = self::router()->getParams();
             $page_id = $params[0];
             $newval  = $params[1];
             if(!is_numeric($page_id)) {
-                CAT_Helper_JSON::printError('Invalid value');
+                Json::printError('Invalid value');
             }
             if(!in_array($newval,array('public','private','hidden','none','deleted','registered')))
             {
-                CAT_Helper_JSON::printError('Invalid value');
+                Json::printError('Invalid value');
             }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // MUSS ANGEPASST WERDEN! Neue Spalte vis_id (FK)
@@ -812,7 +819,7 @@ echo "</textarea>";
                 'UPDATE `:prefix:pages` SET `visibility`=? WHERE `page_id`=?',
                 array($newval,$page_id)
             );
-            echo CAT_Object::json_result(
+            echo Base::json_result(
                 self::db()->isError(),
                 '',
                 true
@@ -834,7 +841,7 @@ echo "</textarea>";
          **/
         protected static function addHeaderComponent($type,$file,$page_id=NULL)
         {
-            $headerfiles = CAT_Helper_Page::getExtraHeaderFiles($page_id);
+            $headerfiles = HPage::getExtraHeaderFiles($page_id);
 
             if(!is_array($headerfiles) || !count($headerfiles))
             {
@@ -845,7 +852,7 @@ echo "</textarea>";
             {
                 if(isset($data[$type]) && is_array($data[$type]) && count($data[$type]) && in_array($file,$data[$type]))
                 {
-                    return CAT_Object::lang()->translate('The file is already listed');
+                    return Base::lang()->translate('The file is already listed');
                 }
                 else
                 {
@@ -861,13 +868,13 @@ echo "</textarea>";
 
                     foreach($paths as $path)
                     {
-                        $filename = CAT_Helper_Directory::sanitizePath($path.'/'.$file);
+                        $filename = Directory::sanitizePath($path.'/'.$file);
                         if(file_exists($filename))
                         {
                             $new    = ( isset($data[$type]) && is_array($data[$type]) && count($data[$type]) )
                                     ? $data[$type]
                                     : array();
-                            array_push($new,CAT_Helper_Validate::path2uri($filename));
+                            array_push($new,Validate::path2uri($filename));
                             $new = array_unique($new);
                             $params = array(
                                 'field'   => 'page_'.$type.'_files',
@@ -898,7 +905,7 @@ echo "</textarea>";
          **/
         protected static function delHeaderComponent($type,$file,$page_id=NULL)
         {
-            $headerfiles = CAT_Helper_Page::getExtraHeaderFiles($page_id);
+            $headerfiles = HPage::getExtraHeaderFiles($page_id);
 
 echo "remove file $file\n";
             if(is_array($headerfiles) && count($headerfiles))
@@ -933,6 +940,6 @@ print_r($item[$type]);
 */
         }   // end function delHeaderComponent()
 
-    } // class CAT_Backend_Page
+    } // class Page
 
 } // if class_exists()

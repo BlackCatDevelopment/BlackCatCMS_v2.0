@@ -15,13 +15,14 @@
 
 */
 
-if ( ! class_exists( 'CAT_Object', false ) ) {
-    @include dirname(__FILE__).'/Object.php';
-}
 
-if ( ! class_exists( 'CAT_Sections', false ) ) {
+namespace CAT;
+use \CAT\Base as Base;
+use \CAT\Helper\HArray as HArray;
 
-	class CAT_Sections extends CAT_Object
+if ( ! class_exists( 'Sections', false ) ) {
+
+	class Sections extends Base
 	{
         /**
          * log level
@@ -132,12 +133,12 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
             $sql  = preg_replace('~,\s*$~','',$sql);
             $sql .= ' WHERE section_id = :id LIMIT 1';
 
-		    self::getInstance()->db()->query(
+		    self::db()->query(
                 $sql,
                 $params
             );
 
-            return self::getInstance()->db()->is_error()
+            return self::db()->is_error()
                 ? false
                 : true;
         }   // end function updateSection()
@@ -196,7 +197,6 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
          **/
         public static function getSection($section_id,$details=false)
         {
-            $self = self::getInstance();
             $q    = 'SELECT * FROM `:prefix:sections` WHERE `section_id` = :id';
             if($details)
             {
@@ -217,7 +217,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                    . 'ON `t1`.`module_id`=`t5`.`addon_id` '
                    . 'WHERE `t1`.`section_id`=:id ';
             }
-        	$sec = $self->db()->query(
+        	$sec = self::db()->query(
                 $q,
                 array('id'=>$section_id)
             );
@@ -321,7 +321,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                 }   // end foreach(self::$sections as $pageID => $items)
 
                 // this will remove non-active sections from self::$sections
-                self::$active = CAT_Helper_Array::filter(self::$sections,'expired',true);
+                self::$active = HArray::filter(self::$sections,'expired',true);
             }
 
             $ref =& self::$sections;
@@ -381,7 +381,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
                     . "ORDER BY `position` ASC LIMIT " . $limit;
             $params['module'] = $type;
             if($page_id) $params['page_id'] = $page_id;
-            $result = $self->db()->query($SQL,$params);
+            $result = self::db()->query($SQL,$params);
             return $result->rowCount()
                 ?  $result->fetchAll()
                 :  false;
@@ -400,7 +400,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         {
             $opt = array('page_id'=>$page_id, 'module'=>$type);
             $sql = 'SELECT `section_id` FROM `:prefix:sections` WHERE `page_id`=:page_id AND `module`=:module';
-            $sec = self::getInstance()->db()->query($sql,$opt);
+            $sec = self::db()->query($sql,$opt);
             if($sec->rowCount())
                 return $sec->fetch();
             return false;
@@ -418,7 +418,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
          **/
         public static function getPageForSection($section_id)
         {
-            $sec = self::getInstance()->db()->query(
+            $sec = self::db()->query(
                 'SELECT `page_id` FROM `:prefix:pages_sections` WHERE `section_id`=:id',
                 array('id'=>$section_id)
             );
@@ -437,14 +437,13 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         public static function hasRevisions($block_id)
         {
             // get section details
-            $section = CAT_Sections::getSection($block_id,true);
+            $section = Sections::getSection($block_id,true);
             // default table name for revisions
             $table   = 'mod_'.$section['module'].'_revisions';
-            $dbh     = CAT_Helper_DB::getInstance();
-            if($dbh->tableExists($table))
+            if(self::db()->tableExists($table))
             {
                 $q = 'SELECT count(`section_id`) FROM `:prefix:%s` WHERE `section_id`=%d LIMIT 1';
-                if($dbh->get_one(sprintf($q,$table,$block_id)))
+                if(self::db()->get_one(sprintf($q,$table,$block_id)))
                     return true;
             }
             return false;
@@ -500,7 +499,7 @@ if ( ! class_exists( 'CAT_Sections', false ) ) {
         {
             $opt = array('id'=>$section_id, 'mod'=>$type );
             $sql = 'SELECT * FROM `:prefix:sections` WHERE `section_id`=:id AND `module`=:mod';
-            $sec = self::getInstance()->db()->query($sql,$opt);
+            $sec = self::db()->query($sql,$opt);
             if($sec->rowCount())
                 return true;
             return false;

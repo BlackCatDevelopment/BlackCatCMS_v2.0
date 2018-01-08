@@ -8,7 +8,7 @@
                         </tr>
                     </thead>
                     <tbody class="gridder-table">
-                        <tr class="gridder-expander hidden" data-gridder-url="" data-gridder-title="">
+                        <tr class="gridder-expander" data-gridder-url="" data-gridder-title="" hidden>
                             <td>
                                 {if user_has_perm('media_delete')}
                                 <a href="" class="delete" title="{translate('Delete item')}" data-url="{$CAT_ADMIN_URL}/media/delete" data-id="">
@@ -17,8 +17,8 @@
                                 {else}<span class="fa fa-fw"></span>{/if}
                             </td>
                             <td>
-                                <img src="" alt="{translate('Preview')}" title="{translate('Preview')}" class="thumb bs-media-details hidden" data-field="preview" />
-                                <div class="fa fa-fw fa-file-movie-o hidden"></div>
+                                <img src="" alt="{translate('Preview')}" title="{translate('Preview')}" class="thumb bs-media-details" data-field="preview" hidden />
+                                <div class="fa fa-fw fa-file-movie-o" hidden></div>
                             </td>
                             <td class="small">
                                 <span class="filename"></span><br />

@@ -15,7 +15,9 @@
 
 */
 
-class CAT_Addons_Language extends CAT_Addons
+namespace CAT\Addon;
+
+class Language extends Module implements IAddon
 {
 
 	/**

@@ -57,7 +57,7 @@
 <span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
 
 {* hidden user form *}
-<div class="hidden">
+<div hidden>
     {$userform}
 </div>
 
