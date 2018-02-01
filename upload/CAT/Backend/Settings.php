@@ -15,14 +15,13 @@
 
 */
 
-if (!class_exists('CAT_Backend_Settings'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../../Object.php';
-    }
+namespace CAT\Backend;
+use \CAT\Base as Base;
+use \CAT\Backend as Backend;
 
-    class CAT_Backend_Settings extends CAT_Object
+if (!class_exists('\CAT\Backend\Settings'))
+{
+    class Settings extends Base
     {
         // log level
         protected static $loglevel       = \Monolog\Logger::EMERGENCY;
@@ -93,19 +92,19 @@ if (!class_exists('CAT_Backend_Settings'))
 
             // filter settings by region
             if($region && $region != 'index')
-                $settings = CAT_Helper_Array::filter($settings,'region',$region,'matching');
+                $settings = \CAT\Helper\hArray::filter($settings,'region',$region,'matching');
 
             if(!self::asJSON())
             {
                 $form = self::renderForm($settings);
-                CAT_Backend::print_header();
+                Backend::print_header();
                 self::tpl()->output(
                     'backend_settings',
                     array(
                         'form'   => $form->render(true),
                     )
                 );
-                CAT_Backend::print_footer();
+                Backend::print_footer();
             }
         }   // end function index()
         
@@ -116,11 +115,11 @@ if (!class_exists('CAT_Backend_Settings'))
          **/
         protected static function renderForm($settings)
         {
-            return CAT_Helper_FormBuilder::generate(
+            return \CAT\Helper\FormBuilder::generate(
                 'settings',
                 $settings,
                 'region',
-                CAT_Object::loadSettings()
+                self::loadSettings()
             );
         }   // end function renderForm()
         

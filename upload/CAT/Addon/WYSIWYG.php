@@ -74,7 +74,7 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
             $am = \CAT\Helper\AssetFactory::getInstance('backend_page');
             $am->addCode(
                 self::tpl()->get(
-                    new \Dwoo_Template_String(self::$e->getEditorJS()),
+                    new \Dwoo\Template\Str(self::$e->getEditorJS()),
                     array(
                         'section_id' => $section_id,
                         'action'     => CAT_ADMIN_URL.'/section/save/'.$section_id,
@@ -89,7 +89,7 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
 
             // render template
             $output  = self::tpl()->get(
-                new \Dwoo_Template_String($tpl),
+                new \Dwoo\Template\Str($tpl),
                 array(
                     'section_id' => $section_id,
                     'action'     => CAT_ADMIN_URL.'/section/save/'.$section_id,

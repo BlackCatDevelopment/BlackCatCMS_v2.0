@@ -22,9 +22,9 @@ class Page extends Module implements IAddon, IPage
 	/**
 	 * @var void
 	 */
-	protected static $type		= 'page';
-	protected static $addonID	= NULL;
-    protected static $template  = NULL;
+	protected static (string)$type     = 'page';
+	protected static (int)$addonID     = NULL;
+    protected static (string)$template = NULL;
 
 	public function __construct()
 	{

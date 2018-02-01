@@ -63,7 +63,7 @@ if (!class_exists('\CAT\Addon\Module', false))
         /**
          *
          * @access public
-         * @return
+         * @return void
          **/
         public static function initialize()
         {

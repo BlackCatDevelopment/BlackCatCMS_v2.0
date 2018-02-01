@@ -233,7 +233,7 @@ if (!class_exists('Page'))
                     {
                         $content    = null;
                         // spare some typing
-                        $section_id = $section['section_id'];
+                        $section_id = intval($section['section_id']);
                         $module     = $section['module'];
                         $class      = 'CAT_Addon_Page_'.ucfirst($module);
 
@@ -315,7 +315,7 @@ if (!class_exists('Page'))
             if(!$pageID || !is_numeric($pageID) || !HPage::exists($pageID))
                 $pageID = NULL;
 
-            return $pageID;
+            return intval($pageID);
         }   // end function getPageID()
 
         /**

@@ -149,7 +149,7 @@ if(!class_exists('Assets'))
                             if(strtolower($item['module'])=='wysiwyg') $wysiwyg = true;
                         }
                     }
-                    if($wysiwyg) $am->addJS(\CAT\Addon\WYSIWYG::getJS());
+                    if(isset($wysiwyg) && $wysiwyg) $am->addJS(\CAT\Addon\WYSIWYG::getJS());
 
                 }
             }

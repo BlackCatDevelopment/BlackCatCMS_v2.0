@@ -15,14 +15,16 @@
 
 */
 
-if ( !class_exists( 'CAT_Helper_Addons' ) )
-{
-    if ( !class_exists( 'CAT_Object', false ) )
-    {
-        @include dirname( __FILE__ ) . '/../Object.php';
-    }
 
-    class CAT_Helper_Addons extends CAT_Object
+namespace CAT\Helper;
+use \CAT\Base as Base;
+use \CAT\Helper\DB as DB;
+use \CAT\Helper\HArray as HArray;
+use \CAT\Helper\Directory as Directory;
+
+if ( !class_exists( 'Addons' ) )
+{
+    class Addons extends Base
     {
         /**
          * log level
@@ -120,7 +122,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     break;
                 default:
             // create query builder
-            $q = CAT_Helper_DB::qb()
+                    $q = DB::qb()
                 ->select('*')
                 ->from(sprintf('%saddons',CAT_TABLE_PREFIX));
 
@@ -153,7 +155,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                 }
                 if(!$names_only && $find_icon)
                 {
-                    $icon = CAT_Helper_Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
+                            $icon = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
                     $data[$i]['icon'] = '';
                     if(file_exists($icon)){
                         list($width, $height, $type_of, $attr) = getimagesize($icon);
@@ -169,12 +171,12 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
 
             if($not_installed)
             {
-                $seen   = CAT_Helper_Array::extract($data,'directory');
+                        $seen   = HArray::extract($data,'directory');
                 $result = array();
                 // scan modules path for modules not seen yet
                 foreach(array('modules','templates') as $t)
                 {
-                    $subdirs = CAT_Helper_Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
+                            $subdirs = Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
 
                     if(count($subdirs))
                     {
@@ -194,7 +196,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             } // end switch()
 
             if($names_only)
-                $data = CAT_Helper_Array::extract($data,'name','directory');
+                $data = HArray::extract($data,'name','directory');
 
             return $data;
         } // end function getAddons()
@@ -240,7 +242,7 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             if(is_dir($fulldir))
             {
                 // find class.<modulename>.php
-                $files = CAT_Helper_Directory::findFiles($fulldir,array('extension'=>'php','remove_prefix'=>true));
+                $files = Directory::findFiles($fulldir,array('extension'=>'php','remove_prefix'=>true));
                 if(count($files)==1)
                 {
                     $classname = str_ireplace('class.','',pathinfo($files[0],PATHINFO_FILENAME));
@@ -248,7 +250,8 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
                     {
                         require_once $fulldir.'/'.$files[0];
                     }
-                    $info = $classname::getInfo();
+                    $class = '\CAT\Addon\\'.$classname;
+                    $info  = $class::getInfo();
                 }
             }
             return $info;
@@ -292,6 +295,41 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
         } // end function getVersion()
         
         /**
+         * checks if a module is installed
+         *
+         * @access public
+         * @param  string  $module  - module name or directory name
+         * @param  string  $version - (optional) version to check (>=)
+         * @param  string  $type    - default 'module'
+         * @return boolean
+         **/
+        public static function isInstalled($module,$version=NULL,$type='module')
+        {
+            $q = self::db()->query(
+                'SELECT * FROM `:prefix:addons` WHERE type=:type AND ( directory=:dir OR name=:name )',
+                array('type'=>$type, 'dir'=>$module, 'name'=>$module)
+            );
+            if ( !is_object($q) || !$q->rowCount() )
+                return false;
+
+            // note: if there's more than one, the first match will be returned!
+            while($addon = $q->fetchRow())
+            {
+                if($version && self::versionCompare($addon['version'], $version))
+                    return true;
+
+                // name before directory
+                if($addon['name'] == $module)
+                    return true;
+
+                if($addon['directory'] == $module)
+                    return true;
+
+            }
+            return false;
+        } // end function isInstalled()
+        
+        /**
          * This function performs a comparison of two provided version strings
          * The versions are first converted into a string following the major.minor.revision
          * convention; the converted strings are passed to version_compare()
@@ -306,6 +344,6 @@ if ( !class_exists( 'CAT_Helper_Addons' ) )
             return version_compare(self::getVersion($version1),self::getVersion($version2),$operator);
         } // end versionCompare()
 
-    } // class CAT_Helper_Addons
+    } // class Addons
 
 } // if class_exists()

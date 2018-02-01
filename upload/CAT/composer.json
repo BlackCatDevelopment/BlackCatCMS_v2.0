@@ -1,7 +1,9 @@
 {
     "name": "BlackCatDevelopment/BlackCatCMS_v2.0",
     "require": {
-        "php": "^5.6 || ^7.0",
+        "php": "^5.6 || ^7.1",
+        "roave/security-advisories": "dev-master",
+        "vimeo/psalm": "^0",
         "chillerlan/php-qrcode": "dev-master",
         "monolog/monolog": ">=1.20.0 <2.0",
         "robthree/twofactorauth": "^1.5",
@@ -9,7 +11,8 @@
         "matthiasmullie/minify": ">=1.2.41",
         "kriswallsmith/assetic": "1.*",
         "verot/class.upload.php": "dev-master",
-        "pclzip/pclzip": ">=2.8"
+        "pclzip/pclzip": ">=2.8",
+        "dwoo/dwoo": "dev-master"
     },
     "authors": [
         {
@@ -17,7 +20,7 @@
             "email": "info@blackcat-cms.de",
             "homepage": "https://blackcat-cms.de",
             "role": "Developer"
-    }
+        }
     ],
     "license": "GPL-3.0",
     "homepage": "https://blackcat-cms.de"

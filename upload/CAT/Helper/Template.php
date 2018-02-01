@@ -18,6 +18,7 @@
 namespace CAT\Helper;
 
 use \CAT\Base As Base;
+use \CAT\Backend as Backend;
 use \CAT\Registry as Registry;
 use \CAT\Helper\Addons as Addons;
 use \CAT\Helper\Page as HPage;
@@ -161,8 +162,8 @@ if (!class_exists('\CAT\Helper\Template'))
 
             if(!$for)
                 $for = Backend::isBackend()
-                     ? CAT_Registry::get('DEFAULT_THEME')
-                     : CAT_Registry::get('DEFAULT_TEMPLATE');
+                     ? Registry::get('DEFAULT_THEME')
+                     : Registry::get('DEFAULT_TEMPLATE');
 
             if(is_numeric($for)) // assume page_id
                 $tpl_path = CAT_ENGINE_PATH.'/templates/'.HPage::getPageTemplate($for).'/templates/';
@@ -185,11 +186,11 @@ if (!class_exists('\CAT\Helper\Template'))
          **/
         public static function get_template_block_name($template=NULL,$selected=1)
         {
-            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
+            if(!$template) $template = Registry::get('DEFAULT_TEMPLATE');
             // include info.php for template info
 			$template_location = ( $template != '' ) ?
 				CAT_ENGINE_PATH.'/templates/'.$template.'/info.php' :
-				CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php';
+				CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE').'/info.php';
 			if(file_exists($template_location))
             {
 				require $template_location;
@@ -216,12 +217,12 @@ if (!class_exists('\CAT\Helper\Template'))
     	 */
     	public static function get_template_menus($template=NULL, $selected=1)
     	{
-            if(!$template) $template = CAT_Registry::get('DEFAULT_TEMPLATE');
+            if(!$template) $template = Registry::get('DEFAULT_TEMPLATE');
 
 			$tpl_info
                 = ($template != '')
                 ? CAT_ENGINE_PATH.'/templates/'.$template.'/info.php'
-                : CAT_ENGINE_PATH.'/templates/'.CAT_Registry::get('DEFAULT_TEMPLATE').'/info.php'
+                : CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE').'/info.php'
                 ;
 
 			if(file_exists($tpl_info))

@@ -15,14 +15,12 @@
 
 */
 
-if (!class_exists('CAT_Backend_Favicon'))
-{
-    if (!class_exists('CAT_Object', false))
-    {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
+namespace CAT\Backend;
+use \CAT\Base as Base;
 
-    class CAT_Backend_Favicon extends CAT_Object
+if(!class_exists('\CAT\Backend\Favicon'))
+{
+    class Favicon extends Base
     {
         protected static $loglevel     = \Monolog\Logger::EMERGENCY;
         public    static $sizes        = array(
@@ -64,21 +62,21 @@ if (!class_exists('CAT_Backend_Favicon'))
          **/
         public static function index()
         {
-            if(!CAT_Object::user()->hasPerm('manage_favicons'))
-                CAT_Helper_JSON::printError('You are not allowed for the requested action!');
+            if(!self::user()->hasPerm('manage_favicons'))
+                \CAT\Helper\JSON::printError('You are not allowed for the requested action!');
 
             $seen = self::findFiles();
 
             if(!self::asJSON())
             {
-                CAT_Backend::print_header();
+                \CAT\Backend::print_header();
                 self::tpl()->output(
                     'backend_settings_favicons',
                     array(
                         'seen' => $seen
                     )
                 );
-                CAT_Backend::print_footer();
+                \CAT\Backend::print_footer();
             }
         }   // end function index()
 

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -19,16 +19,10 @@ namespace CAT\Helper\Template;
 
 use \CAT\Base as Base;
 
-if(!class_exists('\Dwoo',false))
-{
-    include_once CAT_ENGINE_PATH.'/modules/lib_dwoo/dwoo/dwooAutoload.php';
-}
-
 if(!class_exists('DwooDriver',false))
 {
-    class DwooDriver extends \Dwoo
+    class DwooDriver extends \Dwoo\Core
     {
-
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         public    static $_globals = array();
         public    $workdir         = NULL;
@@ -46,6 +40,8 @@ if(!class_exists('DwooDriver',false))
             // we need our own logger instance here as the driver does not
             // inherit from Base
             $this->logger = Base::log();
+            // add custom plugins
+            $this->getLoader()->addDirectory(CAT_ENGINE_PATH.'/modules/lib_dwoo/plugins');
         }   // end function __construct()
 
         public function output($_tpl, $data = array(), \Dwoo_ICompiler $compiler = NULL)

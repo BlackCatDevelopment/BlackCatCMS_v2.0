@@ -162,7 +162,11 @@ if (!class_exists('\CAT\Backend\Media'))
             }
 
             $filter    = \CAT\Helper\Validate::sanitizePost('filter');
-            $files     = \CAT\Helper\Media::getMediaFromDir($path,$filter);
+
+            // make sure we have all the data
+            \CAT\Helper\Media::updateFiles($path,$filter);
+
+            $files     = \CAT\Helper\Media::getFiles($path);
             $depth     = 0;
 
             $parts = (substr_count($subfolder,'/')>1 ? explode('/',$subfolder) : array());
@@ -170,7 +174,7 @@ if (!class_exists('\CAT\Backend\Media'))
 
             $result = array(
                 'files'  => $files,
-                'dirs'   => \CAT\Helper\Directory::findDirectories($path,array('remove_prefix'=>$path)),
+                'dirs'   => \CAT\Helper\Media::getFiles($path),
                 'folder' => \CAT\Helper\Directory::getName($subfolder),
                 'depth'  => $depth,
             );
