@@ -20,6 +20,8 @@ namespace CAT\Addon;
 interface IAddon
 {
     public static function getInfo();
+    public static function getModuleVariants();
+    public static function getVariant();
 	public static function initialize();
 	public static function modify($section_id);
 	public static function install();

@@ -524,33 +524,23 @@ if(!class_exists('Base',false))
          * @access public
          * @return
          **/
-        public static function setTemplatePaths($name,$type='module')
+        public static function setTemplatePaths($name,$variant='default',$type='module')
         {
             $base = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'s/'.$name.'/templates');
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// TODO: Varianten
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if(file_exists($base.'/default'))
+            $paths = array(
+                $base.'/'.$variant,
+                $base.'/default',
+                $base
+            );
+            foreach($paths as $path)
             {
-                self::tpl()->setPath($base.'/default');
-                self::tpl()->setFallbackPath($base.'/default');
+                if(file_exists($path))
+            {
+                    self::tpl()->setPath($path);
+                    self::tpl()->setFallbackPath($base.'/default');
                 return;
             }
-
-            if(file_exists($base))
-            {
-                self::tpl()->setPath($base);
-                self::tpl()->setFallbackPath($base);
-                return;
             }
-/*
-            if (file_exists(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.Registry::get('DEFAULT_TEMPLATE'))))
-            {
-                self::tpl()->setFallbackPath(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/default'));
-                self::tpl()->setPath(Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/templates/'.Registry::get('DEFAULT_TEMPLATE')));
-            }
-*/
         }   // end function setTemplatePaths()
         
         

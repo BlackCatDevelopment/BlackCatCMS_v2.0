@@ -1,6 +1,6 @@
-{template submenu data}
+{template submenu tpldata}
           <ul class="flex-column pl-3 nav">
-          {foreach $data item}
+          {foreach $tpldata item}
             <li class="nav-item">
               <span class="nav-link{if $item.children} arrow{/if}"{if $item.children} data-toggle="collapse" data-target="#sub-{$item.page_id}"{/if}>
                 {$item.menu_title}
@@ -16,12 +16,12 @@
           </ul>
 {/template}
 
-{template pagetree data}
-  {foreach $data item}
+{template pagetree tpldata}
+  {foreach $tpldata item}
       <li class="nav-item">
         <span class="nav-link{if $item.children} arrow{/if}"{if $item.children} data-toggle="collapse" data-target="#sub-{$item.page_id}"{/if}>
           {$item.menu_title}
-          <a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}"><i class="fa fa-fw fa-edit"></i></a>
+          <a href="{$__.CAT_ADMIN_URL}/page/edit/{$item.page_id}"><i class="fa fa-fw fa-edit"></i></a>
         </span>
         {if $item.children}
         <div class="collapse" id="sub-{$item.page_id}" aria-expanded="false">

@@ -38,6 +38,8 @@ if (!class_exists('Backend', false))
         private   static $route    = NULL;
         private   static $params   = NULL;
         private   static $menu     = NULL;
+        private   static $tplpath  = NULL;
+        private   static $tplfallback = NULL;
 
         // public routes (do not check for authentication)
         private   static $public   = array(
@@ -319,14 +321,30 @@ exit;
          **/
         public static function initPaths()
         {
-            $self    = self::getInstance();
+            if(!self::$tplpath || !file_exists(self::$tplpath))
+            {
             $theme   = Registry::get('default_theme');
             $variant = Registry::get('default_theme_variant');
-
             if(!$variant || !strlen($variant)) $variant = 'default';
-
-            self::tpl()->setPath(CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/'.$variant,'backend');
-            self::tpl()->setFallbackPath(CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/default','backend');
+                $paths = array( // search paths
+                    CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/'.$variant,
+                    CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/default',
+                    CAT_ENGINE_PATH.'/templates/'.$theme.'/templates',
+                );
+                foreach($paths as $path)
+                {
+                    if(file_exists($path))
+                    {
+                        self::$tplpath = $path;
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Check if default subdir exists
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        self::$tplfallback = CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/default';
+                    }
+                }
+            }
+            self::tpl()->setPath(self::$tplpath,'backend');
+            self::tpl()->setFallbackPath(self::$tplfallback,'backend');
 
         }   // end function initPaths()
 

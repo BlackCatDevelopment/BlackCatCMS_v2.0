@@ -221,7 +221,7 @@ if (!class_exists('Page'))
                         [1] => Array            block #
                                 [0] => Array    section index
             **/
-            if(count($sections))
+            if(count($sections)>0)
             {
                 // for hybrid modules
                 global $page_id;
@@ -231,17 +231,16 @@ if (!class_exists('Page'))
                 {
                     foreach($items as $section)
                     {
-                        $content    = null;
+                        $section_content = null;
                         // spare some typing
                         $section_id = intval($section['section_id']);
                         $module     = $section['module'];
-                        $class      = 'CAT_Addon_Page_'.ucfirst($module);
 
                         // special case
                         if($module=='wysiwyg')
                         {
                             \CAT\Addon\WYSIWYG::initialize();
-                            $content = \CAT\Addon\WYSIWYG::modify($section_id);
+                            $section_content = \CAT\Addon\WYSIWYG::modify($section_id);
                         }
                         else
                         {
@@ -258,17 +257,19 @@ if (!class_exists('Page'))
                             if ($handler)
                             {
                                 self::log()->addDebug(sprintf('found class file [%s]',$handler));
-                                Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
-                                self::setTemplatePaths($module);
                                 include_once $handler;
                                 $classname::initialize($section_id);
-                                $content = $classname::modify($section_id);
+                                Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
+                                self::setTemplatePaths($module,$classname::getVariant());
+                                $section_content = $classname::modify($section_id);
+                                // make sure to reset the template search paths
+                                Backend::initPaths();
                             }
 
                         }
                         $tpl_data['blocks'][] = array_merge(
                             $section,
-                            array('content' => $content)
+                            array('section_content' => $section_content)
                         );
                     }
                 }

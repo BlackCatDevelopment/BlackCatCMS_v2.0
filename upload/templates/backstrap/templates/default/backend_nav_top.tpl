@@ -1,6 +1,6 @@
-{template dropdownmenu data}
+{template dropdownmenu tpldata}
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            {foreach $data item}
+            {foreach $tpldata item}
             <li{if $item.children} class="dropdown-submenu"{/if}>
               <a class="dropdown-item{if $item.children} dropdown-toggle{/if}" href="{$item.href}"{if $item.children} data-toggle="dropdown"{/if}>{$item.title}</a>
               {if $item.children}{dropdownmenu $item.children}{/if}
@@ -8,8 +8,8 @@
             {/foreach}
           </ul>
 {/template}
-{template topmenu data}
-        {foreach $data item}{if $item.name != 'preferences' && $item.name != 'page' && $item != 1}
+{template topmenu tpldata}
+        {foreach $tpldata item}{if $item.name != 'preferences' && $item.name != 'page' && $item != 1}
         <li class="nav-item{if $item.children} dropdown{/if}{if $item.is_current || $item.is_in_trail} active{/if}">
           <a href="{$item.href}" class="nav-link{if $item.children} dropdown-toggle{/if}"{if $item.children} data-toggle="dropdown" aria-has-popup="true" aria-expanded="false"{/if}>
             <i class="fa fa-fw fa-{$item.name}"></i>

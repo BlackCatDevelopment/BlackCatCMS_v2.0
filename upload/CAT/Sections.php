@@ -434,6 +434,28 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
+        public static function getVariant($section_id)
+        {
+            $data = self::db()->query(
+                'SELECT `variant` FROM `:prefix:pages_sections` WHERE `section_id` = :id',
+                array('id'=>$section_id)
+            );
+            if($data->rowCount())
+            {
+                $result = $data->fetch();
+                return (
+                    $result['variant']
+                    ? $result['variant']
+                    : 'default'
+                );
+            }
+        }   // end function getVariant()
+        
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function hasRevisions($block_id)
         {
             // get section details

@@ -90,7 +90,7 @@
                 </div>
                 <div class="card-content">
                   {if $block.state_id!=2}
-                  {$block.content}
+                  {$block.section_content}
                   {else}
                   <i><small>{translate('This section is marked as deleted.')}{if user_has_perm('pages_section_recover')} {translate('You may recover it by clicking on the recover icon.')} <i class="fa fa-life-saver"></i>{/if}</small></i>
                   {/if}

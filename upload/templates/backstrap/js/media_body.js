@@ -25,7 +25,6 @@ $(function() {
         if(!data.files || !data.files.length) {
             $(target).html('<div class="alert alert-info">No files</div>');
         } else {
-alert('HUHU');
             var base_url = data.media_url;
             $.each(data.files, function(index,file) {
                 var item = $(toclone).clone();
@@ -42,7 +41,6 @@ alert('HUHU');
                     // show preview
                     if(file.mime_type.indexOf('image/') == 0) {
                         var src = $(item).find('[data-field="preview"]');
-alert(base_url+'/'+file.filename);
                         src.attr('src',base_url+'/'+file.filename);
                     } else {
                         $(item).find('[data-field="preview"]').remove();
@@ -112,7 +110,7 @@ alert(base_url+'/'+file.filename);
                         // fill the folder select
                         if(data.dirs) {
                             $.each(data.dirs, function(index,dir) {
-                                s.append('<option value="'+dir+'">'+dir+'</option>');
+                                s.append('<option value="'+dir.path+'">'+dir.path+'</option>');
                             });
                         }
                         if(data.files) {

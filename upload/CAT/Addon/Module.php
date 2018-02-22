@@ -71,6 +71,33 @@ if (!class_exists('\CAT\Addon\Module', false))
             // overload this method
         }   // end function initialize()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getModuleVariants()
+        {
+            $module_variants = \CAT\Helper\Directory::findDirectories(
+                CAT_ENGINE_PATH.'/modules/'.self::$directory.'/templates',
+                array(
+                    'max_depth' => 1,
+                    'remove_prefix' => true
+                )
+            );
+            return $module_variants;
+        }   // end function getModuleVariants()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getVariant()
+        {
+            return \CAT\Sections::getVariant(self::$section_id);
+        }   // end function getVariant()
+
 		/**
 		 * Default install routine
 		 */
