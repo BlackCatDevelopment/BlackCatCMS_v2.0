@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -44,7 +44,7 @@ if (!class_exists('\CAT\Addon\Module', false))
          * @param  string  $value - required info item
          * @return string
          */
-        public static function getInfo($value=NULL)
+        public static function getInfo(string $value=NULL)
         {
             if($value)
                 return static::$$value;
@@ -58,7 +58,7 @@ if (!class_exists('\CAT\Addon\Module', false))
                 }
             }
             return $info;
-        }
+        }   // end function getInfo()
 
         /**
          *
@@ -70,33 +70,6 @@ if (!class_exists('\CAT\Addon\Module', false))
             // if there's something you need to do to initialize your module,
             // overload this method
         }   // end function initialize()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function getModuleVariants()
-        {
-            $module_variants = \CAT\Helper\Directory::findDirectories(
-                CAT_ENGINE_PATH.'/modules/'.self::$directory.'/templates',
-                array(
-                    'max_depth' => 1,
-                    'remove_prefix' => true
-                )
-            );
-            return $module_variants;
-        }   // end function getModuleVariants()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function getVariant()
-        {
-            return \CAT\Sections::getVariant(self::$section_id);
-        }   // end function getVariant()
 
 		/**
 		 * Default install routine

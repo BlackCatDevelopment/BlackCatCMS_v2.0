@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -256,22 +256,7 @@ if (!class_exists('User'))
          **/
         public function logout()
         {
-            // this is not really needed, but just to be really really secure...
-            if(isset($_SESSION))
-                foreach(array_keys($_SESSION) as $key)
-                    unset($_SESSION[$key]);
-
-            // overwrite session array
-            $_SESSION = array();
-
-            // delete session cookie if set
-            if (isset($_COOKIE[session_name()])) {
-                setcookie(session_name(), '', time() - 3600, '/');
-            }
-
-            if(!isset($_POST['_cat_ajax']) && session_id() !== '') {
-                @session_destroy();
-            }
+            \CAT\Session::stop_session();
 
             $this->db()->query(
                 'UPDATE `:prefix:rbac_users` SET `login_when`=?, `login_ip`=? WHERE `user_id`=?',
@@ -282,7 +267,7 @@ if (!class_exists('User'))
             if(!isset($_POST['_cat_ajax']))
             {
                 $redirect = str_ireplace('/logout/','/login/',$_SERVER['SCRIPT_NAME']);
-                die(header('Location: '.CAT_ADMIN_URL.'/login/index.php'));
+                die(header('Location: '.CAT_ADMIN_URL.'/login'));
             }
             else {
                 header('Content-type: application/json');

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -98,8 +98,9 @@ $LANG = array_merge($LANG,array(
     'Time until'        => 'Uhrzeit bis',
     'Use jQuery'        => 'jQuery verwenden',
     'Use jQuery UI'     => 'jQuery UI verwenden',
+    'Variant'           => 'Variante',
     'Visibility'        => 'Sichtbarkeit',
-
+    'About module variants' => 'Über Modul-Varianten',
     'Add jQuery Plugin' => 'jQuery Plugin hinzufügen',
     'Add explicit Javascript file' => 'Ein bestimmtes Javascript hinzufügen',
     'Add explicit CSS file' => 'Eine bestimmte CSS Datei hinzufügen',
@@ -107,6 +108,7 @@ $LANG = array_merge($LANG,array(
     'Currently, no extra files are defined for this page.' => 'Zur Zeit sind keine zusätzlichen Dateien für diese Seite konfiguriert.',
     'Do you really want to delete this section?' => 'Soll dieser Abschnitt wirklich <strong>gelöscht</strong> werden?',
     'Do you really want to unlink the selected page?' => 'Soll diese Seitenbeziehung wirklich entfernt werden?',
+    'For example, WYSIWYG sections have variants for multiple columns per row (shown next to each other), accordion, tabs, etc.' => 'Beispielsweise verfügen WYSIWYG-Sektionen über Varianten für mehrere Spalten pro Zeile (nebeneinander dargestellt), Accordion, Tabs, usw.',
     'Icon explanation' => 'Symbolerklärung',
     'If a section shall be visible between two dates, put the start and end date here.' => 'Wenn eine Sektion während einer gewissen Datumsspanne sichtbar sein soll, hier das Start- und Endedatum angeben.',
     "If a section shall be visible between X and Y o'clock every day, put the start and end times here." => 'Wenn eine Sektion nur zwischen X und Y Uhr jeden Tag sichbar sein soll, hier Start- und Ende-Uhrzeit angeben.',
@@ -116,6 +118,7 @@ $LANG = array_merge($LANG,array(
     'No sections were found for this page' => 'Keine Sektionen für diese Seite gefunden',
     'Please enter max. 55 characters' => 'Bitte maximal 55 Zeichen',
     'Please note that there is a bunch of files that is loaded automatically, so there\'s no need to add them here.' => 'Bitte beachten, dass es eine Reihe von Dateien gibt, die automatisch geladen werden und daher hier nicht verwaltet werden können und müssen.',
+    'Please refer to the documentation of each module to learn more about the available variants.' => 'Bitte die Dokumentation des jeweiligen Moduls für Informationen zu den verfügbaren Varianten einsehen.',
     'public - visible for all visitors; registered - visible for configurable groups of visitors; ...' => 'öffentlich - für alle Besucher sichtbar; registriert - für eine einstellbare Gruppe von Besuchern sichtbar; ...',
     'Remove relation' => 'Beziehung entfernen',
     'See this page in the frontend; opens a new tab or browser window' => 'Diese Seite im Frontend ansehen; öffnet einen neuen Browser-Tab oder ein neues Fenster',
@@ -139,6 +142,7 @@ $LANG = array_merge($LANG,array(
     'These settings are page based, to manage global settings, goto Settings -> Header files.' => 'Diese Einstellungen sind seitenbasiert, globale Einstellungen können unter Einstellungen -> Kopfdateien vorgenommen werden.',
     'This section is marked as deleted.' => 'Dieser Abschnitt ist als gelöscht markiert.',
     'Use {language_menu()} in your frontend template to show links to the pages listed below.' => 'Das Markup {language_menu()} im Frontend-Template erzeugt Links zu den untenstehenden Seiten.',
+    'Variants allow the selection of a specific presentation, possibly combined with specific settings.' => 'Varianten erlauben die Auswahl einer bestimmten Darstellung, eventuell in Kombination mit spezifischen Einstellungen.',
     'You can link any page to other pages in different languages that have the same content.' => 'Jede Seite kann mit Seiten in anderen Sprachen, die den gleichen Inhalt haben, verknüpft werden.',
     'You can manage Javascript- and CSS-Files resp. jQuery plugins to be loaded into the page header here.' => 'Hier können Javascript- und CSS-Dateien bzw. jQuery Plugins verwaltet werden, die zusätzlich in den Seitenkopf geladen werden sollen.',
     'You may override the system settings for the template here' => 'Systemweite Template-Einstellung für diese Seite ändern',

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -122,15 +122,10 @@ if (!class_exists('Backend', false))
             // not logged in
             if($router->isProtected() && !self::user()->is_authenticated())
             {
-
-echo "proctected route ",$router->getFunction(),"<br />";
-self::user()->is_authenticated();
-exit;
-
-#echo "user auth error:<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-#print_r( self::user() );
-#echo "</textarea>";
-#exit;
+                self::log()->addDebug(sprintf(
+                    'proctected route [%s] called, forwarding user to login screen',
+                    $router->getFunction()
+                ));
                 header('Location: '.CAT_ADMIN_URL.'/login');
             }
             else
@@ -308,9 +303,9 @@ exit;
          **/
         public static function initForm()
         {
-            \wblib\wbFormsJQuery::set('enabled',false);
-            \wblib\wbFormsJQuery::set('load_ui_theme',false);
-            \wblib\wbFormsJQuery::set('disable_tooltips',true);
+#            \wblib\wbFormsJQuery::set('enabled',false);
+#            \wblib\wbFormsJQuery::set('load_ui_theme',false);
+#            \wblib\wbFormsJQuery::set('disable_tooltips',true);
         }   // end function initForm()
 
         /**
@@ -449,7 +444,7 @@ exit;
                         $langselect = array(''=>'[Please select]');
                         foreach(array_values($langs) as $l)
                             $langselect[$l] = $l;
-                        $form = self::initForm();
+                        $form = self::form();
                         $form->loadFile('forms.inc.php',__dir__.'/forms');
                         $form->setForm('lang_select');
                         $form->getElement('language')->setAttr('options',$langselect);
@@ -468,10 +463,9 @@ exit;
          **/
         public static function login($msg=null)
         {
-            // we need this twice!
+            self::initPaths();
+            // we need this twice, so we use a var here
             $username_fieldname = Validate::createFieldname('username_');
-            // for debugging
-            $self = self::getInstance();
 			$tpl_data = array(
                 'USERNAME_FIELDNAME'    => $username_fieldname,
                 'PASSWORD_FIELDNAME'    => Validate::createFieldname('password_'),
@@ -491,7 +485,6 @@ exit;
          **/
         public static function logout()
         {
-            $self = self::getInstance();
             self::user()->logout();
         }
 

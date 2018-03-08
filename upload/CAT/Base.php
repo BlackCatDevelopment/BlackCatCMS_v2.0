@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -15,14 +15,16 @@
 
 */
 
+declare(strict_types=1);
+
 namespace CAT;
 
-use CAT\Helper\DB as DB;
+use CAT\Helper\DB        as DB;
 use CAT\Helper\Directory as Directory;
-use CAT\Helper\Template as Template;
-use CAT\Helper\Router as Router;
-use CAT\Helper\Addons as Addons;
-use \CAT\Helper\Json as Json;
+use CAT\Helper\Template  as Template;
+use CAT\Helper\Router    as Router;
+use CAT\Helper\Addons    as Addons;
+use \CAT\Helper\Json     as Json;
 
 if(!class_exists('Base',false))
 {
@@ -74,10 +76,8 @@ if(!class_exists('Base',false))
          **/
         public function __construct($options=array())
         {
-            if(is_array($options))
-            {
+            if(is_array($options) && count($options)>0)
                 $this->config($options);
-            }
         }   // end function __construct()
 
         /**
@@ -88,12 +88,12 @@ if(!class_exists('Base',false))
         /**
          * inheritable __call
          **/
-        public function __call($method, $args)
+        public function __call($method,$args)
         {
             if(!isset($this) || !is_object($this))
                 return false;
-            if(method_exists($this, $method))
-                return call_user_func_array(array($this, $method), $args);
+            if(method_exists($this,$method))
+                return call_user_func_array(array($this,$method),$args);
         }   // end function __call()
 
 // =============================================================================
@@ -101,32 +101,37 @@ if(!class_exists('Base',false))
 // =============================================================================
 
         /**
-         * returns a database connection handle
-         *
-         * This function must be used by all classes, as we plan to replace
-         * the database class in later versions!
+         * returns database connection handle; creates an instance of
+         * \CAT\Helper\DB if no instance was created yet
          *
          * @access public
-         * @return object
+         * @return object - instanceof \CAT\Helper\DB
          **/
         public static function db()
         {
-            if(!isset(Base::$objects['db']) || !is_object(Base::$objects['db']))
-            {
+            if(
+                   !isset(Base::$objects['db'])
+                || !is_object(Base::$objects['db'])
+                || !Base::$objects['db'] instanceof \CAT\Helper\DB
+            ) {
                self::storeObject('db',DB::getInstance());
             }
             return Base::$objects['db'];
         }   // end function db()
 
         /**
+         * returns an instance of getID3
          *
          * @access public
-         * @return
+         * @return object - instanceof \getID3
          **/
         public static function fileinfo()
         {
-            if(!isset(Base::$objects['getid3']) || !is_object(Base::$objects['getid3']))
-            {
+            if(
+                   !isset(Base::$objects['getid3'])
+                || !is_object(Base::$objects['getid3'])
+                || !Base::$objects['getid3'] instanceof \getID3
+            ) {
                 require_once CAT_ENGINE_PATH.'/modules/lib_getid3/getid3/getid3.php';
         	    Base::$objects['getid3'] = new \getID3;
             }
@@ -134,16 +139,19 @@ if(!class_exists('Base',false))
         }   // end function fileinfo()
 
         /**
-         * create a global FormBuilder handler
+         * creates a global FormBuilder handler
          *
          * @access public
-         * @return
+         * @return object - instanceof \wblib\wbForms\Form
          **/
         public static function form()
         {
-            if(!isset(Base::$objects['formbuilder']) || !is_object(Base::$objects['formbuilder']))
-            {
-                Base::$objects['formbuilder'] = \wblib\wbForms::getInstance();
+            if(
+                   !isset(Base::$objects['formbuilder'])
+                || !is_object(Base::$objects['formbuilder'])
+                || !Base::$objects['formbuilder'] instanceof \wblib\wbForms\Form
+            ) {
+                Base::$objects['formbuilder'] = new \wblib\wbForms\Form();
                 $init = Directory::sanitizePath(
                     CAT_ENGINE_PATH.'/templates/'.Registry::get(
                         (Backend::isBackend() ? 'DEFAULT_THEME' : 'DEFAULT_TEMPLATE')
@@ -151,10 +159,10 @@ if(!class_exists('Base',false))
                 );
                 if(file_exists($init))
                     require $init;
-                Base::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/languages');
+                Base::$objects['formbuilder']->setAttribute('lang_path',CAT_ENGINE_PATH.'/languages');
                 if(Backend::isBackend())
                 {
-                    Base::$objects['formbuilder']->set('lang_path',CAT_ENGINE_PATH.'/'.Backend_PATH.'/languages');
+                    Base::$objects['formbuilder']->setAttribute('lang_path',CAT_ENGINE_PATH.'/'.CAT_BACKEND_PATH.'/languages');
                 }
             }
             return Base::$objects['formbuilder'];
@@ -164,12 +172,17 @@ if(!class_exists('Base',false))
          * accessor to I18n helper
          *
          * @access public
-         * @return object
+         * @return object - instanceof \wblib\wbLang
          **/
         public static function lang()
         {
-            if(!isset(Base::$objects['lang']) || !is_object(Base::$objects['lang']) )
-            {
+            if(
+                   !isset(Base::$objects['lang'])
+                || !is_object(Base::$objects['lang'])
+                || !Base::$objects['lang'] instanceof \wblib\wbLang
+            ) {
+                \wblib\wbLang::addPath(CAT_ENGINE_PATH.'/languages');
+                \wblib\wbLang::addPath(CAT_ENGINE_PATH.'/CAT/Backend/languages');
                 self::storeObject('lang',\wblib\wbLang::getInstance(Registry::get('LANGUAGE',NULL,NULL)));
             }
             return Base::$objects['lang'];
@@ -183,7 +196,11 @@ if(!class_exists('Base',false))
          **/
         public static function lb()
         {
-            if(!isset(Base::$objects['list']) || !is_object(Base::$objects['list']) )
+            if(
+                   !isset(Base::$objects['list'])
+                || !is_object(Base::$objects['list'])
+                || !Base::$objects['list'] instanceof \wblib\wbList
+            )
                 self::storeObject('list', new \wblib\wbList(array(
                     'id'    => 'page_id',
                     'title' => 'menu_title',
@@ -192,16 +209,23 @@ if(!class_exists('Base',false))
                 )));
             return Base::$objects['list'];
         }   // end function list()
-        
+
 
         /**
          * accessor to Monolog logger
+         *
+         * @access public
+         * @param  boolean $reset - delete logfile and start over
+         * @return object - instanceof \Monolog\Logger
          **/
         public static function log($reset=false)
         {
             // global logger
-            if(!isset(Base::$objects['logger']) || !is_object(Base::$objects['logger']) )
-            {
+            if(
+                   !isset(Base::$objects['logger'])
+                || !is_object(Base::$objects['logger'])
+                || !Base::$objects['logger'] instanceof \Monolog\Logger
+            ) {
                 // default logger; will set the log level to the global default
                 // set in Base
                 $logger = new Base_LoggerDecorator(new \Monolog\Logger('CAT'));
@@ -223,6 +247,7 @@ if(!class_exists('Base',false))
 
                 Registry::set('CAT.logger.Base',$logger);
             }
+
             // specific logger
             $class    = get_called_class();
             $loglevel = self::getLogLevel();
@@ -259,12 +284,17 @@ if(!class_exists('Base',false))
          * accessor to permissions
          *
          * @access public
-         * @return object
+         * @return object - instanceof \CAT\Permissions
          **/
         public function perms()
         {
-            if(!isset(Base::$objects['perms']) || !is_object(Base::$objects['perms']) )
-                self::storeObject('perms',CAT_Permissions::getInstance());
+            if(
+                   !isset(Base::$objects['perms'])
+                || !is_object(Base::$objects['perms'])
+                || !Base::$objects['perms'] instanceof \CAT\Permissions
+            ) {
+                self::storeObject('perms',\CAT\Permissions::getInstance());
+            }
             return Base::$objects['perms'];
         }   // end function perms()
 
@@ -272,35 +302,47 @@ if(!class_exists('Base',false))
          * accessor to current user object
          *
          * @access public
-         * @return object
+         * @return object - instanceof \CAT\Roles
          **/
         public function roles()
         {
-            if(!isset(Base::$objects['roles']) || !is_object(Base::$objects['roles']) )
-                self::storeObject('roles',CAT_Roles::getInstance());
+            if(
+                   !isset(Base::$objects['roles'])
+                || !is_object(Base::$objects['roles'])
+                || !Base::$objects['roles'] instanceof \CAT\Roles
+            ) {
+                self::storeObject('roles',\CAT\Roles::getInstance());
+            }
             return Base::$objects['roles'];
         }   // end function roles()
 
         /**
+         * accessor to router
          *
          * @access public
-         * @return
+         * @return object - instanceof \CAT\Router
          **/
         public static function router()
         {
-            if(!isset(Base::$objects['router']) || !is_object(Base::$objects['router']) )
+            if(
+                   !isset(Base::$objects['router'])
+                || !is_object(Base::$objects['router'])
+                || !Base::$objects['router'] instanceof \CAT\Router
+            ) {
                 self::storeObject('router',Router::getInstance());
+            }
             return Base::$objects['router'];
         }   // end function router()
 
         /**
+         * gets the data of the currently used Site from the DB and caches them
          *
          * @access public
-         * @return
+         * @return array
          **/
         public static function site()
         {
-            if(!Base::$site)
+            if(!Base::$site || !is_array(Base::$site) || !count(Base::$site)>0)
             {
                 $stmt = self::db()->query(
                     'SELECT * FROM `:prefix:sites` WHERE `site_id`=?',
@@ -312,15 +354,18 @@ if(!class_exists('Base',false))
         }   // end function site()
 
         /**
-         * accessor to current template object
+         * accessor to current template engine object
          *
          * @access public
-         * @return object
+         * @return object - instanceof \CAT\Helper\Template
          **/
         public static function tpl()
         {
-            if(!isset(Base::$objects['tpl']) || !is_object(Base::$objects['tpl']) )
-            {
+            if(
+                   !isset(Base::$objects['tpl'])
+                || !is_object(Base::$objects['tpl'])
+                || !Base::$objects['tpl'] instanceof \CAT\Helper\Template
+            ) {
                 Base::$objects['tpl'] = Template::getInstance('Dwoo');
                 Base::$objects['tpl']->setGlobals(array(
                     'WEBSITE_DESCRIPTION' => Registry::get('WEBSITE_DESCRIPTION'),
@@ -338,12 +383,17 @@ if(!class_exists('Base',false))
          * accessor to current user object
          *
          * @access public
-         * @return object
+         * @return object - instanceof \CAT\User
          **/
         public static function user()
         {
-            if(!isset(Base::$objects['user']) || !is_object(Base::$objects['user']) )
+            if(
+                   !isset(Base::$objects['user'])
+                || !is_object(Base::$objects['user'])
+                || !Base::$objects['user'] instanceof \CAT\User
+            ) {
                 self::storeObject('user',User::getInstance());
+            }
             return Base::$objects['user'];
         }   // end function user()
 
@@ -374,7 +424,7 @@ if(!class_exists('Base',false))
          * @param  string  $prefix - optional prefix
          * @return string
          **/
-        public static function createGUID($prefix='')
+        public static function createGUID(string $prefix='')
         {
             if(!$prefix||$prefix='') $prefix=rand();
             $s = strtoupper(md5(uniqid($prefix,true)));
@@ -392,7 +442,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return
          **/
-        public static function getEncodings($with_labels=false)
+        public static function getEncodings(bool $with_labels=false)
         {
             $result = array();
             $sth = self::db()->query(
@@ -420,7 +470,7 @@ if(!class_exists('Base',false))
          * @param  boolean  $langs_only
          * @return array
          **/
-        public static function getLanguages($langs_only=true)
+        public static function getLanguages(bool $langs_only=true)
         {
             if($langs_only)
                 return Addons::getAddons('language');
@@ -434,9 +484,9 @@ if(!class_exists('Base',false))
          * @param  string   setting name (example: wysiwyg_editor)
          * @return mixed    setting value or false
          **/
-        public static function getSetting($name)
+        public static function getSetting(string $name)
         {
-            if(!self::$settings)
+            if(!self::$settings || !is_array(self::$settings))
                 self::loadSettings();
             if(isset(self::$settings[$name]))
                 return self::$settings[$name];
@@ -448,7 +498,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return
          **/
-        public static function getStateID($name)
+        public static function getStateID(string $name)
         {
             $sth = self::db()->query(
                 'SELECT `state_id` FROM `:prefix:item_states` WHERE `state_name`=?',
@@ -466,7 +516,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return
          **/
-        public static function humanize($string)
+        public static function humanize(string $string)
         {
             return ucfirst(str_replace('_',' ',$string));
         }   // end function humanize()
@@ -479,7 +529,7 @@ if(!class_exists('Base',false))
          **/
         public static function loadSettings()
         {
-            if(!self::$settings)
+            if(!self::$settings || !is_array(self::$settings))
             {
                 self::$settings = array();
 
@@ -524,7 +574,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return
          **/
-        public static function setTemplatePaths($name,$variant='default',$type='module')
+        public static function setTemplatePaths(string $name,string $variant='default',string $type='module')
         {
             $base = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$type.'s/'.$name.'/templates');
             $paths = array(
@@ -535,11 +585,11 @@ if(!class_exists('Base',false))
             foreach($paths as $path)
             {
                 if(file_exists($path))
-            {
+                {
                     self::tpl()->setPath($path);
                     self::tpl()->setFallbackPath($base.'/default');
-                return;
-            }
+                    return;
+                }
             }
         }   // end function setTemplatePaths()
         
@@ -576,7 +626,7 @@ if(!class_exists('Base',false))
          * @param  boolean  enable (TRUE) / disable (FALSE)
          *
          **/
-        public function debug($bool)
+        public function debug(bool $bool)
         {
             $class = get_called_class();
             if ($bool === true)
@@ -600,14 +650,14 @@ if(!class_exists('Base',false))
         {
             $class = get_called_class();
             return $class::$loglevel;
-        }
+        }   // end function getLogLevel()
 
         /**
          *
          * @access public
          * @return
          **/
-        public static function setLogLevel($level='EMERGENCY')
+        public static function setLogLevel(string $level='EMERGENCY')
         {
 #echo "setLogLevel()<br />";
 echo "<pre>";
@@ -636,7 +686,7 @@ echo "level now: ", $class::$loglevel, "<br />";
 //  ERROR HANDLING
 // =============================================================================
 
-        public static function errorstate($id=NULL)
+        public static function errorstate(int $id=NULL)
         {
             if($id)
                 Base::$errorstate = $id;
@@ -655,7 +705,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          * @param  array    $args
          * @return void
          **/
-        public static function printError($message=NULL, $link='index.php', $print_header=true, $args=NULL)
+        public static function printError(string $message=NULL,string $link='index.php',bool $print_header=true,array $args=array())
         {
             if(!$message)
                 'unknown error';
@@ -709,7 +759,8 @@ echo "level now: ", $class::$loglevel, "<br />";
          * @access public
          * @return void
          **/
-        public static function printFatalError($message=NULL, $link='index.php', $print_header=true, $args=NULL) {
+        public static function printFatalError(string $message=NULL,string $link='index.php',bool $print_header=true,array $args=array())
+        {
             Base::printError($message, $link, $print_header, $args);
             exit;
         }   // end function printFatalError()
@@ -724,7 +775,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          *  @param  boolean $auto_exit   - optional flag to call exit() (default) or not
          *  @return void    exit()s
          */
-    	public static function printMsg($message, $redirect='index.php', $auto_footer=true, $auto_exit=true)
+    	public static function printMsg($message,string $redirect='index.php',bool $auto_footer=true,bool $auto_exit=true)
     	{
     		if (true === is_array($message))
     			$message = implode("<br />", $message);
@@ -767,7 +818,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          * @access public
          * @return
          **/
-        public static function storeObject($name,$obj)
+        public static function storeObject(string $name,$obj)
         {
             Base::$objects[$name] = $obj;
         }   // end function storeObject()
@@ -859,7 +910,7 @@ if(!class_exists('Base_LoggerDecorator',false))
             parent::__construct($logger->getName());
             $this->logger = $logger;
         }
-        public function logDebug ($msg,$args=array()) {
+        public function logDebug (string $msg,array $args=array()) {
             if(!is_array($args)) $args = array($args);
             return $this->logger->addDebug($msg,$args);
         }

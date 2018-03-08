@@ -380,7 +380,7 @@ if (!class_exists('\CAT\Backend\Media'))
             //                backend/media/list/video
             // ...where 'video' is the name of the requested sub folder
             $route = self::router()->getRoute();
-            $subdir = NULL;
+            $subdir = '';
 
             if($route != $base)
                 $subdir = str_ireplace(array($base.'/index',$base.'/list',$base.'/protect',$base.'/unprotect',$base),'',$route);

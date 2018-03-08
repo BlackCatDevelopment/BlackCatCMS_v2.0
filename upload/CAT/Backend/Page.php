@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -235,6 +235,35 @@ if (!class_exists('Page'))
                         // spare some typing
                         $section_id = intval($section['section_id']);
                         $module     = $section['module'];
+                        $directory       = Addons::getDetails($module,'directory');
+                        $module_path     = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module);
+                        $options_file    = null;
+                        $options_form    = null;
+                        $variants        = null;
+                        $variant         = null;
+
+                        if($section['active'])
+                        {
+                            $variants        = Addons::getVariants($directory);
+                            $variant         = \CAT\Sections::getVariant($section_id);
+
+                            // check if there's an options.tpl inside the variants folder
+                            if(file_exists($module_path.'/templates/'.$variant.'/options.tpl'))
+                                $options_file = $module_path.'/templates/'.$variant.'/options.tpl';
+
+                            // there may also be a forms.inc.php - get options Time:  0.0156 Seconds
+                            if(file_exists($module_path.'/templates/'.$variant.'/inc.forms.php'))
+                            {
+                                // Time:  0.0156 Seconds
+                                $form = \wblib\wbForms\Form::loadFromFile('options','inc.forms.php',$module_path.'/templates/'.$variant);
+                                // render Time:  0.0312 Seconds
+                                $form->setAttribute('lang_path',$module_path.'/languages/');
+                                $form->getElement('section_id')->setValue($section_id);
+                                if(isset($section['options']))
+                                    $form->setData($section['options']);
+                                $options_form = $form->render(1);
+                            }
+                            // Time until form is rendered: 0.015602 Seconds
 
                         // special case
                         if($module=='wysiwyg')
@@ -245,31 +274,36 @@ if (!class_exists('Page'))
                         else
                         {
                             // get the module class
-                            $name    = Addons::getDetails($module,'directory');
                             $handler = NULL;
-                            foreach(array_values(array(str_replace(' ','',$name),$module)) as $classname) {
+                                foreach(array_values(array(str_replace(' ','',$directory),$module)) as $classname) {
                                 $filename = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
                                 if(file_exists($filename)) {
                                      $handler = $filename;
                                 }
                             }
-
+                                // execute the module's modify() function
                             if ($handler)
                             {
                                 self::log()->addDebug(sprintf('found class file [%s]',$handler));
                                 include_once $handler;
                                 $classname::initialize($section_id);
-                                Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$module.'/languages/');
-                                self::setTemplatePaths($module,$classname::getVariant());
+                                    Base::addLangFile($module_path.'/languages/');
+                                    self::setTemplatePaths($module,$variant);
                                 $section_content = $classname::modify($section_id);
                                 // make sure to reset the template search paths
                                 Backend::initPaths();
                             }
-
+                            }
                         }
+
                         $tpl_data['blocks'][] = array_merge(
                             $section,
-                            array('section_content' => $section_content)
+                            array(
+                                'section_content'    => $section_content,
+                                'available_variants' => $variants,
+                                'options_file'       => $options_file,
+                                'options_form'       => $options_form,
+                            )
                         );
                     }
                 }

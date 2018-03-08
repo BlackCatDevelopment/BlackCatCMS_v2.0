@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -32,6 +32,10 @@ if ( ! class_exists( 'Sections', false ) ) {
          * list of all sections
          **/
         private   static $sections   = array();
+        /**
+         * maps sections to array index
+         **/
+        private   static $index_map  = array();
         /**
          * list of active sections
          **/
@@ -183,7 +187,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
-        public static function exists($section_id)
+        public static function exists(int $section_id)
         {
             $data = self::getSection($section_id);
             if(!$data || !is_array($data) || !count($data)) return false;
@@ -195,7 +199,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
-        public static function getSection($section_id,$details=false)
+        public static function getSection(int $section_id,bool $details=false)
         {
             $q    = 'SELECT * FROM `:prefix:sections` WHERE `section_id` = :id';
             if($details)
@@ -242,7 +246,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @param  boolean  $active_only Only active sections
          * @return array
          **/
-        public static function getSections($page_id=NULL,$block_id=NULL,$active_only=true)
+        public static function getSections(int $page_id=NULL,int $block_id=NULL,bool $active_only=true,bool $with_options=true)
         {
             // cache data
 	        if (!self::$sections)
@@ -252,7 +256,8 @@ if ( ! class_exists( 'Sections', false ) ) {
                    . '    `t2`.`page_id`, `t2`.`position`, `t2`.`block`, '
                    . '    `t2`.`publ_start`, `t2`.`publ_end`, '
                    . '    `t2`.`publ_by_time_start`, `t2`.`publ_by_time_end`, '
-                   . '    `t2`.`name`, `t4`.`state_id`, `t5`.`directory` as `module` '
+                   . '    `t2`.`name`, `t2`.`variant`, '
+                   . '    `t4`.`state_id`, `t5`.`directory` as `module` '
                    . 'FROM `:prefix:sections` AS `t1` '
                    . 'JOIN `:prefix:pages_sections` AS `t2` '
                    . 'ON `t1`.`section_id`=`t2`.`section_id` '
@@ -270,19 +275,44 @@ if ( ! class_exists( 'Sections', false ) ) {
 
                 $data = $sec->fetchAll();
 
-                foreach($data as $i => $section)
+                if(is_array($data) && count($data)>0)
                 {
-                    self::$sections[$section['page_id']][$section['block']][] = $section;
+                    foreach($data as $i => $section)
+                    {
+                        if($with_options)
+                        {
+                            // additional options
+                            $q   = 'SELECT * FROM `:prefix:section_options` WHERE `page_id`=? AND `section_id`=?';
+                            $opt = self::db()->query($q,array($section['page_id'],$section['section_id']));
+                            if($opt->rowCount()>0)
+                            {
+                                $options = $opt->fetchAll();
+                                $section['options'] = array();
+                                foreach($options as $i => $line)
+                                {
+                                    $section['options'][$line['option']] = $line['value'];
+                                }
+                            }
+                        }
+                        self::$sections[$section['page_id']][$section['block']][]
+                            = $section;
+                    }
                 }
 
-                // mark expired sections
+                // mark expired and inactive sections
                 foreach(self::$sections as $pageID => $items)
                 {
                     foreach($items as $blockID => $sections)
                     {
                         foreach($sections as $index => $section)
                         {
+                            self::$index_map[$section['section_id']] = array(
+                                'blockID' => $blockID,
+                                'pageID' => $pageID,
+                                'index' => $index
+                            );
                             self::$sections[$pageID][$blockID][$index]['expired'] = false;
+                            self::$sections[$pageID][$blockID][$index]['active']  = self::isActive($section['section_id'],$pageID);
                             // skip this section if it is out of publication-date
                             if($section['publ_start']!='' || $section['publ_end']!='')
                             {
@@ -316,6 +346,8 @@ if ( ! class_exists( 'Sections', false ) ) {
                                     self::$sections[$pageID][$blockID][$index]['expired'] = true;
                                 }
                             }
+                            if($section['variant'] == '')
+                                self::$sections[$pageID][$blockID][$index]['variant'] = 'default';
                         }
                     }
                 }   // end foreach(self::$sections as $pageID => $items)
@@ -356,7 +388,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @param  boolean  $all     (default false) skip sections out of pub time
          * @return array
           **/
-        public static function getSectionsByType($page_id=NULL,$type='wysiwyg',$limit=1,$all=false)
+        public static function getSectionsByType($page_id=NULL,string $type='wysiwyg',int $limit=1,bool $all=false)
         {
             $limit  = ( isset($limit) && $limit && is_int($limit) )
                     ? $limit
@@ -396,7 +428,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @return mixed    result array containing the section_id on success,
          *                  false otherwise (no such section)
          **/
-        public static function getSectionForPage($page_id,$type=NULL)
+        public static function getSectionForPage(int $page_id,string $type)
         {
             $opt = array('page_id'=>$page_id, 'module'=>$type);
             $sql = 'SELECT `section_id` FROM `:prefix:sections` WHERE `page_id`=:page_id AND `module`=:module';
@@ -416,7 +448,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @param  integer $section_id
          * @return integer
          **/
-        public static function getPageForSection($section_id)
+        public static function getPageForSection(int $section_id)
         {
             $sec = self::db()->query(
                 'SELECT `page_id` FROM `:prefix:pages_sections` WHERE `section_id`=:id',
@@ -434,7 +466,7 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
-        public static function getVariant($section_id)
+        public static function getVariant(int $section_id)
         {
             $data = self::db()->query(
                 'SELECT `variant` FROM `:prefix:pages_sections` WHERE `section_id` = :id',
@@ -456,27 +488,52 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
-        public static function hasRevisions($block_id)
+        public static function hasRevisions(int $section_id)
         {
             // get section details
-            $section = Sections::getSection($block_id,true);
+            $section = Sections::getSection($section_id,true);
             // default table name for revisions
             $table   = 'mod_'.$section['module'].'_revisions';
             if(self::db()->tableExists($table))
             {
                 $q = 'SELECT count(`section_id`) FROM `:prefix:%s` WHERE `section_id`=%d LIMIT 1';
-                if(self::db()->get_one(sprintf($q,$table,$block_id)))
+                if(self::db()->get_one(sprintf($q,$table,$section_id)))
                     return true;
             }
             return false;
         }   // end function hasRevisions()
 
         /**
+         * checks if given section is active
+         *
+         * @access public
+         * @param  int    $section_id
+         * @return boolean
+         **/
+        public static function isActive(int $section_id)
+        {
+            if(!self::$sections) { self::getSections(); }
+            $s = self::$index_map[$section_id];
+            $section = self::$sections[$s['pageID']][$s['blockID']][$s['index']];
+            if(!isset($section) || !isset($section['state_id']))
+                return false;
+            switch($section['state_id']) {
+                case 2:
+                    return false;
+                    break;
+                default:
+                    return true;
+                    break;
+            }
+            return false; // should never be reached
+	    }   // end function isActive()
+
+        /**
          *
          * @access public
          * @return
          **/
-        public static function recoverSection($section_id)
+        public static function recoverSection(int $section_id)
         {
             if(self::exists($section_id))
             {
@@ -491,24 +548,6 @@ if ( ! class_exists( 'Sections', false ) ) {
             }
         }   // end function recoverSection()
         
-        /**
-         * checks if given section is active
-         *
-         * @access public
-         * @param  int    $section_id
-         * @return boolean
-         **/
-        public static function section_is_active($section_id)
-        {
-            global $database;
-            $now = time();
-            $sql = 'SELECT COUNT(*) FROM `:prefix:sections` ';
-            $sql .= 'WHERE (' . $now . ' BETWEEN `publ_start` AND `publ_end`) OR ';
-            $sql .= '(' . $now . ' > `publ_start` AND `publ_end`=0) ';
-            $sql .= 'AND `section_id`=' . $section_id;
-            return($database->query($sql)->fetchColumn() != false);
-	    }
-
         /**
          * checks if given section has given type
          *

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -28,7 +28,6 @@ require __DIR__ . '/vendor/autoload.php';
 
 // we require UTF-8
 ini_set('default_charset','UTF-8');
-
 
 //******************************************************************************
 // register autoloader
@@ -64,18 +63,19 @@ spl_autoload_register(function($class)
     // next in stack
 });
 
+
 //******************************************************************************
 // Start a session
 //******************************************************************************
 if (!defined('SESSION_STARTED'))
 {
-    $session = new Session();
-    $session->start_session('_cat', (isset($_SERVER['HTTPS']) ? true : false));
+    $session = new \CAT\Session();
+    $session->start_session();
     Registry::register('SESSION_STARTED', true, true);
 }
+
 if (defined('ENABLED_ASP') && ENABLED_ASP && !isset($_SESSION['session_started']))
     $_SESSION['session_started'] = time();
-
 
 //******************************************************************************
 // Register jQuery / JavaScripts base path

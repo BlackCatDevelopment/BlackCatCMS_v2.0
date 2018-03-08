@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -133,6 +133,8 @@ if(!class_exists('Authenticate',false))
                 }
             }
                 $_SESSION['USER_ID'] = $uid;
+                \CAT\Session::regenerateSession();
+
                 return true;
             }
             else
