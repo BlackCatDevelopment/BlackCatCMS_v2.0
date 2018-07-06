@@ -290,7 +290,11 @@ if ( ! class_exists( 'Sections', false ) ) {
                                 $section['options'] = array();
                                 foreach($options as $i => $line)
                                 {
-                                    $section['options'][$line['option']] = $line['value'];
+                                    if(strlen($line['item_id'])) {
+                                        $section['options'][$line['item_id']][$line['option']] = $line['value'];
+                                    } else {
+                                        $section['options'][$line['option']] = $line['value'];
+                                    }
                                 }
                             }
                         }
@@ -547,6 +551,28 @@ if ( ! class_exists( 'Sections', false ) ) {
                 return false; // silently fail
             }
         }   // end function recoverSection()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function setVariant(int $section_id,string $variant)
+        {
+            // get the addons directory
+            $section = self::getSection($section_id,true);
+            if(!is_array($section) || !count($section)==1) return false;
+            // only save if variant exists
+            if(\CAT\Helper\Addons::hasVariant($section['module'],$variant))
+            {
+                self::db()->query(
+                    'UPDATE `:prefix:pages_sections` SET `variant`=:v WHERE `section_id` = :id',
+                    array('v'=>$variant,'id'=>$section_id)
+                );
+                return (!self::db()->isError());
+            }
+        }   // end function setVariant()
+        
         
         /**
          * checks if given section has given type

@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -30,13 +30,14 @@ if(!class_exists('DB'))
     {
         public  static $exc_trace = true;
 
-        private static $instance  = NULL;
-        private static $conn      = NULL;
-        private static $prefix    = NULL;
-        private static $qb        = NULL;
+        private static $instance    = NULL;
+        private static $conn        = NULL;
+        private static $prefix      = NULL;
+        private static $qb          = NULL;
+        private static $conn_failed = false;
 
-        private $lasterror        = NULL;
-        private $classLoader      = NULL;
+        private $lasterror          = NULL;
+        private $classLoader        = NULL;
 
         /**
          * constructor; initializes Doctrine ClassLoader and sets up a database
@@ -150,6 +151,7 @@ if(!class_exists('DB'))
                 }
                 catch( \PDO\PDOException $e )
                 {
+                    self::$conn_failed = true;
                     $this->setError($e->message);
                     Base::printFatalError($e->message);
                 }
@@ -164,6 +166,16 @@ if(!class_exists('DB'))
             self::restoreExceptionHandler();
             return self::$conn;
         }   // end function connect()
+
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        public static function connectionFailed()
+        {
+            return self::$conn_failed;
+        }   // end function connectionFailed()
 
         /**
          * unsets connection object
@@ -358,9 +370,12 @@ if(!class_exists('DB'))
             // find file
             // note: .bc.php as suffix filter does not work!
             $configfiles = Directory::findFiles(dirname(__FILE__).'/DB',array('extension'=>'.php'));
-
-            if(!is_array($configfiles) || !count($configfiles))
+            if(!is_array($configfiles) || !count($configfiles)>0)
+            {
+                self::$conn_failed = true;
                 Base::printFatalError('Missing database configuration');
+                exit;
+            }
 
             // the first file with suffix .bc.php will be used
             foreach($configfiles as $file)

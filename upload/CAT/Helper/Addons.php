@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -121,77 +121,77 @@ if ( !class_exists( 'Addons' ) )
                     $data = $stmt->fetchAll();
                     break;
                 default:
-            // create query builder
+                    // create query builder
                     $q = DB::qb()
-                ->select('*')
-                ->from(sprintf('%saddons',CAT_TABLE_PREFIX));
+                        ->select('*')
+                        ->from(sprintf('%saddons',CAT_TABLE_PREFIX));
 
-            // filter by type
-            if($type) {
-                if(is_array($type)) {
-                    foreach($type as $item) {
-                        $q->andWhere('type = '.$q->createNamedParameter($item));
-                    }
-                } else {
-                    $q->andWhere('type = '.$q->createNamedParameter($type));
-                }
-            }
-
-            // always order by type
-            $q->orderBy('type', 'ASC'); // default order
-            if($order && $order != 'name')
-                $q->addOrderBy($order, 'ASC');
-
-            // get the data
-            $data = $q->execute()->fetchAll();
-
-            // remove addons the user is not allowed for
-            for($i=(count($data)-1);$i>=0;$i--)
-            {
-                $addon = $data[$i];
-                if(!self::user()->hasModulePerm($addon['addon_id']))
-                {
-                    unset($data[$i]); // not allowed
-                }
-                if(!$names_only && $find_icon)
-                {
-                            $icon = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
-                    $data[$i]['icon'] = '';
-                    if(file_exists($icon)){
-                        list($width, $height, $type_of, $attr) = getimagesize($icon);
-                        // Check whether file is 32*32 pixel and is an PNG-Image
-                        $data[$i]['icon']
-                            = ($width == 32 && $height == 32 && $type_of == 3)
-                            ? CAT_URL.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png'
-                            : false
-                            ;
-                    }
-                }
-            }
-
-            if($not_installed)
-            {
-                        $seen   = HArray::extract($data,'directory');
-                $result = array();
-                // scan modules path for modules not seen yet
-                foreach(array('modules','templates') as $t)
-                {
-                            $subdirs = Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
-
-                    if(count($subdirs))
-                    {
-                        foreach($subdirs as $dir)
-                        {
-                            // skip paths starting with __ (sometimes used for deactivating addons)
-                            if(substr($dir,0,2) == '__') continue;
-                            $info = self::getInfo($dir);
-                            if(is_array($info) && count($info))
-                                $result[] = $info;
+                    // filter by type
+                    if($type) {
+                        if(is_array($type)) {
+                            foreach($type as $item) {
+                                $q->andWhere('type = '.$q->createNamedParameter($item));
+                            }
+                        } else {
+                            $q->andWhere('type = '.$q->createNamedParameter($type));
                         }
                     }
-                }
-                return $result;
-            }
+
+                    // always order by type
+                    $q->orderBy('type', 'ASC'); // default order
+                    if($order && $order != 'name')
+                        $q->addOrderBy($order, 'ASC');
+
+                    // get the data
+                    $data = $q->execute()->fetchAll();
+
+                    // remove addons the user is not allowed for
+                    for($i=(count($data)-1);$i>=0;$i--)
+                    {
+                        $addon = $data[$i];
+                        if(!self::user()->hasModulePerm($addon['addon_id']))
+                        {
+                            unset($data[$i]); // not allowed
+                        }
+                        if(!$names_only && $find_icon)
+                        {
+                            $icon = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
+                            $data[$i]['icon'] = '';
+                            if(file_exists($icon)){
+                                list($width, $height, $type_of, $attr) = getimagesize($icon);
+                                // Check whether file is 32*32 pixel and is an PNG-Image
+                                $data[$i]['icon']
+                                    = ($width == 32 && $height == 32 && $type_of == 3)
+                                    ? CAT_URL.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png'
+                                    : false
+                                    ;
+                            }
+                        }
+                    }
+
+                    if($not_installed)
+                    {
+                        $seen   = HArray::extract($data,'directory');
+                        $result = array();
+                        // scan modules path for modules not seen yet
+                        foreach(array('modules','templates') as $t)
+                        {
+                            $subdirs = Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
+
+                            if(count($subdirs))
+                            {
+                                foreach($subdirs as $dir)
+                                {
+                                    // skip paths starting with __ (sometimes used for deactivating addons)
+                                    if(substr($dir,0,2) == '__') continue;
+                                    $info = self::getInfo($dir);
+                                    if(is_array($info) && count($info))
+                                        $result[] = $info;
+                                }
+                            }
+                        }
+                        return $result;
+                    }
                     break;
             } // end switch()
 
@@ -256,7 +256,33 @@ if ( !class_exists( 'Addons' ) )
             }
             return $info;
         }   // end function getInfo()
-        
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getVariants(string $directory)
+        {
+            $module_variants = \CAT\Helper\Directory::findDirectories(
+                CAT_ENGINE_PATH.'/modules/'.$directory.'/templates',
+                array(
+                    'max_depth'     => 1,
+                    'remove_prefix' => true
+                )
+            );
+            // remove paths starting with an underscore (we use this to
+            // deactivate variants)
+            if(is_array($module_variants) && count($module_variants)>0) {
+                for($i=count($module_variants)-1;$i>=0;$i--) {
+                    if(!substr_compare($module_variants[$i],'_',0,1)) {
+                        unset($module_variants[$i]);
+                    }
+                }
+            }
+            return $module_variants;
+        }   // end function getVariants()
+
         /**
          * removes/replaces known substrings in version string with their
          * weights
@@ -293,7 +319,20 @@ if ( !class_exists( 'Addons' ) )
             $version = preg_replace('~[a-z]+~i','',$version);
             return $version;
         } // end function getVersion()
-        
+
+        /**
+         * checks if the module in folder $directory has a variant $variant
+         *
+         * @access public
+         * @return
+         **/
+        public static function hasVariant(string $directory, string $variant)
+        {
+            $variants = self::getVariants($directory);
+            if(!is_array($variants) || count($variants)==0) return false;
+            return in_array($variant,$variants);
+        }   // end function hasVariant()
+
         /**
          * checks if a module is installed
          *

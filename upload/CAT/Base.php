@@ -114,7 +114,9 @@ if(!class_exists('Base',false))
                 || !is_object(Base::$objects['db'])
                 || !Base::$objects['db'] instanceof \CAT\Helper\DB
             ) {
-               self::storeObject('db',DB::getInstance());
+                if(!DB::connectionFailed()) {
+                    self::storeObject('db',DB::getInstance());
+                }
             }
             return Base::$objects['db'];
         }   // end function db()
@@ -151,6 +153,7 @@ if(!class_exists('Base',false))
                 || !is_object(Base::$objects['formbuilder'])
                 || !Base::$objects['formbuilder'] instanceof \wblib\wbForms\Form
             ) {
+                \wblib\wbForms\Form::$wblang = self::lang();
                 Base::$objects['formbuilder'] = new \wblib\wbForms\Form();
                 $init = Directory::sanitizePath(
                     CAT_ENGINE_PATH.'/templates/'.Registry::get(
@@ -707,6 +710,7 @@ echo "level now: ", $class::$loglevel, "<br />";
          **/
         public static function printError(string $message=NULL,string $link='index.php',bool $print_header=true,array $args=array())
         {
+
             if(!$message)
                 'unknown error';
             self::log()->addError($message);

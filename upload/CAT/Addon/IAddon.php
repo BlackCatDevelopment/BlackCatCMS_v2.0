@@ -21,9 +21,9 @@ interface IAddon
 {
     public static function getInfo();
 	public static function initialize();
-	public static function modify($section_id);
+	public static function modify(array $section);
 	public static function install();
 	public static function uninstall();
 	public static function upgrade();
-	public static function save($section_id);
+	public static function save(int $section_id);
 }

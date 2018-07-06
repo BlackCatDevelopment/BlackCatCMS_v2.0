@@ -26,6 +26,7 @@ use \CAT\Helper\FormBuilder as FormBuilder;
 use \CAT\Helper\Json as Json;
 use \CAT\Helper\Validate as Validate;
 use \CAT\Helper\Template as Template;
+use \CAT\Helper\Assets as Assets;
 
 if (!class_exists('Page'))
 {
@@ -168,6 +169,7 @@ if (!class_exists('Page'))
          **/
         public static function index()
         {
+/*
             // note: the access rights for index() are checked by the Backend
             // class, so there's no need to do it here
             $pages = self::list(true);
@@ -183,6 +185,8 @@ if (!class_exists('Page'))
             Backend::print_header();
             self::tpl()->output('backend_pages', $tpl_data);
             Backend::print_footer();
+*/
+            return self::router()->reroute('/pages/index');
         }   // end function index()
 
         /**
@@ -199,20 +203,26 @@ if (!class_exists('Page'))
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 self::printFatalError('You are not allowed for the requested action!');
 
-            if(!$pageID || !is_numeric($pageID)) return;
-
-            // get sections; format: $sections[array_of_blocks[array_of_sections]]
-            $sections = \CAT\Sections::getSections($pageID,NULL,false);
-
             // addable addons
             $addable  = Addons::getAddons('page','name',false);
 
+            // sections
+            $sections = array();
+
+            // template data
             $tpl_data = array(
-                'page'    => HPage::properties($pageID),
-                'linked'  => HPage::getLinkedByLanguage($pageID),
                 'blocks'  => NULL,
                 'addable' => $addable,
             );
+
+            // catch errors on wrong pageID
+            if($pageID && is_numeric($pageID) && HPage::exists($pageID))
+            {
+                $tpl_data['page']   = HPage::properties($pageID);
+                $tpl_data['linked'] = HPage::getLinkedByLanguage($pageID);
+                // get sections; format: $sections[array_of_blocks[array_of_sections]]
+                $sections = \CAT\Sections::getSections($pageID,NULL,false);
+            }
 
             /** sections array:
             Array
@@ -229,23 +239,27 @@ if (!class_exists('Page'))
 
                 foreach($sections as $block => $items)
                 {
+                    // section Time:  0.0312 Seconds
                     foreach($items as $section)
                     {
                         $section_content = null;
                         // spare some typing
-                        $section_id = intval($section['section_id']);
-                        $module     = $section['module'];
+                        $section_id      = intval($section['section_id']);
+                        $module          = $section['module'];
                         $directory       = Addons::getDetails($module,'directory');
                         $module_path     = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module);
                         $options_file    = null;
                         $options_form    = null;
                         $variants        = null;
                         $variant         = null;
+                        $infofiles       = array();
 
                         if($section['active'])
                         {
-                            $variants        = Addons::getVariants($directory);
-                            $variant         = \CAT\Sections::getVariant($section_id);
+                            Base::addLangFile($module_path.'/languages/');
+
+                            $variants    = Addons::getVariants($directory);
+                            $variant     = \CAT\Sections::getVariant($section_id);
 
                             // check if there's an options.tpl inside the variants folder
                             if(file_exists($module_path.'/templates/'.$variant.'/options.tpl'))
@@ -265,34 +279,62 @@ if (!class_exists('Page'))
                             }
                             // Time until form is rendered: 0.015602 Seconds
 
-                        // special case
-                        if($module=='wysiwyg')
-                        {
-                            \CAT\Addon\WYSIWYG::initialize();
-                            $section_content = \CAT\Addon\WYSIWYG::modify($section_id);
-                        }
-                        else
-                        {
-                            // get the module class
-                            $handler = NULL;
-                                foreach(array_values(array(str_replace(' ','',$directory),$module)) as $classname) {
-                                $filename = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
-                                if(file_exists($filename)) {
-                                     $handler = $filename;
+                            // if there are variants, collect info.tpl files
+                            if(count($variants))
+                            {
+                                $files = Directory::findFiles(
+                                    $module_path.'/templates/',
+                                    array(
+                                        'filename'      => 'info',
+                                        'max_depth'     => 2,
+                                        'recurse'       => true,
+                                        'remove_prefix' => true,
+                                    )
+                                );
+                                if(count($files))
+                                {
+                                    $map = array();
+                                    foreach($files as $i => $f)
+                                        $map[str_replace('/','',pathinfo($f,PATHINFO_DIRNAME))] = $i;
+                                    foreach($variants as $v) {
+                                        if(array_key_exists($v, $map)) {
+                                            $infofiles[$v] = $module_path.'/templates/'.$files[$map[$v]];
+                                        }
+                                        if(is_dir($module_path.'/templates/'.$v.'/languages')) {
+                                            Base::addLangFile($module_path.'/templates/'.$v.'/languages');
+                                        }
+                                    }
                                 }
                             }
-                                // execute the module's modify() function
-                            if ($handler)
+
+                            // special case
+                            if($module=='wysiwyg')
                             {
-                                self::log()->addDebug(sprintf('found class file [%s]',$handler));
-                                include_once $handler;
-                                $classname::initialize($section_id);
-                                    Base::addLangFile($module_path.'/languages/');
-                                    self::setTemplatePaths($module,$variant);
-                                $section_content = $classname::modify($section_id);
-                                // make sure to reset the template search paths
-                                Backend::initPaths();
+                                \CAT\Addon\WYSIWYG::initialize();
+                                $section_content = \CAT\Addon\WYSIWYG::modify($section);
+                                // Time until wysiwyg is rendered: 0.031202 Seconds
                             }
+                            else
+                            {
+                                // get the module class
+                                $handler = NULL;
+                                foreach(array_values(array(str_replace(' ','',$directory),$module)) as $classname) {
+                                    $filename = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$module.'/inc/class.'.$classname.'.php');
+                                    if(file_exists($filename)) {
+                                         $handler = $filename;
+                                    }
+                                }
+                                // execute the module's modify() function
+                                if ($handler)
+                                {
+                                    self::log()->addDebug(sprintf('found class file [%s]',$handler));
+                                    include_once $handler;
+                                    $classname::initialize($section_id);
+                                    self::setTemplatePaths($module,$variant);
+                                    $section_content = $classname::modify($section_id);
+                                    // make sure to reset the template search paths
+                                    Backend::initPaths();
+                                }
                             }
                         }
 
@@ -303,6 +345,7 @@ if (!class_exists('Page'))
                                 'available_variants' => $variants,
                                 'options_file'       => $options_file,
                                 'options_form'       => $options_form,
+                                'infofiles'          => $infofiles,
                             )
                         );
                     }
@@ -346,6 +389,9 @@ if (!class_exists('Page'))
 
             if(!$pageID)
                 $pageID = self::router()->getParam(-1);
+
+            if(!$pageID)
+                $pageID = self::router()->getRoutePart(-1);
 
             if(!$pageID || !is_numeric($pageID) || !HPage::exists($pageID))
                 $pageID = NULL;
@@ -436,8 +482,8 @@ Array
             );
 
             // already assigned
-            $headerfiles = HPage::getAssets('header',$pageID,false,false);
-            $footerfiles = HPage::getAssets('footer',$pageID,false,false);
+            $headerfiles = Assets::getAssets('header',$pageID,false,true);
+            $footerfiles = Assets::getAssets('footer',$pageID,false,true);
             $files       = array('js'=>array(),'css'=>array());
 
             if(count($headerfiles['js'])) {
@@ -450,15 +496,16 @@ Array
                     $files['js'][] = array('file'=>$file,'pos'=>'footer');
                 }
             }
-echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">$pageID\n";
-print_r($headerfiles);
-#print_r($tpljs);
-#print_r($plugins);
-echo "</textarea>";
 
             if(self::asJSON())
             {
-                Json::printSuccess();
+                Json::printSuccess(array(
+                    'files'   => $files,
+                    'content' => self::tpl()->get('backend_page_headerfiles', array(
+                        'files'   => $files,
+                        'tplcss'  => $tplcss,
+                    ))
+                ));
             } else {
                 Backend::print_header();
                 self::tpl()->output('backend_page_headerfiles', array(
@@ -531,6 +578,7 @@ return;
 
             $pages = HPage::getPages(true);
 
+/*
             $lang  = self::router()->getRoutePart(-1);
             if($lang && !in_array($lang,array('page','index','list')))
             {
@@ -541,6 +589,7 @@ return;
                 }
                 $pages = HPage::getPagesForLanguage($lang);
             }
+*/
 
             if(!$as_array && self::asJSON())
             {
@@ -609,7 +658,7 @@ return;
             if(is_array(($tpls=Addons::getAddons('template'))))
                 foreach(array_values($tpls) as $dir => $name)
                     $templates[$dir] = $name;
-            $form->getElement('page_template')->setData($templates);
+            $form->getElement('page_template')->setValue($templates);
 
             // set current value for template select
             $curr_tpl   = HPage::getPageTemplate($pageID);
@@ -618,7 +667,7 @@ return;
             // remove variant select if no variants are available
             $variants   = Template::getVariants($curr_tpl);
             if(!$variants) $form->removeElement('template_variant');
-            else           $form->getElement('template_variant')->setData($variants);
+            else           $form->getElement('template_variant')->setValue($variants);
 
             // remove menu select if there's only one menu block
             $menus      = Template::get_template_menus($curr_tpl);
@@ -716,11 +765,11 @@ echo "</textarea>";
                                 ;
                         }
 /*
-                        
-*/
-echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+    echo "FUNC ",__FUNCTION__," LINE ",__LINE__,"<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
 print_r($page);
 echo "</textarea>";
+*/
+
                     }
                 }
             }

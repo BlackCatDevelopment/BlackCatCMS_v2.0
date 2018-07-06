@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -17,14 +17,16 @@
 
 namespace CAT\Addon;
 
+use \CAT\Helper\Directory As Directory;
+
 class Page extends Module implements IAddon, IPage
 {
 	/**
 	 * @var void
 	 */
-	protected static (string)$type     = 'page';
-	protected static (int)$addonID     = NULL;
-    protected static (string)$template = NULL;
+	protected static $type     = 'page';
+	protected static $addonID  = NULL;
+    protected static $template = NULL;
 
 	public function __construct()
 	{
@@ -60,22 +62,25 @@ class Page extends Module implements IAddon, IPage
 
     /**
      * default view function
+     *
+     * @access public
+     * @param  array  $section - section settings
+     * @return string
      **/
-	public static function view($section_id)
+	public static function view($section)
 	{
 		self::$template	= 'view';
-        $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
-        if(is_dir($tpl_path))
+        $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
+        $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant'].'/languages');
+        if(is_dir($tpl_path)) {
             self::tpl()->setPath($tpl_path);
-        $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/default');
+        }
+        if(is_dir($lang_path)) {
+            self::addLangFile($lang_path);
+        }
+        $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
         if(is_dir($def_path))
             self::tpl()->setFallbackPath($def_path);
-		self::tpl()->output(
-			self::$template,
-			array(
-                'section_id' => $section_id
-            ) //self::getParserValue()
-		);
 	}
 
     /**

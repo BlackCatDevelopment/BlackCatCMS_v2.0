@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -31,7 +31,7 @@ class Widget extends Module implements IAddon
 	/**
 	 * @inheritDoc
 	 */
-	public static function save($section_id)
+	public static function save(int $section_id)
 	{
 		// TODO: implement here
 	}
@@ -39,7 +39,7 @@ class Widget extends Module implements IAddon
 	/**
 	 * @inheritDoc
 	 */
-	public static function modify($section_id)
+	public static function modify(array $section)
 	{
 		// TODO: implement here
 	}

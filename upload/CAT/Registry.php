@@ -115,15 +115,15 @@ if (!class_exists('\CAT\Registry', false))
                     $return_value = Registry::$REGISTRY[$key];
 
             // try to get the value from the settings table
-            if(!$return_value)
+            if(!$return_value && ! \CAT\Helper\DB::connectionFailed())
             {
                 $result = self::db()->query(
                     'SELECT `t1`.`name`, `t1`.`default_value`, '
                     .'`t2`.`value` AS `global`, `t3`.`value` AS `site` '
-                    .'FROM `cat_settings` AS `t1` '
-                    .'LEFT JOIN `cat_settings_global` AS `t2` '
+                    .'FROM `:prefix:settings` AS `t1` '
+                    .'LEFT JOIN `:prefix:settings_global` AS `t2` '
                     .'ON `t1`.`name`=`t2`.`name` '
-                    .'LEFT JOIN `cat_settings_site` as `t3` '
+                    .'LEFT JOIN `:prefix:settings_site` as `t3` '
                     .'ON `t1`.`name`=`t3`.`name` '
                     .'WHERE `t1`.`name`=?',
                     array(strtolower($key))

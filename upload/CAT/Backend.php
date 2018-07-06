@@ -18,10 +18,7 @@
 namespace CAT;
 use \CAT\Base as Base;
 use \CAT\Registry as Registry;
-use \CAT\Sections as Sections;
-use \CAT\Backend\Page as BPage;
 use \CAT\Helper\HArray as HArray;
-use \CAT\Helper\Page as HPage;
 use \CAT\Helper\Validate as Validate;
 use \CAT\Helper\FormBuilder as FormBuilder;
 use \CAT\Helper\Json as Json;
@@ -33,12 +30,12 @@ if (!class_exists('Backend', false))
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         #protected static $loglevel = \Monolog\Logger::DEBUG;
 
-        private   static $instance = array();
-        private   static $form     = NULL;
-        private   static $route    = NULL;
-        private   static $params   = NULL;
-        private   static $menu     = NULL;
-        private   static $tplpath  = NULL;
+        private   static $instance    = array();
+        private   static $form        = NULL;
+        private   static $route       = NULL;
+        private   static $params      = NULL;
+        private   static $menu        = NULL;
+        private   static $tplpath     = NULL;
         private   static $tplfallback = NULL;
 
         // public routes (do not check for authentication)
@@ -92,90 +89,7 @@ if (!class_exists('Backend', false))
          **/
         public static function dispatch()
         {
-            // get the route handler
-            $router = self::router();
-            self::log()->addDebug(sprintf(
-                'checking if route [%s] is protected',
-                $router->getFunction()
-            ));
-            // check for protected route
-            if(!in_array($router->getFunction(),self::$public))
-            {
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// Das erfordert die Einhaltung bestimmter Regeln, z.B. dass die Funktion
-// "index" immer das Recht "<Funktionsname>" erfordert (z.B. "groups"), alle
-// weiteren das Recht "<Funktionsname>_<$funcname>" (z.B. "pages_list")
-// Der Code ist irgendwie unelegant... Später nochmal drauf schauen
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                $need_perm = strtolower($router->getFunction());
-                if($router->getFunction() !== 'index')
-                    $router->setController('\CAT\Backend\\'.ucFirst($router->getFunction()));
-                $router->setFunction(
-                    ( ($funcname = $router->getParam(0,true)) !== NULL ? $funcname : 'index' )
-                );
-                if($funcname)
-                    $need_perm .= '_'.strtolower($funcname);
-                $router->protect($need_perm);
-            }
-
-            // re-route to login page if the route is protected and the user is
-            // not logged in
-            if($router->isProtected() && !self::user()->is_authenticated())
-            {
-                self::log()->addDebug(sprintf(
-                    'proctected route [%s] called, forwarding user to login screen',
-                    $router->getFunction()
-                ));
-                header('Location: '.CAT_ADMIN_URL.'/login');
-            }
-            else
-            {
-                // save current route for later use
-                self::$route = $router->getRoute();
-
-                // if asJSON() is true, nothing will be rendered, so we don't
-                // need this
-                if(!self::asJSON())
-                {
-                    // set some template globals
-                    self::tpl()->setGlobals(
-                        array(
-                            'meta' => array(
-                                'USER'    => self::user()->get(),
-                                'SECTION' => ucfirst(str_replace('\CAT\Backend\\','',$router->getController())),
-                                'PERMS'   => User::getInstance()->getPerms()
-                            )
-                        )
-                    );
-                    if($router->getFunction() !== 'index') {
-                        self::tpl()->setGlobals(
-                            array(
-                                'meta' => array(
-                                    'ACTION'  => ucfirst($router->getFunction()),
-                                )
-                            )
-                        );
-                    }
-
-                    // set the page title
-                    $controller = explode('\\',$router->getController());
-                    HPage::setTitle(sprintf(
-                        'BlackCat CMS Backend / %s',
-                        self::lang()->translate($controller[count($controller)-1])
-                    ));
-
-                    // pages list
-                    if(self::user()->hasPerm('pages_list'))
-                    {
-                        self::tpl()->setGlobals('pages',BPage::tree());
-                        self::tpl()->setGlobals('pagelist',HPage::getPages(1));
-                        self::tpl()->setGlobals('sections',Sections::getSections());
-                    }
-                }
-
-                // finally, dispatch the request (call controller)
-                $router->dispatch();
-            }
+            return self::router()->dispatch('Backend');
         }   // end function dispatch()
 
         /**
@@ -188,8 +102,8 @@ if (!class_exists('Backend', false))
             $route = self::router()->getRoute();
             // example route: backend/page/edit/1
             $parts = explode('/',$route);
-            if(count($parts)>=2)
-                return $parts[1];
+            if($parts[0]==CAT_BACKEND_PATH) array_shift($parts);
+            return $parts[0];
             return null;
         }   // end function getArea()
 
@@ -285,6 +199,14 @@ if (!class_exists('Backend', false))
 
         /**
          *
+         **/
+        public static function getPublicRoutes()
+        {
+             return self::$public;
+        }    // end function getPublicRoutes()
+
+        /**
+         *
          * @access public
          * @return
          **/
@@ -318,9 +240,9 @@ if (!class_exists('Backend', false))
         {
             if(!self::$tplpath || !file_exists(self::$tplpath))
             {
-            $theme   = Registry::get('default_theme');
-            $variant = Registry::get('default_theme_variant');
-            if(!$variant || !strlen($variant)) $variant = 'default';
+                $theme   = Registry::get('default_theme');
+                $variant = Registry::get('default_theme_variant');
+                if(!$variant || !strlen($variant)) $variant = 'default';
                 $paths = array( // search paths
                     CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/'.$variant,
                     CAT_ENGINE_PATH.'/templates/'.$theme.'/templates/default',
@@ -351,30 +273,8 @@ if (!class_exists('Backend', false))
          **/
         public static function isBackend()
         {
-            $current_route = Base::router()->getRoute();
-            $backend_route = defined('Backend_PATH')
-                           ? Backend_PATH
-                           : 'backend';
-
-            if(substr($current_route, 0, -1) != '/')
-                $current_route .= '/';
-
-//echo "curr $current_route be $backend_route<br />";
-            self::log()->addDebug(sprintf(
-                'current route [%s] configured backend route [%s]',
-                $current_route,$backend_route
-            ));
-
-            if(preg_match('~^/?'.$backend_route.'/~i', $current_route))
-            {
-                self::log()->addDebug('isBackend(true)');
-                return true;
-            } else {
-                self::log()->addDebug('isBackend(false)');
-                return false;
-            }
+            return self::router()->isBackend();
         }   // end function isBackend()
-
 
 // =============================================================================
 //     Route handler
@@ -445,10 +345,9 @@ if (!class_exists('Backend', false))
                         foreach(array_values($langs) as $l)
                             $langselect[$l] = $l;
                         $form = self::form();
-                        $form->loadFile('forms.inc.php',__dir__.'/forms');
-                        $form->setForm('lang_select');
-                        $form->getElement('language')->setAttr('options',$langselect);
-                        Json::printSuccess($form->getForm());
+                        $form->loadFromFile('lang_select','forms.inc.php',__dir__.'/forms');
+                        $form->getElement('language')->setValue($langselect);
+                        Json::printSuccess($form->render(1));
                         break;
                 }
             }

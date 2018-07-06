@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -89,6 +89,8 @@ if (!class_exists('\CAT\Backend\Settings'))
             $region     = self::router()->getParam();
             if(!$region)
                 $region = self::router()->getFunction();
+            if(!$region)
+                $region = self::router()->getRoutePart(1);
 
             // filter settings by region
             if($region && $region != 'index')
@@ -116,9 +118,8 @@ if (!class_exists('\CAT\Backend\Settings'))
         protected static function renderForm($settings)
         {
             return \CAT\Helper\FormBuilder::generate(
-                'settings',
-                $settings,
-                'region',
+                'settings',  // form name
+                $settings,   // form items
                 self::loadSettings()
             );
         }   // end function renderForm()

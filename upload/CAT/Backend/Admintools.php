@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -52,11 +52,37 @@ if (!class_exists('Backend\Admintools'))
          **/
         public static function index()
         {
+            $d = self::list();
+            Backend::print_header();
+            self::tpl()->output('backend_dashboard',array('id'=>0,'dashboard'=>$d));
+            Backend::print_footer();
+
+        }   // end function index()
+
+        /**
+         *
+         *
+         *
+         *
+         **/
+        public static function list($as_array=false)
+        {
+            if(!self::user()->hasPerm('tools_list'))
+                Json::printError('You are not allowed for the requested action!');
+
             $d = \CAT\Helper\Dashboard::getDashboardConfig('backend/admintools');
             // no configuration yet
             if(!isset($d['widgets']) || !is_array($d['widgets']) || !count($d['widgets']))
             {
                 $tools = Addons::getAddons('tool','name',false);
+
+                if(!$as_array && self::asJSON())
+                {
+                    echo header('Content-Type: application/json');
+                    echo json_encode($tools,true);
+                    return;
+                }
+
                 $col          = 1; // init column
                 $d['columns'] = ( isset($d['columns']) ? $d['columns'] : 2 ); // init col number
                 if(count($tools))
@@ -66,23 +92,6 @@ if (!class_exists('Backend\Admintools'))
                     $count = count($tools);
                     foreach($tools as $tool)
                     {
-/*
-[addon_id] => 1
-[type] => module
-[directory] => blackcat
-[name] => BlackCat CMS Admin Tool and Widget
-[description] => BlackCat CMS Admin Tool and Widget - allows to check for new versions (widget demo)
-[function] => tool
-[version] => 0.6
-[guid] => CF217773-24C7-4DAB-954F-98D9F7118F7D
-[platform] => 1.0
-[author] => BlackCat  Development
-[license] => GNU General Public License
-[installed] => 1458312789
-[upgraded] => 1458312789
-[removable] => Y
-[bundled] => Y
-*/
                         Base::addLangFile(CAT_ENGINE_PATH.'/modules/'.$tool['directory'].'/languages/');
                         // init widget
                         $d['widgets'][] = array(
@@ -100,12 +109,9 @@ if (!class_exists('Backend\Admintools'))
                     //$d = \CAT\Helper\Dashboard::getDashboard('backend/admintools');
                 }
             }
-            $self = self::getInstance();
-            Backend::print_header();
-            $self->tpl()->output('backend_dashboard',array('id'=>0,'dashboard'=>$d));
-            Backend::print_footer();
 
-        }   // end function index()
+            return $d;
+        }   // end function list()
 
         /**
          *
@@ -142,6 +148,9 @@ if (!class_exists('Backend\Admintools'))
                 self::addLangFile(CAT_ENGINE_PATH.'/modules/tool_'.$tool.'/languages/');
                 self::setTemplatePaths($tool);
                 include_once $handler;
+                if(!class_exists($classname)) {
+                    $classname = '\CAT\Addon\\'.$classname;
+                }
                 // init forms
                 $init = Directory::sanitizePath(
                     CAT_ENGINE_PATH.'/modules/'.$tool.'/forms.init.php'
@@ -155,7 +164,10 @@ if (!class_exists('Backend\Admintools'))
                 {
                     $classname::initialize();
                 }
-                $tpl_data['content'] = $classname::tool();
+                if(is_callable(array($classname,'tool')))
+                {
+                    $tpl_data['content'] = $classname::tool();
+                }
             }
 
             if(self::asJSON())
@@ -191,8 +203,11 @@ if (!class_exists('Backend\Admintools'))
             if(!$tool)
                 $tool = self::router()->getParam(-1);
 
+            if(!$tool)
+                $tool = self::router()->getRoutePart(-1);
+
             if(!$tool || !is_scalar($tool))
-                CAT_Object::printFatalError('Invalid data')
+                self::printFatalError('Invalid data')
                 . (self::$debug ? '(Backend_Admintools::getTool())' : '');
 
             if(!Addons::exists($tool))

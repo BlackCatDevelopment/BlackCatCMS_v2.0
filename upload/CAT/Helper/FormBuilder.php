@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -45,32 +45,45 @@ if (!class_exists('FormBuilder'))
                     if(isset($item['fieldset']) && $lastlabel != $item['fieldset'])
                     {
                         $form->addElement(new \wblib\wbForms\Element\Fieldset(
-                            self::lang()->translate(self::humanize($item['fieldset'])),
                             self::lang()->translate(self::humanize($item['fieldset']))
                         ));
                     }
 
                     $type = 'wblib\wbForms\Element\\'.ucfirst($item['fieldtype']);
+
+                    // list of values for checkbox and radio
+                    if($item['fieldtype']=='checkbox' || $item['fieldtype']=='radio')
+                    {
+                        if(isset($formdata[$item['name']]) && strlen($formdata[$item['name']]) && substr_count($formdata[$item['name']],","))
+                        {
+                            $formdata[$item['name']] = explode(",",$formdata[$item['name']]);
+                        }
+                    }
+
                     $label = strlen($item['label'])
                             ? self::lang()->translate($item['label'])
                             : self::lang()->translate(self::humanize($item['name']));
 
-                    $element = array(
-                        'required' => (
-                              (isset($item['required']) && strlen($item['required']))
-                            ? true
-                            : false
-                        ),
-                        'helptext' => $item['helptext'],
-                        'pattern'  => ( isset($item['pattern']) ? $item['pattern'] : false ),
+                    $element = array_merge(
+                        $item,
+                        array(
+                            'required' => (
+                                  (isset($item['required']) && strlen($item['required']))
+                                ? true
+                                : false
+                            ),
+                            'helptext' => $item['helptext'],
+                            'pattern'  => ( isset($item['pattern']) ? $item['pattern'] : false ),
+                            'label'    => $label,
+                        )
                     );
-                    $e = $form->addElement(new $type($label,$item['name'],$element));
+                    $e = $form->addElement(new $type($item['name'],$element));
 
                     if(strlen($item['fieldhandler'])) {
                         $params = ( substr_count($item['params'], ',') ? explode(', ',$item['params']) : array($item['params']) );
                         $data = call_user_func_array($item['fieldhandler'], $params);
                         if($data) {
-                            $e->setData($data);
+                            $e->setValue($data);
                         }
                     }
 
@@ -83,11 +96,9 @@ if (!class_exists('FormBuilder'))
 
                 // buttons
                 $form->addElement(new \wblib\wbForms\Element\Button(
-                    self::lang()->translate('Save'),
                     self::lang()->translate('Save')
                 ));
                 $form->addElement(new \wblib\wbForms\Element\Button(
-                    self::lang()->translate('Cancel'),
                     self::lang()->translate('Cancel')
                 ));
             }

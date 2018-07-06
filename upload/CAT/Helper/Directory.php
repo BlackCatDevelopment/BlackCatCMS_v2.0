@@ -7,13 +7,15 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
    @package         CAT_Core
 
 */
+
+declare(strict_types=1);
 
 namespace CAT\Helper;
 
@@ -54,7 +56,7 @@ if (!class_exists('\CAT\Helper\Directory'))
          **/
         public static function getInstance()
         {
-            if (!self::$instance)
+            if (!self::$instance || !self::$instance instanceof self)
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
@@ -67,7 +69,7 @@ if (!class_exists('\CAT\Helper\Directory'))
          * @param  string   $inside (default 'SITE')
          * @return boolean
          **/
-        public static function checkPath($path,$inside='SITE')
+        public static function checkPath(string $path,string $inside='SITE')
         {
             $check = (strtoupper($inside) == 'SITE')
                    ? CAT_PATH
@@ -88,7 +90,7 @@ if (!class_exists('\CAT\Helper\Directory'))
          * @param  octal    $dir_mode - access mode
          * @return boolean
          **/
-        public static function createDirectory($dir_name, $dir_mode=NULL, $createIndex=false)
+        public static function createDirectory(string $dir_name,string $dir_mode=NULL,bool $createIndex=false)
         {
             if(!$dir_mode) {
                 $dir_mode = Registry::exists('OCTAL_DIR_MODE')
@@ -119,7 +121,7 @@ if (!class_exists('\CAT\Helper\Directory'))
          * @return boolean
          *
          **/
-        public static function createIndex($dir)
+        public static function createIndex(string $dir)
         {
             if($handle=dir($dir))
             {
@@ -175,34 +177,6 @@ if (!class_exists('\CAT\Helper\Directory'))
             }
             return $default_file_mode;
         }   // end function defaultFileMode()
-
-        /**
-         * converts extensions like .php to case insensitive glob pattern
-         * like .[pP][hH][pP]
-         *
-         * @access public
-         * @param  mixed  $ext - string or array of extensions
-         * @return string
-         **/
-        public static function globPattern($ext)
-        {
-            $result = null;
-            if(!is_array($ext)) { $ext = array($ext); }
-            if(is_array($ext) && count($ext)) {
-                $results = array();
-                foreach(array_values($ext) as $item) {
-                    $result = null;
-                    foreach(str_split($item) as $char) {
-                        if($char == '.') continue;
-                        $result .= '['.strtolower($char).strtoupper($char).']';
-                    }
-                    $results[] = $result;
-                }
-                $result = implode(',',$results);
-            }
-            return $result;
-        }   // end function globPattern()
-        
 
         /**
          *
@@ -264,22 +238,27 @@ $directories[] = $name;
          **/
         public static function findFiles($dir,$options=array())
         {
-            if(!is_dir($dir)) return array();
+            if(!strlen($dir) || !is_dir($dir)) {
+                return array();
+            }
 
-            if(self::$debug) self::$trace[] = sprintf('scanning path [%s]',$dir);
+            if(self::$debug) {
+                self::$trace[] = sprintf('scanning path [%s]',$dir);
+            }
 
             // merge options with defaults
             $options = array_merge(array(
                 'curr_depth'    => 0,     // pass current recursion depth
                 'extension'     => null,  // file extension to scan for
                 'extensions'    => null,  // array of extensions to scan for
-                'filename'      => null,  // filename to scan for
-                'filter'        => null,  // filename filter
+                'filename'      => '',    // filename to scan for
+                'filter'        => '',    // filename filter
                 'max_depth'     => 9,     // max recursion depth
                 'recurse'       => false, // recurse or not
                 'remove_prefix' => false, // prefix to remove from path
                 'remove_suffix' => false, // suffix to remove from path
             ), $options);
+
 
             $options['curr_depth']++;
 
@@ -315,68 +294,71 @@ $directories[] = $name;
                 $options['remove_prefix'] = self::sanitizePath($dir);
             }
 
-            if(self::$debug) self::$trace[] = var_export($options,1);
-
-            foreach(scandir($dir) as $file)
+            if(self::$debug) self::$trace[] = var_export($options,true);
+            $scanned_directory = array_diff(scandir($dir), array('..', '.'));
+            if(is_array($scanned_directory) && count($scanned_directory)>0)
             {
-                if(substr($file,0,1)=='.') continue;
-                $curr_item = self::getName(self::sanitizePath($dir.'/'.$file));
-                if(self::$debug) self::$trace[] = sprintf('current item: %s', $curr_item);
-                if(is_file($curr_item))
+                foreach($scanned_directory as $file)
                 {
-                    $filename = str_ireplace($options['remove_prefix'],'',$curr_item);
-                    if(self::$debug) self::$trace[] = sprintf('checking file: %s', $filename);
-                    // filename match
-                    if(
-                           strlen($options['filename'])
-                        && pathinfo($curr_item,PATHINFO_FILENAME) != $options['filename']
-                    ) {
-                        if(self::$debug) self::$trace[] = sprintf(
-                            '>>> skipped by filename filter --- [%s] != [%s]',
-                            pathinfo($curr_item,PATHINFO_FILENAME),
-                            $options['filename']
-                        );
-                        continue;
-                    }
-                    // extension match
-                    if(
-                           is_array($options['extensions'])
-                        && count($options['extensions'])
-                        && !in_array(pathinfo($curr_item,PATHINFO_EXTENSION),$options['extensions'])
-                    ) {
-                        if(self::$debug) self::$trace[] = sprintf(
-                            '>>> skipped by extensions filter; allowed extensions:',
-                            implode(',',$options['extensions'])
-                        );
-                        continue;
-                    }
-                    // filter match
-                    if(strlen($options['filter']))
+                    if(substr($file,0,1)=='.') continue;
+                    $curr_item = self::getName(self::sanitizePath($dir.'/'.$file));
+                    if(self::$debug) self::$trace[] = sprintf('current item: %s', $curr_item);
+                    if(is_file($curr_item))
                     {
-                        $filter = "~^".$options['filter'];
-                        if(count($options['extensions']>0))
-                        {
-                            $filter .= "\.(" . implode("|",$options['extensions']) . ")";
-                        } else {
-                            $filter .= "\..*";
-                        }
-                        $filter .= "$~i";
-                        if(!preg_match($filter,pathinfo($curr_item,PATHINFO_BASENAME))
+                        $filename = str_ireplace($options['remove_prefix'],'',$curr_item);
+                        if(self::$debug) self::$trace[] = sprintf('checking file: %s', $filename);
+                        // filename match
+                        if(
+                               strlen($options['filename'])
+                            && pathinfo($curr_item,PATHINFO_FILENAME) != $options['filename']
                         ) {
                             if(self::$debug) self::$trace[] = sprintf(
-                                '>>>skipped by regexp filter: [%s]',
-                                $filter
+                                '>>> skipped by filename filter --- [%s] != [%s]',
+                                pathinfo($curr_item,PATHINFO_FILENAME),
+                                $options['filename']
                             );
                             continue;
                         }
-                    }
-                    if(self::$debug) self::$trace[] = sprintf(
-                        'adding file [%s]', $filename
-                    );
-                    $files[] = $filename;
-                } else {
-                    if(is_dir($curr_item) && $options['recurse']===true && $options['curr_depth']<$options['max_depth']) {
-                        $files = array_merge($files, self::findFiles($curr_item,$options));
+                        // extension match
+                        if(
+                               is_array($options['extensions'])
+                            && count($options['extensions'])
+                            && !in_array(pathinfo($curr_item,PATHINFO_EXTENSION),$options['extensions'])
+                        ) {
+                            if(self::$debug) self::$trace[] = sprintf(
+                                '>>> skipped by extensions filter; allowed extensions:',
+                                implode(',',$options['extensions'])
+                            );
+                            continue;
+                        }
+                        // filter match
+                        if(strlen($options['filter']))
+                        {
+                            $filter = "~^".$options['filter'];
+                            if(count($options['extensions'])>0)
+                            {
+                                $filter .= "\.(" . implode("|",$options['extensions']) . ")";
+                            } else {
+                                $filter .= "\..*";
+                            }
+                            $filter .= "$~i";
+                            if(!preg_match($filter,pathinfo($curr_item,PATHINFO_BASENAME))
+                            ) {
+                                if(self::$debug) self::$trace[] = sprintf(
+                                    '>>>skipped by regexp filter: [%s]',
+                                    $filter
+                                );
+                                continue;
+                            }
+                        }
+                        if(self::$debug) self::$trace[] = sprintf(
+                            'adding file [%s]', $filename
+                        );
+                        $files[] = $filename;
+                    } else {
+                        if(is_dir($curr_item) && $options['recurse']===true && $options['curr_depth']<$options['max_depth']) {
+                            $files = array_merge($files, self::findFiles($curr_item,$options));
+                        }
                     }
                 }
             }
@@ -482,7 +464,7 @@ $directories[] = $name;
                 	}
             	}
             }
-            if($size && $convert) $size = self::humanize($size);
+            if($size && $convert) $size = self::format($size);
         	return $size;
         }   // end function getSize()
 
@@ -503,7 +485,7 @@ $directories[] = $name;
          * @param  integer $bytes
          * @return string
          **/
-        public static function humanize($bytes)
+        public static function format(int $bytes)
         {
         	$symbol = array(' bytes', ' KB', ' MB', ' GB', ' TB');
         	$exp = 0;
@@ -514,7 +496,7 @@ $directories[] = $name;
         		$converted_value = ($bytes / pow( 1024, floor($exp)));
         	}
         	return sprintf('%.2f '.$symbol[$exp], $converted_value);
-        }   // end function humanize()
+        }   // end function format()
 
         /**
          *
@@ -540,7 +522,7 @@ $directories[] = $name;
          * @param  string  $string - filename
          * @return string
          **/
-        public static function sanitizeFilename($string)
+        public static function sanitizeFilename(string $string)
         {
             self::log()->addDebug('> sanitizeFilename [{file}]',array('file'=>$string));
             require_once(CAT_ENGINE_PATH . '/framework/functions-utf8.php');
@@ -569,7 +551,7 @@ $directories[] = $name;
          * @param  string  $path - path to fix
          * @return string
          **/
-        public static function sanitizePath($path,$as_array=false)
+        public static function sanitizePath(string $path,bool $as_array=false)
         {
             #self::log()->addDebug(sprintf('> sanitizePath(%s)',$path));
 
@@ -625,7 +607,7 @@ $directories[] = $name;
          * @param  string  $filename
          * @return string
          **/
-        private static function getID3Mime($filename)
+        private static function getID3Mime(string $filename)
         {
             $mime = NULL;
 
@@ -680,7 +662,7 @@ $directories[] = $name;
          * @access public
          * @return
          **/
-        private static function getMagicMime($filename)
+        private static function getMagicMime(string $filename)
         {
             $mime = NULL;
 
@@ -709,7 +691,7 @@ $directories[] = $name;
          * @access public
          * @return
          **/
-        private static function getPECLMime($filename)
+        private static function getPECLMime(string $filename)
         {
             self::log()->addDebug('- Checking MIME type with Fileinfo PECL extension');
             $mime = NULL;
@@ -797,7 +779,7 @@ $directories[] = $name;
          * @access public
          * @return
          **/
-        private static function getUNIXMime($filename)
+        private static function getUNIXMime(string $filename)
         {
             $mime = NULL;
             if (function_exists('exec'))

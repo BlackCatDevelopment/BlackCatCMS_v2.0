@@ -139,6 +139,7 @@ $LANG = array_merge($LANG,array(
     'The page was deleted but can be recovered' => 'Die Seite ist gelöscht, kann aber wiederhergestellt werden',
     'The position of the page in the page tree.' => 'Die Position der Seite im Seitenbaum.',
     'The title should be a nice &quot;human readable&quot; text having 30 up to 55 characters.' => 'Der Seitentitel sollte ein &quot;menschenlesbarer&quot; Text mit mindestens 30 und höchstens 55 Zeichen sein.',
+    'There are no linked pages yet' => 'Es sind noch keine Seiten verlinkt',
     'These settings are page based, to manage global settings, goto Settings -> Header files.' => 'Diese Einstellungen sind seitenbasiert, globale Einstellungen können unter Einstellungen -> Kopfdateien vorgenommen werden.',
     'This section is marked as deleted.' => 'Dieser Abschnitt ist als gelöscht markiert.',
     'Use {language_menu()} in your frontend template to show links to the pages listed below.' => 'Das Markup {language_menu()} im Frontend-Template erzeugt Links zu den untenstehenden Seiten.',
@@ -263,6 +264,7 @@ $LANG = array_merge($LANG,array(
 
     // --------------- Backend -> Settings ----------
     'Common'            => 'Allgemein',
+    'Cookie name'       => 'Cookie-Name',
     'Default charset'   => 'Standard Encoding / Charset',
     'Default language'  => 'Standard-Sprache',
     'Default template'  => 'Standard-Template',

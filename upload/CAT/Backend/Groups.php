@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -124,7 +124,7 @@ print_r($_REQUEST);
         public static function index($id=NULL)
         {
             $params = self::router()->getParams();
-            if(count($params))
+            if(is_array($params) && count($params))
             {
                 switch($params[0])
                 {

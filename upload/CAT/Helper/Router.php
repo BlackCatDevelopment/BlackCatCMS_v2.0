@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -20,6 +20,9 @@ namespace CAT\Helper;
 use \CAT\Base as Base;
 use \CAT\Backend as Backend;
 use \CAT\Helper\Directory as Directory;
+use \CAT\Backend\Page as BPage;
+use \CAT\Helper\Page as HPage;
+use \CAT\Sections as Sections;
 
 if(!class_exists('Router',false))
 {
@@ -34,18 +37,20 @@ if(!class_exists('Router',false))
         private          $route      = NULL;
         // query string
         private          $query      = NULL;
-        // controller name
-        private          $controller = NULL;
-        // function name
-        private          $func       = NULL;
-        // params
-        private          $params     = NULL;
-        // full name
-        private          $handler    = NULL;
-        // match public
-        public           $protected  = false;
-        // needed route permission
-        private          $perm       = NULL;
+        // the route split into parts
+        private          $parts      = NULL;
+        // flag
+        private          $backend    = false;
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Spaeter konfigurierbar machen!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        private   static $asset_paths = array(
+            'css','js','images','eot','fonts'
+        );
+        private   static $assets = array(
+            'css','js','eot','svg','ttf','woff','woff2',
+        );
 
         public static function getInstance()
         {
@@ -59,28 +64,7 @@ if(!class_exists('Router',false))
          **/
         public function __construct()
         {
-            // get route
-            list($this->route,$this->query) = self::initRoute();
-            // split route
-            $params      = explode('/',str_replace('\\','/',$this->route));
-            // first part of the route is the controller name
-            $controller  = array_shift($params);
-            // second item (if exists) is the function name; if
-            // no function name is available, use index()
-            $function    = (count($params) ? array_shift($params) : 'index');
-            $this->addDebug(sprintf('controller [%s] function [%s]',$controller,$function));
-            // if there are any items left, save as params
-            if(count($params)) $this->params = $params;
-            // the given param may be an item id
-            if(is_numeric($function))
-            {
-                $this->params[] = $function;
-                $function = 'index';
-            }
-            // controller class name
-            $this->controller = '\CAT\\' . ucfirst($controller);
-            // function name
-            $this->func       = $function;
+            $this->initRoute();
         }   // end function __construct()
 
         /**
@@ -90,44 +74,115 @@ if(!class_exists('Router',false))
          **/
         public function dispatch()
         {
-            $controller = $this->controller;
-            $function   = $this->func;
-            $this->log()->addDebug(
-                sprintf(
-                    'dispatching route [%s], controller [%s], function [%s], protected [%s]',
-                    $this->route, $controller, $function, $this->protected
-                )
-            );
-            // check route permissions
-            if(
-                    $this->protected
-                && !$this->user()->hasPerm($this->perm)
-            ) {
-                $this->log()->addError(
-                    'Routing error: User [{user}] tried to access [{func}] in controller [{controller}]',
-                    array('user'=>$this->user()->get('username'),'func'=>$function,'controller'=>$controller)
-                );
-                return Backend::login(
-                    'Please enter valid login credentials to proceed<br />'
-                  . sprintf('(Backend_Router::dispatch#1) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
-                );
-            }
-            // check if controller exists
-            if(!class_exists($controller) || !is_callable(array($controller,$function)))
-            {
-                $this->log()->addError(sprintf(
-                    'Routing error: No such controller [%s] (%s) or function not callable [%s] (%s)',
-                    $controller, class_exists($controller), $function, is_callable(array($controller,$function))
-                ));
-                return Backend::login(
-                    'Please enter valid login credentials to proceed<br />'
-                  . sprintf('(Backend_Router::dispatch#2) user [%s] func [%s] controller [%s]',$this->user()->get('username'),$function,$controller)
-                );
+            if(!$this->route) {
+                $this->route = 'index';
             }
 
-            // hand over to controller
-            return $controller::$function($this->getParam());
-            exit;
+            // ----- serve asset files -----------------------------------------
+            $suffix = pathinfo($this->route,PATHINFO_EXTENSION);
+            if(
+                ($type=$this->match('~^('.implode('|',self::$asset_paths).')~i'))!==false
+                ||
+                (strlen($suffix) && in_array($suffix,self::$assets))
+            ) {
+                if(strlen($suffix) && in_array($suffix,self::$assets))
+                {
+                    \CAT\Helper\Assets::serve($suffix,array($this->route),true);
+                } else {
+                    parse_str($this->getQuery(),$files);
+                    // remove leading / from all files
+                    foreach($files as $i => $f) $files[$i] = preg_replace('~^/~','',$f,1);
+                    \CAT\Helper\Assets::serve($type,$files);
+                }
+                return;
+            }
+
+            $this->controller = "\\CAT\\".($this->backend ? 'Backend' : 'Frontend'); // \CAT\Backend || \CAT\Frontend
+            $this->function   = ( count($this->parts)>0 ? $this->parts[0] : 'index' );
+#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
+            self::log()->addDebug(sprintf(
+                'controller [%s] function [%s]',
+                $this->controller,
+                $this->function
+            ));
+
+            // ----- internal handler? ex \CAT\Backend::index() ----------------
+            if(!is_callable(array($this->controller,$this->function)))
+            {
+                self::log()->addDebug(sprintf('is_callable() failed for function [%s], trying to find something in route parts',$this->function));
+                // find controller
+                if(class_exists($this->controller.'\\'.ucfirst($this->function)))
+                {
+                    $this->controller = $this->controller.'\\'.ucfirst($this->function);
+                    $this->function   = ( count($this->parts)>1 ? $this->parts[1] : 'index' );
+#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
+                    if($this->function=='index' && count($this->params)>0)
+                    {
+                        $this->function = array_shift($this->params);
+                    }
+                }
+            }
+
+            $handler = $this->controller.'::'.$this->function;
+            self::log()->addDebug(sprintf(
+                'handler [%s]', $handler
+            ));
+#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
+            if(is_callable(array($this->controller,$this->function)))
+            {
+                self::log()->addDebug('is_callable() succeeded');
+                if(is_callable(array($this->controller,'getPublicRoutes')))
+                {
+                    self::log()->addDebug('found getPublicRoutes() method in controller');
+                    $public_routes = $this->controller::getPublicRoutes();
+                    if(in_array($this->route,$public_routes))
+                    {
+                        self::log()->addDebug('found current route in public routes, unprotecting it');
+                        $this->protected = false;
+                    }
+                }
+
+                // check for protected route
+                if($this->protected && !self::user()->is_authenticated()) {
+                    self::log()->addDebug(sprintf(
+                        'protected route [%s], forwarding to login page',
+                        $this->route
+                    ));
+                    $this->reroute('/backend/login');
+                } else {
+                    // forward to route handler
+                    self::log()->addDebug('forwarding request to route handler');
+                    $handler();
+                }
+            }
+/*
+SITE INDEX
+CAT\Helper\Router Object
+(
+    [route:CAT\Helper\Router:private] =>
+    [query:CAT\Helper\Router:private] =>
+    [controller:CAT\Helper\Router:private] =>
+    [func:CAT\Helper\Router:private] =>
+    [params:CAT\Helper\Router:private] =>
+    [handler:CAT\Helper\Router:private] =>
+    [protected] =>
+    [perm:CAT\Helper\Router:private] =>
+)
+
+BACKEND ROUTE
+CAT\Helper\Router Object
+(
+    [route:CAT\Helper\Router:private] => backend/Page
+    [query:CAT\Helper\Router:private] =>
+    [controller:CAT\Helper\Router:private] => \CAT\Backend
+    [func:CAT\Helper\Router:private] => Page
+    [params:CAT\Helper\Router:private] =>
+    [handler:CAT\Helper\Router:private] =>
+    [protected] =>
+    [perm:CAT\Helper\Router:private] =>
+)
+*/
+
         }   // end function dispatch()
         
 
@@ -311,12 +366,15 @@ if(!class_exists('Router',false))
          * @access public
          * @return
          **/
-        public static function initRoute($remove_prefix=NULL)
+        public function initRoute($remove_prefix=NULL)
         {
             self::log()->addDebug('initializing route');
 
-            $route = NULL;
-            $query = NULL;
+            $this->route     = NULL;
+            $this->query     = NULL;
+            $this->params    = array();
+            $this->protected = false;
+            $this->backend   = false;
 
             foreach(array_values(array('REQUEST_URI','REDIRECT_SCRIPT_URL','SCRIPT_URL','ORIG_PATH_INFO','PATH_INFO')) as $key)
             {
@@ -326,22 +384,33 @@ if(!class_exists('Router',false))
                         'found key [%s] in $_SERVER', $key
                     ));
                     $route = parse_url($_SERVER[$key],PHP_URL_PATH);
-                    $query = parse_url($_SERVER[$key],PHP_URL_QUERY);
                     self::log()->addDebug(sprintf(
-                        'route [%s] query [%s]', $route, $query
+                        'route [%s]', $route
                     ));
                     break;
                 }
             }
             if(!$route) { $route = '/'; }
 
+            if(isset($_SERVER['QUERY_STRING']))
+            {
+                $this->query = $_SERVER['QUERY_STRING'];
+                self::log()->addDebug(sprintf(
+                        'query string [%s]', $this->query
+                    ));
+            }
+
             // remove params
             if(stripos($route,'?'))
                 list($route,$ignore) = explode('?',$route,2);
 
             // remove site subfolder
-            $route = preg_replace('~^\/'.self::site()['subfolder'].'\/~i','',$route);
+            $route = preg_replace('~^\/'.self::site()['subfolder'].'\/?~i','',$route);
 
+            // remove index.php
+            $route = str_ireplace('index.php','',$route);
+
+            // remove document root
             $path_prefix = str_ireplace(
                 Directory::sanitizePath($_SERVER['DOCUMENT_ROOT']),
                 '',
@@ -352,6 +421,10 @@ if(!class_exists('Router',false))
             if(substr($route,0,1)=='/')
                 $route = substr($route,1,strlen($route));
 
+            // remove trailing /
+            if(substr($route,-1,1)=='/')
+                $route = substr($route,0,strlen($route)-1);
+
             // if there's a prefix to remove (needed for backend paths)
             if($remove_prefix)
             {
@@ -359,10 +432,33 @@ if(!class_exists('Router',false))
                 $route = substr($route,1,strlen($route));
             }
 
+            if($route)
+            {
+                $this->parts = explode('/',str_replace('\\','/',$route));
+                $this->route = $route;
+                $backend_route = defined('BACKEND_PATH')
+                    ? BACKEND_PATH
+                    : 'backend';
+                if(preg_match('~^/?'.$backend_route.'/?~i', $route))
+                {
+                    $this->backend   = true;
+                    $this->protected = true;
+                    array_shift($this->parts); // remove backend/ from route
+                    $this->route     = implode("/",$this->parts);
+                    // pages list
+                    if(!self::asJSON() && self::user()->hasPerm('pages_list'))
+                    {
+                        self::tpl()->setGlobals('pages',BPage::tree());
+                        self::tpl()->setGlobals('pagelist',HPage::getPages(1));
+                        self::tpl()->setGlobals('sections',Sections::getSections());
+                    }
+                }
+            }
+
             self::log()->addDebug(sprintf(
-                'initRoute() returning result: route [%s] query [%s]', $route, $query
+                'initRoute() returning result: route [%s] query [%s]', $route, $this->query
             ));
-            return array($route,$query);
+            
         }   // end function initRoute()
 
         /**
@@ -382,6 +478,14 @@ if(!class_exists('Router',false))
             }
             return false;
         }   // end function match()
+
+        /**
+         *
+         **/
+        public function isBackend()
+        {
+            return $this->backend;
+        }
 
         /**
          * checks if the route is protected or not
@@ -409,6 +513,15 @@ if(!class_exists('Router',false))
             $this->perm      = $needed_perm;
         }   // end function protect()
         
+        /**
+         *
+         **/
+        public function reroute($newroute)
+        {
+            $_SERVER['REQUEST_URI'] = $newroute;
+            $this->initRoute();
+            $this->dispatch();
+        }
 
     }
 }

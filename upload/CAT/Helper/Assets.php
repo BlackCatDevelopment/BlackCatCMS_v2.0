@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       Black Cat Development
    @link            https://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Core
@@ -28,14 +28,15 @@ if(!class_exists('Assets'))
 	class Assets extends Base
 	{
         // set debug level
-        #protected static $loglevel  = \Monolog\Logger::EMERGENCY;
-        protected static $loglevel  = \Monolog\Logger::DEBUG;
+        protected static $loglevel  = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel  = \Monolog\Logger::DEBUG;
         protected static $instance  = NULL;
         // map type to content-type
         protected static $mime_map  = array(
             'css'   => 'text/css',
             'js'    => 'text/javascript',
             'png'   => 'image/png',
+            'svg'   => 'image/svg+xml',
         );
         //
         protected static $includes  = array();
@@ -107,7 +108,7 @@ if(!class_exists('Assets'))
          * @param  boolean $ignore_inc - wether to load inc files or not
          * @return AssetFactory object
          **/
-        public static function getAssets($pos, $id=null, $ignore_inc=false)
+        public static function getAssets($pos, $id=null, $ignore_inc=false, $as_array=false)
         {
             list($id,$for) = self::analyzeID($id);
 
@@ -147,10 +148,16 @@ if(!class_exists('Assets'))
                             array_push($paths,Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$item['module'].'/js'));
                             array_push($incpaths,Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$item['module']));
                             if(strtolower($item['module'])=='wysiwyg') $wysiwyg = true;
+
+                            if($item['variant']!='')
+                            {
+                                $variant_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$item['module'].'/templates/'.$item['variant'].'/css');
+                                if(is_dir($variant_path))
+                                    array_push($paths,$variant_path);
+                            }
                         }
                     }
                     if(isset($wysiwyg) && $wysiwyg) $am->addJS(\CAT\Addon\WYSIWYG::getJS());
-
                 }
             }
 
@@ -214,7 +221,7 @@ if(!class_exists('Assets'))
                                 require $file;
                                 $array =& ${'mod_'.$pos.'s'};
                                 // CSS
-                                if(array_key_exists('css',$array[$for]) && count($array[$for]['css']>0))
+                                if(array_key_exists('css',$array[$for]) && count($array[$for]['css'])>0)
                                 {
                                     foreach($array[$for]['css'] as $item)
                                     {
@@ -234,7 +241,7 @@ if(!class_exists('Assets'))
                                     }
                                 }
                                 // JS
-                                if(array_key_exists('js',$array[$for]) && count($array[$for]['js']>0))
+                                if(array_key_exists('js',$array[$for]) && count($array[$for]['js'])>0)
                                 {
                                     foreach($array[$for]['js'] as $item)
                                     {
@@ -308,6 +315,9 @@ if(!class_exists('Assets'))
                 'Found [%d] files for filter [%s]',
                 count($files),$filter
             ));
+
+            if($as_array) return $files;
+
             if(is_array($files) && count($files)>0) {
                 foreach($files as $file) {
                     self::log()->addDebug(sprintf(
@@ -442,8 +452,8 @@ if(!class_exists('Assets'))
          **/
         public static function serve($type,$files,$print=false)
         {
-            if(!count($files)) return false;
-            if($type=='images')
+            if(!is_array($files) || !count($files)>0) return false;
+            if($type=='images'||$type=='svg')
             {
                 self::log()->addDebug('serving image');
                 foreach($files as $file)
@@ -456,7 +466,12 @@ if(!class_exists('Assets'))
                             CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME)
                         ));
                         copy(CAT_ENGINE_PATH.'/'.$file,CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
-                        #header('Content-Type: '.self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]);
+                        if(isset(self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]))
+                        {
+                            header('Content-Type: '.self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]);
+readfile(CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
+return;
+                        }
                         echo CAT_SITE_URL.'/assets/'.pathinfo($file,PATHINFO_BASENAME);
                     }
                 }

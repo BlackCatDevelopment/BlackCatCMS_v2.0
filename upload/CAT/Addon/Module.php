@@ -86,19 +86,14 @@ if (!class_exists('\CAT\Addon\Module', false))
 		/**
 		 * Default modify routine
 		 */
-		public static function modify($section_id)
+		public static function modify(array $section)
 		{
-			self::setIDs();
-            $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/'.self::getVariant());
+            $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
             if(is_dir($tpl_path))
                 self::tpl()->setPath($tpl_path);
-            $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/templates/default');
+            $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
             if(is_dir($def_path))
                 self::tpl()->setFallbackPath($def_path);
-			self::tpl()->output(
-				self::$template,
-				array() //self::getParserValue()
-			);
 		}
 
 		/**
@@ -120,7 +115,7 @@ if (!class_exists('\CAT\Addon\Module', false))
 		/**
 		 *
 		 */
-		public static function save($section_id) {}
+		public static function save(int $section_id) {}
 
 	}
 }

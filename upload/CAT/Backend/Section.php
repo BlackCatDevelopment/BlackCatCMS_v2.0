@@ -222,16 +222,22 @@ if (!class_exists('\CAT\Backend\Section'))
             // get page ID
             $pageID  = $section['page_id'];
             self::checkPerm($pageID,null);
+            // set variant?
+            if(null!=($variant=\CAT\Helper\Validate::sanitizePost('variant')))
+            {
+                $result = \CAT\Sections::setVariant($sectionID,$variant);
+            }
+/*
             // special case
             if($section['module']=='wysiwyg')
             {
-                CAT_Addon_WYSIWYG::initialize();
-                $result = CAT_Addon_WYSIWYG::save($sectionID);
+                \CAT\Addon\WYSIWYG::initialize();
+                $result = \CAT\Addon\WYSIWYG::save($sectionID);
             }
             else
             {
             }
-
+*/
             if(self::asJSON())
             {
                 echo \CAT\Helper\Json::printResult($result, '');
@@ -308,14 +314,16 @@ if (!class_exists('\CAT\Backend\Section'))
          **/
         protected static function getSectionID()
         {
-            $self    = self::getInstance();
             $sectID  = \CAT\Helper\Validate::sanitizePost('section_id','numeric',NULL);
 
             if(!$sectID)
                 $sectID  = \CAT\Helper\Validate::sanitizeGet('section_id','numeric',NULL);
 
             if(!$sectID)
-                $sectID = $self->router()->getParam(-1);
+                $sectID = self::router()->getParam(-1);
+
+            if(!$sectID)
+                $sectID = self::router()->getRoutePart(-1);
 
             if(!$sectID || !is_numeric($sectID) || !\CAT\Sections::exists($sectID))
                 Base::printFatalError('Invalid data')

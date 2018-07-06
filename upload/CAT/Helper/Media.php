@@ -286,17 +286,17 @@ if (!class_exists('\CAT\Helper\Media'))
                         );
                     }
                 }
-            // mark deleted folders
-            if(is_array($dbfolders) && count($dbfolders)>0) {
-                foreach($dbfolders as $item) {
-                    if($item['path']!='' && !array_key_exists($item['path'],$lookup1)) {
-                        self::db()->query(
-                            'UPDATE `:prefix:media_dirs` SET `deleted`=1 WHERE `path`=?',
-                            array($item['path'])
-                        );
+                // mark deleted folders
+                if(is_array($dbfolders) && count($dbfolders)>0) {
+                    foreach($dbfolders as $item) {
+                        if($item['path']!='' && !array_key_exists($item['path'],$lookup1)) {
+                            self::db()->query(
+                                'UPDATE `:prefix:media_dirs` SET `deleted`=1 WHERE `path`=?',
+                                array($item['path'])
+                            );
+                        }
                     }
                 }
-            }
 
             }
         }   // end function updateFolderData()

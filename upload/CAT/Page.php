@@ -83,7 +83,7 @@ if (!class_exists('\CAT\Page', false))
                     {
                         $route = self::router()->getRoute();
                         // no route -> get default page
-                        if($route == '')
+                        if($route == '' || $route == 'index')
                         {
                             self::$curr_page = \CAT\Helper\Page::getDefaultPage();
                         }
@@ -118,7 +118,7 @@ if (!class_exists('\CAT\Page', false))
             // check if the page exists, is not marked as deleted, and has
             // some content at all
             if(
-                   !$page_id                           // no page id
+                   !$page_id                              // no page id
                 || !\CAT\Helper\Page::exists($page_id)    // page does not exist
                 || !\CAT\Helper\Page::isActive($page_id)  // page not active
             ) {
@@ -159,7 +159,7 @@ if (!class_exists('\CAT\Page', false))
                     // special case
                     if($module=='wysiwyg')
                     {
-                        $output[] = \CAT\Addon\WYSIWYG::view($section_id)['content'];
+                        $output[] = \CAT\Addon\WYSIWYG::view($section);
                     }
                     else
                     {
@@ -263,9 +263,12 @@ if (!class_exists('\CAT\Page', false))
                 header('HTTP/1.1 503 Service Temporarily Unavailable');
                 header('Status: 503 Service Temporarily Unavailable');
                 header('Retry-After: 7200'); // in seconds
+                return;
             }
 
             $this->setTemplate();
+
+            self::tpl()->setGlobals('page_id',$this->page_id);
 
             // including the template; it may calls different functions
             // like page_content() etc.

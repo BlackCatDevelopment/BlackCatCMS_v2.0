@@ -379,7 +379,7 @@ if (!class_exists('\CAT\Backend\Media'))
             // example route: backend/media/index/video
             //                backend/media/list/video
             // ...where 'video' is the name of the requested sub folder
-            $route = self::router()->getRoute();
+            $route  = self::router()->getRoute();
             $subdir = '';
 
             if($route != $base)
