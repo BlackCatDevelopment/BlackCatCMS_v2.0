@@ -96,26 +96,95 @@ if(!class_exists('\CAT\Helper\Menu',false))
         public static function breadcrumbMenu(array &$options = array())
         {
             self::log()->addDebug('breadcrumbMenu');
-            $pid = NULL;
-            self::checkPageId($pid);
+
+            $lb   = Base::lb();
+            $menu = array();
+
             self::checkOptions($options);
-            self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
-            $menu     = array();
-            // get the level of the current page
-            $level    = \CAT\Helper\Page::properties($pid,'level');
-            // get the path
-            $subpages = array_reverse(\CAT\Helper\Page::getPageTrail($pid,false,true));
-            self::log()->debug('level [{level}] pages [{pages}]',array('level'=>$level,'pages'=>print_r($subpages,1)));
-            // add the pages to the menu
-            foreach($subpages as $id)
+
+            if(self::router()->isBackend())
             {
-                $pg = \CAT\Helper\Page::properties($id);
-                $menu[] = $pg;
+                $route = self::router()->getController();
+                $curr  = pathinfo($route,PATHINFO_FILENAME);
+                $result = self::db()->query(
+                    'SELECT `trail` FROM `:prefix:backend_areas` WHERE `name`=?',
+                    array(strtolower($curr))
+                );
+                $path = $result->fetch();
+                if(isset($path['trail']) && strlen($path['trail']))
+                {
+                    $trail = explode('/',$path['trail']);
+                    $be_menu = \CAT\Backend::getMainMenu();
+                    foreach(array_values($trail) as $page)
+                    {
+                        $item = \CAT\Helper\HArray::extract($be_menu,'id',$page);
+                        $key  = key($item);
+                        // 'flatten' the array to avoid nested list
+                        $item[$key]['parent'] = 0;
+                        // add icon
+                        if(isset($options['iconclass']) && $options['iconclass']) {
+                            $item[$key]['title'] = '<i class="'.$options['iconclass'].$item[$key]['name'].'"></i> '.$item[$key]['title'];
+                        }
+                        $menu[] = $item[$key];
+                    }
+
+                    if(isset($options['add_home']) && $options['add_home']) {
+                        $item = \CAT\Helper\HArray::extract($be_menu,'name','dashboard');
+                        $key  = key($item);
+                        // 'flatten' the array to avoid nested list
+                        $item[$key]['parent'] = 0;
+                        array_unshift($menu,$item[$key]);
+                    }
+
+                    if(isset($options['before']) && $options['before']) {
+                        array_unshift(
+                            $menu,
+                            array(
+                                'id' => 99999999,
+                                'title' => $options['before'],
+                                'parent' => 0,
+                                'level' => 0,
+                                'href' => CAT_ADMIN_URL
+                            )
+                        );
+                    }
+
+                    if(isset($options['after']) && $options['after']) {
+                        array_push(
+                            $menu,
+                            array(
+                                'id' => 88888888,
+                                'title' => $options['after'],
+                                'parent' => 0,
+                                'level' => 0
+                            )
+                        );
+                    }
+
+                    $lb->set('id','id');
+                    $lb->set('title','title');
+                }
+            } else {
+                $pid = NULL;
+                self::checkPageId($pid);
+                self::log()->debug('current page [{pid}] options [{opt}]',array('pid'=>$pid,'opt'=>print_r($options,1)));
+                // get the level of the current page
+                $level    = \CAT\Helper\Page::properties($pid,'level');
+                // get the path
+                $subpages = array_reverse(\CAT\Helper\Page::getPageTrail($pid,false,true));
+                self::log()->debug('level [{level}] pages [{pages}]',array('level'=>$level,'pages'=>print_r($subpages,1)));
+                // add the pages to the menu
+                foreach($subpages as $id)
+                {
+                    $pg = \CAT\Helper\Page::properties($id);
+                    $menu[] = $pg;
+                }
             }
+
             // check if the current page should be shown
             if(!isset($options['show_current']) || !$options['show_current'])
             {
-                array_shift($menu); // remove last item = current page
+                array_pop($menu); // remove last item = current page
             }
             else
             {
@@ -131,8 +200,10 @@ if(!class_exists('\CAT\Helper\Menu',false))
             // set root id to the root parent to make the listbuilder work
             #$options['root_id'] = \CAT\Helper\Page::getRootParent($pid);
             $options['root_id'] = 0;
+
             // return the menu
-            return self::listbuilder(true)->buildList($menu,$options);
+            return $lb->buildList($menu,$options);
+
         }   // end function breadcrumbMenu()
         
         /**

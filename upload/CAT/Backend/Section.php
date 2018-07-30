@@ -220,14 +220,36 @@ if (!class_exists('\CAT\Backend\Section'))
             // get section details
             $section = \CAT\Sections::getSection($sectionID,true);
             // get page ID
-            $pageID  = $section['page_id'];
+            $pageID  = self::getPageID(); //$section['page_id'];
             self::checkPerm($pageID,null);
             // set variant?
             if(null!=($variant=\CAT\Helper\Validate::sanitizePost('variant')))
             {
                 $result = \CAT\Sections::setVariant($sectionID,$variant);
             }
-/*
+            // options
+            if(null!=($options=\CAT\Helper\Validate::sanitizePost('options')))
+            {
+                $optnames = explode(',',$options);
+                foreach(array_values($optnames) as $key) {
+                    $value=\CAT\Helper\Validate::sanitizePost($key);
+                    if(null!=$value)
+                    {
+                        if(is_array($value)) $value=implode('|',$value);
+                        self::db()->query(
+                            'REPLACE INTO `:prefix:section_options` (`page_id`,`section_id`,`option`,`value`) '
+                            . 'VALUES(?,?,?,?)',
+                            array($pageID,$sectionID,strip_tags($key),strip_tags($value))
+                        );
+                    } else {
+                        self::db()->query(
+                            'DELETE FROM `:prefix:section_options` WHERE `page_id`=? AND `section_id`=? and `option`=?',
+                            array($pageID,$sectionID,$key)
+                        );
+                    }
+                }
+            }
+
             // special case
             if($section['module']=='wysiwyg')
             {
@@ -237,10 +259,13 @@ if (!class_exists('\CAT\Backend\Section'))
             else
             {
             }
-*/
+
             if(self::asJSON())
             {
-                echo \CAT\Helper\Json::printResult($result, '');
+                echo \CAT\Helper\Json::printResult(
+                    ( $errors>0 ? 'Error' : 'Success'),
+                    ''
+                );
                 return;
             }
         }   // end function save()

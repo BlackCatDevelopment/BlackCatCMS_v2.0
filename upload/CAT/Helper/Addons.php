@@ -144,7 +144,6 @@ if ( !class_exists( 'Addons' ) )
 
                     // get the data
                     $data = $q->execute()->fetchAll();
-
                     // remove addons the user is not allowed for
                     for($i=(count($data)-1);$i>=0;$i--)
                     {
@@ -196,7 +195,7 @@ if ( !class_exists( 'Addons' ) )
             } // end switch()
 
             if($names_only)
-                $data = HArray::extract($data,'name','directory');
+                $data = HArray::extractList($data,'name','directory');
 
             return $data;
         } // end function getAddons()

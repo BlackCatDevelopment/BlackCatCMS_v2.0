@@ -1,0 +1,1 @@
+Verwendet einfache, aber responsive CSS-Klassen zur Darstellung der Spalten.

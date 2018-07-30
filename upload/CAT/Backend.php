@@ -240,7 +240,7 @@ if (!class_exists('Backend', false))
         {
             if(!self::$tplpath || !file_exists(self::$tplpath))
             {
-                $theme   = Registry::get('default_theme');
+                $theme   = Registry::get('default_theme',null,'backstrap');
                 $variant = Registry::get('default_theme_variant');
                 if(!$variant || !strlen($variant)) $variant = 'default';
                 $paths = array( // search paths
@@ -335,7 +335,8 @@ if (!class_exists('Backend', false))
         public static function languages()
         {
             $self  = self::getInstance();
-            $langs = self::getLanguages();
+            $langs = self::getLanguages(1);
+
             if(($parm = self::router()->getRoutePart(-1)) !== false)
             {
                 switch($parm)
@@ -344,10 +345,7 @@ if (!class_exists('Backend', false))
                         $langselect = array(''=>'[Please select]');
                         foreach(array_values($langs) as $l)
                             $langselect[$l] = $l;
-                        $form = self::form();
-                        $form->loadFromFile('lang_select','forms.inc.php',__dir__.'/forms');
-                        $form->getElement('language')->setValue($langselect);
-                        Json::printSuccess($form->render(1));
+                        Json::printSuccess($langselect);
                         break;
                 }
             }
@@ -420,6 +418,13 @@ if (!class_exists('Backend', false))
                 'space'            => '',
             ));
             $tpl_data['MAIN_MENU_UL'] = $lb->buildList($menu);
+
+            // set the page title
+            $controller = explode('\\',self::router()->getController());
+            \CAT\Helper\Page::setTitle(sprintf(
+                'BlackCat CMS Backend / %s',
+                self::lang()->translate($controller[count($controller)-1])
+            ));
 
             self::log()->addDebug('printing header');
             self::tpl()->output('header', $tpl_data);

@@ -72,6 +72,8 @@ if (!class_exists('Page'))
                 $query  = self::db()->qb();
                 $query->insert(self::db()->prefix().'pages');
 
+                $query->setValue('site_id',$query->createNamedParameter(CAT_SITE_ID));
+
                 $i      = 0;
                 $parent = 0;
 
@@ -150,7 +152,7 @@ if (!class_exists('Page'))
 
             if(self::asJSON())
             {
-                echo Json::printResult($tpl_data);
+                echo Json::printData($tpl_data);
                 exit;
             }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -209,6 +211,9 @@ if (!class_exists('Page'))
             // sections
             $sections = array();
 
+            //
+            $blocks   = array();
+
             // template data
             $tpl_data = array(
                 'blocks'  => NULL,
@@ -218,8 +223,9 @@ if (!class_exists('Page'))
             // catch errors on wrong pageID
             if($pageID && is_numeric($pageID) && HPage::exists($pageID))
             {
-                $tpl_data['page']   = HPage::properties($pageID);
-                $tpl_data['linked'] = HPage::getLinkedByLanguage($pageID);
+                self::tpl()->setGlobals('page_id',$pageID);
+                $tpl_data['page']    = HPage::properties($pageID);
+                $tpl_data['linked']  = HPage::getLinkedByLanguage($pageID);
                 // get sections; format: $sections[array_of_blocks[array_of_sections]]
                 $sections = \CAT\Sections::getSections($pageID,NULL,false);
             }
@@ -231,7 +237,7 @@ if (!class_exists('Page'))
                         [1] => Array            block #
                                 [0] => Array    section index
             **/
-            if(count($sections)>0)
+            if(is_array($sections) && count($sections)>0)
             {
                 // for hybrid modules
                 global $page_id;
@@ -239,7 +245,6 @@ if (!class_exists('Page'))
 
                 foreach($sections as $block => $items)
                 {
-                    // section Time:  0.0312 Seconds
                     foreach($items as $section)
                     {
                         $section_content = null;
@@ -265,19 +270,21 @@ if (!class_exists('Page'))
                             if(file_exists($module_path.'/templates/'.$variant.'/options.tpl'))
                                 $options_file = $module_path.'/templates/'.$variant.'/options.tpl';
 
-                            // there may also be a forms.inc.php - get options Time:  0.0156 Seconds
+                            // there may also be a forms.inc.php
                             if(file_exists($module_path.'/templates/'.$variant.'/inc.forms.php'))
                             {
-                                // Time:  0.0156 Seconds
                                 $form = \wblib\wbForms\Form::loadFromFile('options','inc.forms.php',$module_path.'/templates/'.$variant);
-                                // render Time:  0.0312 Seconds
                                 $form->setAttribute('lang_path',$module_path.'/languages/');
+                                $form->setAttribute('action',CAT_ADMIN_URL.'/section/save/'.$section_id);
+                                if(is_dir($module_path.'/templates/'.$variant.'/languages/'))
+                                {
+                                    $form->lang()->addPath($module_path.'/templates/'.$variant.'/languages/');
+                                }
                                 $form->getElement('section_id')->setValue($section_id);
                                 if(isset($section['options']))
                                     $form->setData($section['options']);
                                 $options_form = $form->render(1);
                             }
-                            // Time until form is rendered: 0.015602 Seconds
 
                             // if there are variants, collect info.tpl files
                             if(count($variants))
@@ -338,7 +345,7 @@ if (!class_exists('Page'))
                             }
                         }
 
-                        $tpl_data['blocks'][] = array_merge(
+                        $blocks[] = array_merge(
                             $section,
                             array(
                                 'section_content'    => $section_content,
@@ -350,6 +357,9 @@ if (!class_exists('Page'))
                         );
                     }
                 }
+
+                $tpl_data['blocks'] = $blocks;
+
             }
 
             if(self::asJSON())
@@ -363,6 +373,7 @@ if (!class_exists('Page'))
                 self::lang()->translate('Page'),
                 self::lang()->translate('Edit')
             ));
+
             Backend::print_header();
             self::tpl()->output('backend_page_modify', $tpl_data);
             Backend::print_footer();

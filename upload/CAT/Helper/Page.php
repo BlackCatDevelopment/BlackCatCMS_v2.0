@@ -37,6 +37,7 @@ if (!class_exists('Page'))
         private   static $id_to_index         = array();
         private   static $pages_sections      = array();
         private   static $visibilities        = array();
+        private   static $pages_by_visibility = array();
 
         private   static $jquery_enabled      = false;
         private   static $jquery_seen         = false;
@@ -184,6 +185,20 @@ if (!class_exists('Page'))
         }   // end function getExtraHeaderFiles()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getLastEdited($number=10)
+        {
+            $result = array();
+            $pages  = self::getPages(1);
+            // sort pages by when_changed
+            $res = usort($pages, function($a,$b) { return ( ( $a["modified_when"] < $b["modified_when"] ) ? 1 : -1 ); } );
+            return array_slice($pages,0,$number);
+        }   // end function getLastEdited()
+
+        /**
          * creates a full url for the given pageID
          *
          * @access public
@@ -260,9 +275,9 @@ if (!class_exists('Page'))
             );
             $data   = $result->fetch();
             if(!$data || !is_array($data) || !count($data))
-                \CAT\Page::print404();
+                return false;
             else
-                return $data['page_id'];
+                return (int)$data['page_id'];
         }   // end function getPageForRoute()
 
 
@@ -333,14 +348,42 @@ if (!class_exists('Page'))
         {
             $pages = self::getPages($all);
             // sort by children
-            $pages = self::lb()->sort($pages);
+            //$pages = self::lb()->sort($pages);
+            if(!is_array($pages) || !count($pages)>0)
+                return false;
             $list  = array(0=>self::lang()->translate('none'));
             foreach($pages as $p) {
                 $list[$p['page_id']] = str_repeat('|-- ',$p['level']) . $p['menu_title'];
             }
             return $list;
         }   // end function getPagesAsList()
-        
+
+        /**
+         * returns a list of page_id's by visibility
+         *
+         * @access public
+         * @param  string  $visibility - optional
+         * @return array
+         **/
+        public static function getPagesByVisibility($visibility=NULL)
+        {
+            self::init();
+            if(!count(self::$pages_by_visibility))
+            {
+                foreach(self::$pages as $page)
+                {
+                    self::$pages_by_visibility[$page['visibility']][] = $page['page_id'];
+                }
+            }
+            if($visibility)
+            {
+                if(isset(self::$pages_by_visibility[$visibility]))
+                return self::$pages_by_visibility[$visibility];
+                else
+                    return array();
+            }
+            return self::$pages_by_visibility;
+        }   // end function getPagesByVisibility()
 
         /**
          *
@@ -602,7 +645,7 @@ if (!class_exists('Page'))
                   ? self::$pages[self::$id_to_index[$page_id]]
                   : NULL;
 
-            if(count($page))
+            if(is_array($page) && count($page))
             {
                 if($key)
                 {

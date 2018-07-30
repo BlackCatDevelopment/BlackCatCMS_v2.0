@@ -83,9 +83,9 @@ if ( ! class_exists( 'Sections', false ) ) {
                   'INSERT INTO `:prefix:sections` SET '
                 . '`site_id`=:site, '
                 . '`module_id`=:module, '
-                . '`modified_when`=NOW(), '
+                . '`modified_when`=:time, '
                 . '`modified_by`=:user',
-                array('site'=>CAT_SITE_ID,'module'=>$module,'user'=>self::user()->getID())
+                array('site'=>CAT_SITE_ID,'module'=>$module,'user'=>self::user()->getID(),'time'=>time())
             );
         	if(!self::db()->isError())
             {
@@ -290,11 +290,7 @@ if ( ! class_exists( 'Sections', false ) ) {
                                 $section['options'] = array();
                                 foreach($options as $i => $line)
                                 {
-                                    if(strlen($line['item_id'])) {
-                                        $section['options'][$line['item_id']][$line['option']] = $line['value'];
-                                    } else {
-                                        $section['options'][$line['option']] = $line['value'];
-                                    }
+                                    $section['options'][$line['option']] = $line['value'];
                                 }
                             }
                         }

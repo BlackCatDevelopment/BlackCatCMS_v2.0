@@ -138,7 +138,7 @@ if(!class_exists('Assets'))
             if(is_numeric($page_id) && $page_id>0)
             {
                 $sections = Sections::getSections($page_id);
-                if(count($sections))
+                if(is_array($sections) && count($sections)>0)
                 {
                     foreach($sections as $block => $items)
                     {

@@ -1,0 +1,1 @@
+Einfacher WYSIWYG-Block ohne weitere Besonderheiten.

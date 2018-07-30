@@ -44,8 +44,8 @@ if(!class_exists('Authenticate',false))
         const REQUIRE_UPPERCASE       = 8;
         const REQUIRE_NUMBER          = 16;
         const REQUIRE_SPECIALCHAR     = 32;
-        //const REQUIRE_DIFFPASS          = 64;
-        const REQUIRE_DIFFUSER          = 128;
+        //const REQUIRE_DIFFPASS       = 64;
+        const REQUIRE_DIFFUSER        = 128;
         const REQUIRE_UNIQUE          = 256;
         protected $_passwordDiffLevel = 3;
         protected $_uniqueChrRequired = 4;
@@ -122,16 +122,16 @@ if(!class_exists('Authenticate',false))
                         );
                         return false;
                     }
-                else
-                {
-                    // if TFA is enabled but token is missing
+                    else
+                    {
+                        // if TFA is enabled but token is missing
                         self::setError(
-                        'Two step authentication failed!',
-                        'Missing token'
-                    );
-                    return false;
+                            'Two step authentication failed!',
+                            'Missing token'
+                        );
+                        return false;
+                    }
                 }
-            }
                 $_SESSION['USER_ID'] = $uid;
                 \CAT\Session::regenerateSession();
 
@@ -174,7 +174,7 @@ if(!class_exists('Authenticate',false))
             )->fetchColumn();
 
             if(self::db()->isError()) return false;
-            else                       return $storedHash;
+            else                      return $storedHash;
 
         }   // end function getPasswd()
 
@@ -203,7 +203,7 @@ if(!class_exists('Authenticate',false))
 
             if(!self::db()->isError() && $getTFA->rowCount() != 0) // user found and password ok
             {
-                $tfa    = $getTFA->fetch(\PDO::FETCH_ASSOC);
+                $tfa = $getTFA->fetch(\PDO::FETCH_ASSOC);
                 if( $tfa['tfa_enabled'] == 'Y') {
                     // missing secret?
                     if(!strlen($tfa['tfa_secret']))
@@ -234,7 +234,7 @@ if(!class_exists('Authenticate',false))
             if ( is_object($this->tfa) ) return $this->tfa;
             $ignore    = new CQRCode(); // just to make sure the helper is loaded
             $mp        = new CQRCodeProvider(); // needed for image creation
-            $this->tfa    = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
+            $this->tfa = new \RobThree\Auth\TwoFactorAuth(WEBSITE_TITLE, 6, 30, 'sha1', $mp);
             return $this->tfa;
         }   // end function getTFAObject()
 

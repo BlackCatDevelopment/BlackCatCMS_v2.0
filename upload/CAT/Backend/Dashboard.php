@@ -54,13 +54,12 @@ if(!class_exists('\CAT\Backend\Dashboard'))
         {
             // validate path
             if(!$dash)
-                $dash = HDash::getDashboardID(self::router()->getParam(-1));
+                $dash = self::getDashID();
             // check if dashboard exists
             if(!HDash::exists($dash))
-                echo Json::printError('error');
+                echo Json::printError('no such dashboard');
             $widget = Validate::sanitizePost('widget_id');
             $result = HDash::addWidget($widget,$dash);
-print_r($result);
             echo Json::printSuccess('ok');
         }   // end function add()
 
@@ -71,11 +70,41 @@ print_r($result);
          **/
         public static function get()
         {
-            $self = self::getInstance();
             $page = Validate::sanitizePost('page');
             HDash::getDashboard($page);
         }   // end function getDashboard()
         
+        /**
+         * tries to retrieve 'page_id' by checking (in this order):
+         *
+         *    - $_POST['page_id']
+         *    - $_GET['page_id']
+         *    - Route param['page_id']
+         *
+         * also checks for numeric value
+         *
+         * @access private
+         * @return integer
+         **/
+        public static function getDashID()
+        {
+            $dashID  = Validate::sanitizePost('dash_id','numeric',NULL);
+
+            if(!$dashID)
+                $dashID  = Validate::sanitizeGet('dash_id','numeric',NULL);
+
+            if(!$dashID)
+                $dashID = self::router()->getParam(-1);
+
+            if(!$dashID)
+                $dashID = self::router()->getRoutePart(-1);
+
+#            if(!$dashID || !is_numeric($dashID) || !HPage::exists($dashID))
+#                $dashID = NULL;
+
+            return intval($dashID);
+        }   // end function getDashID()
+
         /**
          * show dashboard; if no path is given, will try to resolve the
          * dashboard path from the current route
@@ -309,7 +338,6 @@ Array
          **/
         public static function toggle()
         {
-            $self = self::getInstance();
             $id   = Validate::sanitizePost('id');
             $vis  = Validate::sanitizePost('vis');
             $dash = Validate::sanitizePost('dashboard');
@@ -344,10 +372,10 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = HDash::getDashboardID($self->router()->getParam(-1));
+                $dash = self::getDashID();
             // check if dashboard exists
             if(!HDash::exists($dash))
-                echo Json::printError('error');
+                echo Json::printError('No such dashboard id: '.$dash);
             // get list of widgets the user is allowed to see
             $all  = Widget::getAllowed();
             // get list of widgets already an the dashboard

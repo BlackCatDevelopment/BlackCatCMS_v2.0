@@ -1,0 +1,1 @@
+Die Variante "bootstrap" benötigt das Modul lib_bootstrap. Es verwendet den Grid (bzw. die entsprechenden CSS-Klassen) zur Darstellung der Spalten.

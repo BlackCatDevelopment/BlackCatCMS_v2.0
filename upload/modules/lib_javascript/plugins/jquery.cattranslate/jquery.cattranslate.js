@@ -10,24 +10,24 @@
         var translated;
         translated = '';
         $.ajax({
-          type   : 'post',
-          url    : url,
-          data: {
-            msg  : string,
-            attr : attributes,
-            mod  : module
-          },
-          cache  : false,
-          async  : false,
-          success: function( data ) {
-            if ( typeof elem != 'undefined' && typeof elem != '' && elem != '' && elem != null ) {
-              jQuery(elem).text(jQuery(data).text());
+            type   : 'post',
+            url    : url,
+            data: {
+                msg  : string,
+                attr : attributes,
+                mod  : module
+            },
+//          cache  : false,
+            async  : false,
+            success: function(data) {
+                if ( typeof elem != 'undefined' && typeof elem != '' && elem != '' && elem != null ) {
+                    jQuery(elem).text(jQuery(data).text());
+                }
+                else
+                {
+                    translated = jQuery(data).text();
+                }
             }
-            else
-            {
-              translated = jQuery(data).text();
-            }
-          }
         });
         if(translated=='') translated = string;
         return translated;

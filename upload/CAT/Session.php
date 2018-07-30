@@ -21,7 +21,8 @@ if(!class_exists('\CAT\Session',false))
 {
     class Session extends Base implements \SessionHandlerInterface
     {
-        protected static $loglevel = \Monolog\Logger::DEBUG;
+        protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel = \Monolog\Logger::DEBUG;
 
         private        $domain;
         private        $path     = '/';

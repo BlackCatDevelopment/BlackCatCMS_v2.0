@@ -17,21 +17,18 @@ $mod  = $val->get('_REQUEST','mod');
 
 if( version_compare(phpversion(),'5.4','<') )
 {
-    $msg  = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
+    $msg  = htmlspecialchars(urldecode($msg), ENT_QUOTES, 'UTF-8');
     $attr = htmlspecialchars($attr, ENT_QUOTES, 'UTF-8');
 }
 else
 {
-    $msg  = htmlspecialchars($msg, ENT_XHTML, 'UTF-8');
+    $msg  = htmlspecialchars(urldecode($msg), ENT_XHTML, 'UTF-8');
     $attr = htmlspecialchars($attr, ENT_XHTML, 'UTF-8');
 }
 
 if(\CAT\Backend::isBackend() || $mod = 'BE')
 {
-    $h   = \CAT\Backend::getInstance();
     $mod = NULL;
-} else {
-    $h   = \CAT\Frontend::getInstance();
 }
 
 if($mod)
@@ -40,19 +37,14 @@ if($mod)
         CAT_ENGINE_PATH.'/modules/'.$mod.'/languages',
         CAT_ENGINE_PATH.'/templates/'.$mod.'/languages',
     );
-    $lang = strtoupper($h->lang()->getLang());
+    $lang = strtoupper(\CAT\Base::lang()->getLang());
     foreach(array_values($paths) as $dir)
     {
         if(file_exists($dir.'/'.$lang.'.php'))
         {
-            $h->lang()->addFile($lang,$dir);
+            \CAT\Base::lang()->addFile($lang,$dir);
         }
     }
 }
 
-if(is_object($h)) {
-	echo '<data>'.$h->lang()->translate($msg,$attr).'</data>';
-}
-else {
-	echo '<data>'.$msg.'</data>';
-}
+echo '<data>'.\CAT\Base::lang()->t($msg).'</data>';

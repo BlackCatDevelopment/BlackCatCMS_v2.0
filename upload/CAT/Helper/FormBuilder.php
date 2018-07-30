@@ -60,10 +60,12 @@ if (!class_exists('FormBuilder'))
                         }
                     }
 
+                    // if no label is given, use the field name as label
                     $label = strlen($item['label'])
                             ? self::lang()->translate($item['label'])
                             : self::lang()->translate(self::humanize($item['name']));
 
+                    // create the element
                     $element = array_merge(
                         $item,
                         array(
@@ -79,11 +81,12 @@ if (!class_exists('FormBuilder'))
                     );
                     $e = $form->addElement(new $type($item['name'],$element));
 
+                    // add values from fieldhandler
                     if(strlen($item['fieldhandler'])) {
                         $params = ( substr_count($item['params'], ',') ? explode(', ',$item['params']) : array($item['params']) );
                         $data = call_user_func_array($item['fieldhandler'], $params);
                         if($data) {
-                            $e->setValue($data);
+                            $e->setData($data);
                         }
                     }
 
@@ -119,10 +122,10 @@ if (!class_exists('FormBuilder'))
                     'SELECT `t1`.`action`, `t2`.*, '
                     . '     `t3`.`name`, `t3`.`mapto`, `t3`.label, `t3`.`helptext`, `t3`.`pattern`, '
                     . '     `t4`.`fieldtype` '
-                    . 'FROM `cat_forms` as `t1` '
-                    . 'JOIN `cat_forms_has_fields` AS `t2` ON `t1`.`form_id`=`t2`.`form_id` '
-                    . 'JOIN `cat_forms_fielddefinitions` AS `t3` ON `t2`.`field_id`=`t3`.`field_id` '
-                    . 'JOIN `cat_forms_fieldtypes` AS `t4` ON `t2`.type_id=`t4`.`type_id` '
+                    . 'FROM `:prefix:forms` as `t1` '
+                    . 'JOIN `:prefix:forms_has_fields` AS `t2` ON `t1`.`form_id`=`t2`.`form_id` '
+                    . 'JOIN `:prefix:forms_fielddefinitions` AS `t3` ON `t2`.`field_id`=`t3`.`field_id` '
+                    . 'JOIN `:prefix:forms_fieldtypes` AS `t4` ON `t2`.type_id=`t4`.`type_id` '
                     . 'WHERE `t1`.`form_name`=? ORDER BY `fieldset`, `t2`.`position` ',
                     array($name)
                 );

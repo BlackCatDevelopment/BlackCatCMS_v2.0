@@ -22,12 +22,6 @@
         var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-    // "disable" fuelUX datepicker
-    if (!$.fn.bootstrapDP && $.fn.datepicker && $.fn.datepicker.noConflict) {
-        var datepicker = $.fn.datepicker.noConflict();
-        $.fn.bootstrapDP = datepicker;
-    }
-
     // get the time period settings template
     var bsPublishingTemplate = $('#publishing').detach();
     var bsModalTemplate      = $('#bsDialog').clone().detach();
@@ -52,6 +46,7 @@
                 },
                 success : function(data, status) {
                     if(target == '#headerfiles') {
+/*
                         var table      = $('div'+target).find('table');
 
                         if(data.byplugin) {
@@ -135,13 +130,14 @@ console.log(data);
                         $('div'+target).append(data.forms.be_page_headerfiles_plugin);
                         $('div'+target).append(data.forms.be_page_headerfiles_js);
                         $('div'+target).append(data.forms.be_page_headerfiles_css);
-
+*/
                     }
                     else {
                         $('div'+target).html(data.message);
                     }
                     //$('div'+target).find('form').fieldset_to_tabs();
                     $('.fa-spinner').remove();
+                    $('div#headerfiles').html(data.content);
                     pane.tab('show');
                 },
                 error   : function(data, status) {
@@ -221,7 +217,7 @@ console.log(data);
         });
     });
 
-    // unlink page
+    // ----- unlink page -------------------------------------------------------
     $('.fa-chain-broken').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
         $('.modal-body').html(
@@ -249,7 +245,7 @@ console.log(data);
         });
     });
 
-    // add header file
+    // ----- add header file ---------------------------------------------------
     $('form#be_page_headerfiles').parent().hide();
     var pluginform = $('select#jquery_plugin').parent().parent();
     $('button#bsAddPlugin').unbind('click').on('click', function(e) {
@@ -271,6 +267,18 @@ console.log(data);
                 }
             });
         });
+    });
+
+    // ----- show options panel ------------------------------------------------
+    $('.fa.fa-cogs').unbind('click').on('click', function(e) {
+        var id = $(this).data('id');
+        $(this).parent().toggleClass('bg-light');
+        $('#bsOptionsPanel_'+id).toggle('slow');
+    });
+
+    $('div.card-content div.form-group.row.buttonline input.btn.btn-primary').unbind('click').on('click', function(e) {
+        var id = $(this).data('id');
+        $('#bsOptionsPanel_'+id).hide('slow');
     });
 
     // ----- delete section ----------------------------------------------------
@@ -399,7 +407,7 @@ console.log(data);
         
     });
 
-    // toggle visibility
+    // ----- toggle visibility -------------------------------------------------
     $('div.card-header span.toggle').on('click',function() {
         $(this).parentsUntil('li').next('.card-body').toggle('slow');
         $(this).toggleClass('fa-chevron-down').toggleClass('fa-chevron-right');
@@ -550,11 +558,88 @@ console.log(data);
         });
     });
 
+    // ----- select variant ----------------------------------------------------
+    $('input.bsVariantSave').unbind('click').on('click',function(e) {
+        var _this   = this;
+        var id      = $(this).data('id');
+        var variant = $(this).parent().parent().find('select[name=variant]').val();
+        $.ajax({
+            type    : 'POST',
+            url     : CAT_ADMIN_URL + '/section/save/' + id,
+            dataType: 'json',
+            data    : { variant: variant},
+            success : function(data, status) {
+                window.location.href = CAT_ADMIN_URL + '/page/edit/' + id;
+            }
+        });
+    });
+
+    // ----- save content(s) ---------------------------------------------------
+    $('div#contents.tab-pane.active button.btn.btn-primary.btn-save').unbind('click').on('click', function() {
+        var _this      = this;
+        var section_id = $(this).data('id');
+        var page_id    = $(this).data('page');
+        var card       = $(this).parent().parent();
+        var data       = {
+            contents: new Array(),
+            page_id: page_id,
+            section_id: section_id
+        };
+
+        // inline editor
+        $(card).find("[contenteditable].haschanged").each(function() {
+            var col     = $(this).data("col");
+            var opt     = $(this).data("option");
+            var content = $(this).html();
+            data.contents.push({attribute:opt,column:col,content:content});
+            $(this).removeClass("haschanged");
+        });
+        $.ajax({
+            type    : 'POST',
+            url     : CAT_ADMIN_URL + '/section/save/' + section_id,
+            data    : data,
+            dataType: 'json',
+            success : function(data, status) {
+                BCGrowl($.cattranslate(data.message),data.success);
+                if(data.success) {
+                    $(card).parent().find('.bsChangedFlag').removeClass("fa-exclamation-triangle").removeClass("text-warning");
+                    if(!$("[contenteditable].haschanged").length) {
+                        $('span#bsGlobalChangeIndicator').removeClass("fa-exclamation-triangle").removeClass("text-warning");
+                    }
+                } else {
+                    $(card).parent().find('.bsChangedFlag').removeClass("text-warning").addClass("text-danger");
+                }
+            }
+        });
+
+    });
+
+    // allows to click on the select inside the dropdown without closing it
+    $('.keep-open').on('click', function(e) {
+        e.stopPropagation(); 
+    });
+
     $('button#bsAddCSS').unbind('click').on('click',function(e) {
         var list = $('div#bsCSSFiles').clone();
         $('.modal-body').html(list);
         //$('.modal-title').text($.cattranslate('Remove plugin',undefined,undefined,'backstrap'));
         $('#tplcss').modal('show');
     });
+
+$("[contenteditable]").each(function () {
+  var target = this;
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === "class" && $(mutation.target).prop(mutation.attributeName).indexOf("haschanged")>0) {
+            var attributeValue = $(mutation.target).prop(mutation.attributeName);
+            console.log("Class attribute changed to:", attributeValue);
+            $(mutation.target).parentsUntil('li.card').parent().find('.bsChangedFlag').addClass("fa-exclamation-triangle text-warning");
+            $('span#bsGlobalChangeIndicator').addClass("fa-exclamation-triangle text-warning");
+        }
+    });
+  });
+
+  observer.observe(target, {attributes: true});
+});
 
 })(jQuery);

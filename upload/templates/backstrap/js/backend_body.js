@@ -14,6 +14,23 @@
          }
     });
 
+    /* page tree filter */
+    $("input#bsPageSearch").keyup(function() {
+        var find = $(this).val().toLowerCase();
+        if(find.length) {
+            $('div#sidebar li span.pagename').each(function() {
+                var text = $(this).text().toLowerCase();
+                if(text.indexOf(find) != -1) {
+                    $(this).removeClass('text-muted').addClass('text-danger');
+                } else {
+                    $(this).addClass('text-muted').removeClass('text-danger');
+                }
+            });
+        } else {
+            $('div#sidebar li span.pagename').removeClass('text-muted').removeClass('text-danger');
+        }
+    });
+
     /* show javascript errors as modal */
     function bsErrorMsg(message)
     {
@@ -73,17 +90,18 @@
     });
 
     // allow to add a new page everywhere
-    $("a.bsAddPage").unbind("click").on("click",function(e) {
+    $("a.bsAddPage, button.bsAddPage").unbind("click").on("click",function(e) {
         e.preventDefault();
         $("#add_page_modal .modal-title").text($.cattranslate("Add page"));
         // remove buttons from form
         $("#add_page_modal .form-group.row.buttonline").remove();
-        //$("#add_page_modal form").fieldset_to_tabs();
-        //$("div.fbform form#be_page_settings ul.nav.nav-tabs.inner a:last").tab("show");
+        // select parent
+        parent = $(e.target).parent().data("parent");
+        if(typeof parent == "undefined") { parent = 0; }
+        $("#add_page_modal select[name=page_parent]").val(parent).change();
         $("#add_page_modal").modal("show");
         var _this = $(this);
         $("#add_page_modal .modal-content button.btn-primary").unbind("click").on("click",function(e) {
-            //console.log($("div.fbform form#be_page_settings").serialize());
             e.preventDefault();
             $("#add_page_modal").modal("hide");
             $.ajax({
@@ -129,7 +147,7 @@
     $('.detach').each( function() {
         $(this).detach()
                .addClass("float-right")
-               .appendTo('#bsTop');
+               .appendTo('.breadcrumb');
     });
 
     // format buttons
@@ -156,6 +174,23 @@
                 $("div.modal-footer > button.btn-primary").trigger('click');
             }
         });
+    });
+
+    // populate AdminTools list
+    $.ajax({
+        type    : "GET",
+        url     : CAT_ADMIN_URL+"/admintools/list",
+        dataType: "json",
+        success : function(data, status) {
+            if(data) {
+                submenu = $("<ul></ul>");
+                submenu.addClass("dropdown-menu");
+                for(index=0;index<=data.length;index++) {
+                    submenu.append('<li><a class="dropdown-item" href="//localhost:444/site1/backend/addons">Erweiterungen</a></li>');
+                }
+                //console.log(submenu);
+            }
+        }
     });
 
     // style file upload form fields

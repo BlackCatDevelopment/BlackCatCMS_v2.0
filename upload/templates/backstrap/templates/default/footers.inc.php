@@ -21,13 +21,13 @@ $mod_footers = array(
             '/modules/lib_bootstrap/vendor/js/bootstrap-editable.js',
             '/templates/backstrap/js/bootstrap.growl/growl.min.js',
             // --- aus headers.inc.php verschoben! ---
-            'modules/lib_javascript/plugins/jquery.columns/jquery.columns.js',
             'modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js',
             'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.mark.min.js',
             'modules/lib_javascript/plugins/jquery.datatables/js/dataTables.bootstrap4.min.js',
             'modules/lib_javascript/plugins/jquery.fieldset_to_tabs/jquery.fieldset_to_tabs.js',
             'CAT/Backend/js/session.js',
             'templates/backstrap/js/datetimepicker/jquery.datetimepicker.full.js',
+            'modules/lib_javascript/plugins/jquery.treed/jquery.treed.js',
 
         )
     )

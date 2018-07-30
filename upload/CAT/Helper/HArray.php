@@ -26,6 +26,7 @@ if(!class_exists('\CAT\Helper\HArray'))
 
         protected static $loglevel  = \Monolog\Logger::EMERGENCY;
         private   static $instance  = NULL;
+        private   static $filtered  = null;
 
         public function __call($method, $args)
         {
@@ -78,6 +79,18 @@ if(!class_exists('\CAT\Helper\HArray'))
         }   // end function encodeUTF8()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function extract()
+        {
+            call_user_func_array(array('self','filter'), func_get_args());
+            return json_decode(json_encode(self::$filtered), true);
+        }   // end function extract()
+        
+
+        /**
          * extracts the values of a given key from an array, returning just a
          * list of values
          *
@@ -86,7 +99,7 @@ if(!class_exists('\CAT\Helper\HArray'))
          * @param  string  $key
          * @return array
          **/
-        public static function extract($array,$key,$index_by=null)
+        public static function extractList($array,$key,$index_by=null)
         {
             if(!is_array($array) || !count($array)) return array();
             $result = array();
@@ -102,7 +115,7 @@ if(!class_exists('\CAT\Helper\HArray'))
 
             }
             return $result;
-        }   // end function extract()
+        }   // end function extractList()
 
         /**
          * filter array; this means the items that match the filter are
@@ -123,7 +136,8 @@ if(!class_exists('\CAT\Helper\HArray'))
         public static function filter()
         {
             $arguments = func_get_args();
-            $array     = array_shift($arguments); // first arg must be the input array
+            $origarray = array_shift($arguments); // first arg must be the input array
+            $array     = $origarray;
 
             if(!is_array($array) || !count($array)) return array();
 
@@ -190,6 +204,14 @@ echo "not an array<br />";
                     }
                 }
             }
+
+            // store filtered items for later use (extract() method)
+            // Compare all values by a json_encode
+            $diff = array_diff(array_map('json_encode', $origarray),array_map('json_encode', (array)$result));
+
+            // Json decode the result
+            self::$filtered = array_map('json_decode', $diff);
+
             return json_decode(json_encode($result), true);
         }   // end function filter()
 

@@ -153,7 +153,7 @@ if(!class_exists('Base',false))
                 || !is_object(Base::$objects['formbuilder'])
                 || !Base::$objects['formbuilder'] instanceof \wblib\wbForms\Form
             ) {
-                \wblib\wbForms\Form::$wblang = self::lang();
+                //\wblib\wbForms\Form::$wblang = self::lang();
                 Base::$objects['formbuilder'] = new \wblib\wbForms\Form();
                 $init = Directory::sanitizePath(
                     CAT_ENGINE_PATH.'/templates/'.Registry::get(

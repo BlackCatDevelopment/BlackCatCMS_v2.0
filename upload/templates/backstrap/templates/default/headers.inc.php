@@ -3,7 +3,7 @@
 /**
  *
  *   @author          Black Cat Development
- *   @copyright       2017 Black Cat Development
+ *   @copyright       Black Cat Development
  *   @link            https://blackcat-cms.org
  *   @license         http://www.gnu.org/licenses/gpl.html
  *   @category        CAT_Core
@@ -33,6 +33,7 @@ $mod_headers = array(
             array('file'=>'modules/lib_javascript/jquery-ui/themes/base/jquery-ui.css',),
             array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),
             array('file'=>'modules/lib_javascript/plugins/jquery.datatables/css/dataTables.bootstrap4.min.css',),
+            array('file'=>'modules/lib_javascript/plugins/jquery.treed/jquery.treed.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
         ),
         'jquery' => array(

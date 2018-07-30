@@ -1,0 +1,25 @@
+.mod-wysiwyg-columns{display:flex;flex-flow:row wrap;justify-content:center;margin:5px 0;}
+.mod-wysiwyg-column{flex:1;margin:2px;padding:10px;}
+.mod-wysiwyg-column:first-child{margin-left:0;}
+.mod-wysiwyg-column:not(.mod-wysiwyg-column-bordered):first-child{padding-left:0;}
+.mod-wysiwyg-column:last-child{margin-right:0;}
+.mod-wysiwyg-column-bordered{border:1px solid #ccc;}
+@media screen and (max-width: 980px) {
+  .mod-wysiwyg-columns .mod-wysiwyg-column {
+		margin-bottom: 5px;
+        flex-basis: 40%;
+		&:nth-last-child(2) {
+			margin-right: 0;
+		}
+		&:last-child {
+			flex-basis: 100%;
+			margin: 0;
+		}
+	}
+}
+@media screen and (max-width: 680px) {
+	.mod-wysiwyg-columns .mod-wysiwyg-column {
+		flex-basis: 100%;
+		margin: 0 0 5px 0;
+	}
+}

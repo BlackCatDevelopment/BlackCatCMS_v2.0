@@ -40,6 +40,7 @@ $LANG = array(
     'Sorry, no preview available for this mime type!' => 'Für diesen Mime-Typ ist leider keine Vorschau verfügbar!',
     'The loading of the settings form failed!' => 'Das Nachladen des Einstellungen-Formulars ist fehlgeschlagen!',
     'There are no linked pages yet' => 'Es sind noch keine Seiten verknüpft',
+    'This section has unsaved changes' => 'Diese Sektion hat ungespeicherte Änderungen',
     'Unlink plugin file' => 'Plugin-Datei entfernen',
     'Use widget setting' => 'Einstellung des Widgets verwenden',
     'You can set a date and time period in which this content section will be visible.' => 'Hier kann eine Zeitspanne definiert werden, in welcher dieser Inhalt sichtbar ist.',

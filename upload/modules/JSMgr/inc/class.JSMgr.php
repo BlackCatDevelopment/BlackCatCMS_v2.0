@@ -19,7 +19,7 @@ namespace CAT\Addon;
 
 use \CAT\Base as Base;
 
-if(!class_exists('JSMgr',false))
+if(!class_exists('\CAT\Addon\JSMgr',false))
 {
     final class JSMgr extends Tool
     {

@@ -3,26 +3,22 @@
 <div class="dashboard" data-id="{$dashboard.id}" data-columns="{$dashboard.columns}">
 {if count($dashboard.widgets)}
     <button role="button" class="btn btn-sm btn-warning detach" id="dashboard_reset" data-id="{$dashboard.id}">{translate('Reset Dashboard')}</button>
-    <ul class="columnize">
-    {foreach $dashboard.widgets widget}
-        <li data-row="{$widget.position}" data-col="{$widget.column}">
+    <div class="card-columns">
+{foreach $dashboard.widgets widget}
             <div class="card"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}>
-                <div class="card border-secondary">
-                    <div class="card-header bg-secondary">
-                        {if $widget.icon}<span class="fa fa-fw {$widget.icon}"></span>{/if}
-                        {if $widget.widget_name}{translate($widget.widget_name)}{/if}
-                        {if $widget.link}{$widget.link}{/if}
-                        <span class="float-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
-                        <span class="float-right toggle{if $widget.open != 'Y'} card-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
-                    </div>
-                    <div class="card-body"{if $widget.open != 'Y'} style="display:none;"{/if}>
-                        {$widget.content}
-                    </div>
+                <div class="card-header">
+                    {if $widget.icon}<span class="fa fa-fw {$widget.icon}"></span>{/if}
+                    {if $widget.widget_name}{translate($widget.widget_name)}{/if}
+                    {if $widget.link}{$widget.link}{/if}
+                    <span class="float-right remove fa fa-fw fa-trash"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}></span>
+                    <span class="float-right toggle{if $widget.open != 'Y'} card-collapsed{/if} fa fa-fw fa-eye{if $widget.open != 'Y'}-slash{/if}"></span>
+                </div>
+                <div class="card-body"{if $widget.open != 'Y'} style="display:none;"{/if}>
+                    {$widget.content}
                 </div>
             </div>
-        </li>
     {/foreach}
-    </ul>
+    </div>
 {else}
     <div class="alert alert-info alert-dismissible" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="{translate('Close')}"><span aria-hidden="true">&times;</span></button>

@@ -152,6 +152,8 @@ if (!class_exists('\CAT\Page', false))
             {
                 foreach($items as $section)
                 {
+                    if(!$section['active'] || $section['expired']) continue;
+
                     // spare some typing
                     $section_id = $section['section_id'];
                     $module     = $section['module'];

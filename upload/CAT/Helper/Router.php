@@ -42,6 +42,8 @@ if(!class_exists('Router',false))
         // flag
         private          $backend    = false;
 
+        private          $func       = NULL;
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Spaeter konfigurierbar machen!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -98,7 +100,8 @@ if(!class_exists('Router',false))
             }
 
             $this->controller = "\\CAT\\".($this->backend ? 'Backend' : 'Frontend'); // \CAT\Backend || \CAT\Frontend
-            $this->function   = ( count($this->parts)>0 ? $this->parts[0] : 'index' );
+            $this->function   = ( (is_array($this->parts) && count($this->parts)>0 ) ? $this->parts[0] : 'index' );
+
 #echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
             self::log()->addDebug(sprintf(
                 'controller [%s] function [%s]',
@@ -106,6 +109,26 @@ if(!class_exists('Router',false))
                 $this->function
             ));
 
+            // ----- frontend page ---------------------------------------------
+            if(!$this->backend)
+            {
+                $page = HPage::getPageForRoute($this->route);
+                if($page && is_int($page))
+                {
+                    $pg = \CAT\Page::getInstance($page);
+                    $pg->show();
+                    exit;
+                }
+            }
+
+// forward to modules
+            if(self::router()->match('~^modules/~i') && $suffix=='php')
+            {
+                require CAT_ENGINE_PATH.'/'.self::router()->getRoute();
+                return;
+            }
+
+#echo "is callable [", is_callable(array($this->controller,$this->function)), "]<br />";
             // ----- internal handler? ex \CAT\Backend::index() ----------------
             if(!is_callable(array($this->controller,$this->function)))
             {
@@ -154,7 +177,10 @@ if(!class_exists('Router',false))
                     self::log()->addDebug('forwarding request to route handler');
                     $handler();
                 }
+                return;
             }
+
+            \CAT\Page::print404();
 /*
 SITE INDEX
 CAT\Helper\Router Object
