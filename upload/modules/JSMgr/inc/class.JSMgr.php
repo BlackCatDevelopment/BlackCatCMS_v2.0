@@ -7,7 +7,7 @@
   (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
    @author          Black Cat Development
-   @copyright       2017 Black Cat Development
+   @copyright       2018 Black Cat Development
    @link            http://blackcat-cms.org
    @license         http://www.gnu.org/licenses/gpl.html
    @category        CAT_Module
@@ -26,7 +26,7 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
         protected static $type        = 'tool';
         protected static $directory   = 'JSMgr';
         protected static $name        = 'JSMgr';
-        protected static $version     = '0.1';
+        protected static $version     = '1.0';
         protected static $description = "JSMgr";
         protected static $author      = "BlackCat Development";
         protected static $guid        = "cae3b023-13a4-4a9d-8634-115cf4ee9bc2";
@@ -79,7 +79,8 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
             // check if all plugins are registered
             foreach($plugins as $name)
             {
-                if(!array_key_exists($name,$installed))
+                // skip directories with underscore as prefix
+                if(substr($name,0,1)!='_' && !array_key_exists($name,$installed))
                 {
                     // slurp js
                     $jsfiles = \CAT\Helper\Directory::findFiles(
@@ -153,9 +154,10 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
 
             // reload data if any plugins where added
             if($added) {
-                $data = self::db()->query(
+                $stmt = self::db()->query(
                     'SELECT * FROM `:prefix:addons_javascripts` ORDER BY `name`'
                 );
+                $data = $stmt->fetchAll();
             }
             // \CAT\Helper\Validate::path2uri(self::$basepath.$p.'/'.$rfile);
 
@@ -181,15 +183,6 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
                 // highslide-5.0.0_2.zip
                 $regexp = '^(.+?)[\s-_]?v?(\d+\.\d+(\.\d+)?)';
                 preg_match("~$regexp~i",$subdir,$m);
-                    /*
-                    Array
-                    (
-                        [0] => highslide-5.0.0
-                        [1] => highslide
-                        [2] => 5.0.0
-                        [3] => .0
-                    )
-                    */
                 if(is_array($m) && isset($m[1]) && !empty($m[2]))
                 {
                     if(isset($m[1]) && !empty($m[1])) $subdir = $m[1].'/'.$m[2];
