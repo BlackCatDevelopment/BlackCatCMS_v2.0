@@ -151,6 +151,7 @@ if (!class_exists('Backend\Admintools'))
                 if(!class_exists($classname)) {
                     $classname = '\CAT\Addon\\'.$classname;
                 }
+
                 // init forms
                 $init = Directory::sanitizePath(
                     CAT_ENGINE_PATH.'/modules/'.$tool.'/forms.init.php'
@@ -164,7 +165,14 @@ if (!class_exists('Backend\Admintools'))
                 {
                     $classname::initialize();
                 }
-                if(is_callable(array($classname,'tool')))
+
+                // check for function call in route
+                $func = self::router()->getRoutePart(-1);
+                if(is_callable(array($classname,$func)))
+                {
+                    $tpl_data['content'] = $classname::$func();
+                }
+                elseif(is_callable(array($classname,'tool')))
                 {
                     $tpl_data['content'] = $classname::tool();
                 }
@@ -199,14 +207,17 @@ if (!class_exists('Backend\Admintools'))
 
             if(!$tool)
                 $tool  = Validate::sanitizeGet('tool','scalar',NULL);
-
             if(!$tool)
                 $tool = self::router()->getParam(-1);
+#            if(!$tool)
+#                $tool = self::router()->getRoutePart(-1);
+            if(!$tool) {
+                $route = self::router()->getRoute();
+                $route = str_ireplace('admintools/tool/','',$route);
+                $tool  = explode('/',$route)[0];
+            }
 
-            if(!$tool)
-                $tool = self::router()->getRoutePart(-1);
-
-            if(!$tool || !is_scalar($tool))
+            if(!$tool || !is_scalar($tool) || !Addons::exists($tool))
                 self::printFatalError('Invalid data')
                 . (self::$debug ? '(Backend_Admintools::getTool())' : '');
 

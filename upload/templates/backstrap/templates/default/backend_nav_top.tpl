@@ -1,23 +1,3 @@
-{template dropdownmenu tpldata}
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            {foreach $tpldata item}
-            <li{if $item.children} class="dropdown-submenu"{/if}>
-              <a class="dropdown-item{if $item.children} dropdown-toggle{/if}" href="{$item.href}"{if $item.children} data-toggle="dropdown"{/if}>{$item.title}</a>
-              {if $item.children}{dropdownmenu $item.children}{/if}
-            </li>
-            {/foreach}
-          </ul>
-{/template}
-{template topmenu tpldata}
-        {foreach $tpldata item}{if $item.name != 'preferences' && $item.name != 'page' && $item != 1}
-        <li id="nav_{$item.name}" class="nav-item{if $item.children} dropdown{/if}{if $item.is_current || $item.is_in_trail} active{/if}">
-          <a href="{$item.href}" class="nav-link{if $item.children} dropdown-toggle{/if}"{if $item.children} data-toggle="dropdown" aria-has-popup="true" aria-expanded="false"{/if}>
-            <i class="fa fa-fw fa-{$item.name}"></i>
-            {translate($item.title)}
-          </a>
-          {if $item.children}{dropdownmenu $item.children}{/if}
-        </li>{/if}{/foreach}
-{/template}
   <header>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" id="bsTop">
       <a class="navbar-brand" href="{$CAT_ADMIN_URL}/dashboard">BlackCat CMS {$CAT_VERSION}</a>
@@ -25,9 +5,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="navbar-collapse collapse" id="navbarMainContent">
-        <ul class="navbar-nav mr-auto">
-          {topmenu $MAIN_MENU_RECURSIVE}
-        </ul>
+        {menu(1)}
         <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
           <li class="nav-item dropdown">
             <a class="nav-item nav-link dropdown-toggle mr-md-2" id="bsUserDropdown" data-toggle="dropdown" title="{cat_username()}" href="#" aria-haspopup="true" aria-expanded="false">

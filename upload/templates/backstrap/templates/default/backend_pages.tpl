@@ -1,6 +1,6 @@
 {template pagetree data}
     {foreach $data item}
-    <li class="route">
+    <li class="route" id="page_{$item.page_id}" data-id="{$item.page_id}">
       <div class="card">
         <div class="panel-body">
           <div class="handler"><i class="fa fa-fw fa-arrows"></i></div>
@@ -11,7 +11,7 @@
           </div>
         </div>
       </div>
-      <ul class="space" id="space1">
+      <ul class="space" id="space1" data-id="{$item.page_id}">
           {if $item.children}
             {pagetree $item.children}
           {/if}

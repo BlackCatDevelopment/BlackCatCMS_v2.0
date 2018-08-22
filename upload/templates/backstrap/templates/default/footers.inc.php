@@ -33,6 +33,11 @@ $mod_footers = array(
     )
 );
 
+if(\CAT\Backend::getArea() == 'roles')
+{
+    $mod_footers['backend']['js'][] = 'modules/lib_javascript/plugins/jquery.fancytree/jquery.fancytree-all.min.js';
+}
+
 if(\CAT\Backend::getArea() == 'media')
 {
 /*

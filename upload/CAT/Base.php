@@ -141,12 +141,12 @@ if(!class_exists('Base',false))
         }   // end function fileinfo()
 
         /**
-         * creates a global FormBuilder handler
+         * creates a global wbForms handler
          *
          * @access public
          * @return object - instanceof \wblib\wbForms\Form
          **/
-        public static function form()
+        public static function form() : object
         {
             if(
                    !isset(Base::$objects['formbuilder'])
@@ -177,7 +177,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return object - instanceof \wblib\wbLang
          **/
-        public static function lang()
+        public static function lang() : object
         {
             if(
                    !isset(Base::$objects['lang'])
@@ -190,6 +190,10 @@ if(!class_exists('Base',false))
             }
             return Base::$objects['lang'];
         }   // end function lang()
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !!! TODO: Refactor to new List Builder
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         /**
          * initializes wbList for use with pages
@@ -213,6 +217,7 @@ if(!class_exists('Base',false))
             return Base::$objects['list'];
         }   // end function list()
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         /**
          * accessor to Monolog logger
@@ -289,7 +294,7 @@ if(!class_exists('Base',false))
          * @access public
          * @return object - instanceof \CAT\Permissions
          **/
-        public function perms()
+        public static function perms()
         {
             if(
                    !isset(Base::$objects['perms'])
@@ -302,12 +307,12 @@ if(!class_exists('Base',false))
         }   // end function perms()
 
         /**
-         * accessor to current user object
+         * accessor to current role object
          *
          * @access public
          * @return object - instanceof \CAT\Roles
          **/
-        public function roles()
+        public static function role()
         {
             if(
                    !isset(Base::$objects['roles'])
@@ -317,7 +322,7 @@ if(!class_exists('Base',false))
                 self::storeObject('roles',\CAT\Roles::getInstance());
             }
             return Base::$objects['roles'];
-        }   // end function roles()
+        }   // end function role()
 
         /**
          * accessor to router
@@ -412,11 +417,14 @@ if(!class_exists('Base',false))
          **/
         public static function addLangFile($path)
         {
-            $langfile   = Directory::sanitizePath($path.'/'.Registry::get('LANGUAGE').'.php');
-            // load language file (if exists and is valid)
-            if(file_exists($langfile) && self::lang()->checkFile($langfile,'LANG',true))
-            {
-                self::lang()->addFile(Registry::get('LANGUAGE').'.php', $path);
+            $lang     = Registry::get('LANGUAGE');
+            foreach(array_values(array($lang, strtoupper($lang), strtolower($lang))) as $l) {
+                $langfile = Directory::sanitizePath($path.'/'.$l.'.php');
+                // load language file (if exists and is valid)
+                if(file_exists($langfile) && self::lang()->checkFile($langfile,'LANG',true))
+                {
+                    self::lang()->addFile($l.'.php', $path);
+                }
             }
         }   // end function addLangFile()
         

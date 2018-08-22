@@ -450,12 +450,13 @@ if(!class_exists('DB'))
          * @param  string  $id_field - column name, default 'id'
          * @return
          **/
-        public function reorder(string $table, integer $id, integer $newpos, string $order_field='position', string $id_field='id')
+        public function reorder(string $table, int $id, int $newpos, string $order_field='position', string $id_field='id', string $parent_field='parent') : bool
         {
+            $tablename = sprintf('%s%s',self::$prefix,$table);
             // get original position
             $qb = self::qb()
-                ->select($order_field)
-                ->from($table,'t1')
+                ->select('*')
+                ->from($tablename,'t1')
                 ->where($id_field.'=:id')
                 ->setParameter('id',$id);
             $sth = $qb->execute();
@@ -464,39 +465,31 @@ if(!class_exists('DB'))
             if(is_array($data) && count($data))
             {
                 $pos = $data[$order_field];
-                if($pos!=$newpos) {
-                    if($newpos>$pos) {
-                        self::query(
-                            sprintf(
-                                "UPDATE `%s` SET `%s`=`%s`-1 WHERE `%s`<=? AND `%s`<>?",
-                                array($order_field,$order_field,$order_field,$order_field,$id_field)
-                            ),
-                            array($newpos,$id)
-                        );
-                        self::query(
-                            sprintf(
-                                "UPDATE `%s` SET `%s`=`%s`+1 WHERE `%s`>? AND `%s`<>?",
-                                array($order_field,$order_field,$order_field,$order_field,$id_field)
-                            ),
-                            array($newpos,$id)
-                        );
-                    } else {
-                        self::query(
-                            sprintf(
-                                "UPDATE `%s` SET `%s`=`%s`-1 WHERE `%s`<? AND `%s`<>?",
-                                array($order_field,$order_field,$order_field,$order_field,$id_field)
-                            ),
-                            array($newpos,$id)
-                        );
-                        self::query(
-                            sprintf(
-                                "UPDATE `%s` SET `%s`=`%s`+1 WHERE `%s`>=? AND `%s`<>?",
-                                array($order_field,$order_field,$order_field,$order_field,$id_field)
-                            ),
-                            array($newpos,$id)
-                        );
-                    }
-                }
+                // save new position
+                self::query(
+                    sprintf(
+                        "UPDATE `%s` SET `%s`=? WHERE `%s`=?",
+                        $tablename, $order_field, $id_field
+                    ),
+                    array($newpos,$id)
+                );
+                // calculate positions for previous items
+                self::query(
+                    sprintf(
+                        "UPDATE `%s` SET `%s`=`%s`-1 WHERE `%s`=? AND `%s`<=? AND `%s`<>?",
+                        $tablename, $order_field, $order_field, $parent_field, $order_field, $id_field
+                    ),
+                    array($data[$parent_field],$newpos,$id)
+                );
+                // calculate positions for next items
+                self::query(
+                    sprintf(
+                        "UPDATE `%s` SET `%s`=`%s`+1 WHERE `%s`=? AND `%s`>? AND `%s`<>?",
+                        $tablename, $order_field, $order_field, $parent_field, $order_field, $id_field
+                    ),
+                    array($data[$parent_field],$newpos,$id)
+                );
+                return true;
             }
             else
             {
@@ -664,7 +657,6 @@ class CPDOExceptionHandler
      **/
     public static function exceptionHandler($exception)
     {
-
         if(DB::$exc_trace === true)
         {
             $traceline = "#%s %s(%s): %s(%s)";

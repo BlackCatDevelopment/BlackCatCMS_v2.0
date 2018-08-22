@@ -1,0 +1,59 @@
+#sidebar{background-color:#343A40;color:#ccc;padding-left:0 !important;padding-right:0 !important;}
+#sidebar .list-group-item {border-radius:0;border-left:0;border-right:0;border-color:#2c2c2c;background-color:#343A40;color:#ccc;padding-right:5px !important;overflow:hidden}
+
+/* highlight active menu */
+#sidebar .list-group-item:not(.collapsed,.leaf){background-color:#52585E;}
+
+/* closed state */
+#sidebar .list-group .list-group-item[aria-expanded="false"]::after {content:" \f0d7";font-family:FontAwesome;display:inline;text-align:right;padding-left:5px;}
+
+/* open state */
+#sidebar .list-group .list-group-item[aria-expanded="true"] {font-weight:900;}
+#sidebar .list-group .list-group-item[aria-expanded="true"]::after {content:" \f0da";font-family:FontAwesome;display:inline;text-align:right;padding-left:5px;}
+
+/* links */
+#sidebar .list-group-item-actions{float:right;}
+#sidebar .list-group-link{color:#ccc;}
+
+/* multilevel indent */
+#sidebar .list-group.panel div{padding-left:15px}
+
+#sidebar-closer{width:10px;
+background:
+radial-gradient(black 15%, transparent 16%) 0 0,
+radial-gradient(black 15%, transparent 16%) 8px 8px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 0 1px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 8px 9px;
+background-color:#343A40;background-size:11px 14px;
+}
+
+
+@media (max-width:48em) {
+    /* overlay sub levels on small screens */
+    #sidebar .list-group .collapse.in, #sidebar .list-group .collapsing {
+        position: absolute;
+        z-index: 1;
+        width: 190px;
+    }
+    #sidebar .list-group > .list-group-item {
+        text-align: center;
+        padding: .75rem .5rem;
+    }
+    /* hide caret icons of top level when collapsed */
+    #sidebar .list-group > .list-group-item[aria-expanded="true"]::after,
+    #sidebar .list-group > .list-group-item[aria-expanded="false"]::after {
+        display:none;
+    }
+}
+
+/* change transition animation to width when entire sidebar is toggled */
+#sidebar.collapsing {
+
+  width: 0;
+  -webkit-transition-property: width;
+       -o-transition-property: width;
+          transition-property: width;
+  -webkit-transition-duration: .3s;
+       -o-transition-duration: .3s;
+          transition-duration: .3s;
+}

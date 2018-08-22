@@ -29,15 +29,13 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
         private static $e_name = null;
         private static $e      = null;
 
-        public static function initialize()
+        public static function initialize(array $section)
         {
+            parent::initialize($section);
             self::$e_name = Registry::get('wysiwyg_editor');     // name
             self::$e_url  = Registry::get('wysiwyg_editor_url'); // url
             self::$e      = new \CAT\Addon\WYSIWYG\CKEditor4();
         }
-
-        public static function add() {}
-        public static function remove() {}
 
         /**
          * @inheritdoc

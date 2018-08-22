@@ -33,8 +33,8 @@ $mod_headers = array(
             array('file'=>'modules/lib_javascript/jquery-ui/themes/base/jquery-ui.css',),
             array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),
             array('file'=>'modules/lib_javascript/plugins/jquery.datatables/css/dataTables.bootstrap4.min.css',),
-            array('file'=>'modules/lib_javascript/plugins/jquery.treed/jquery.treed.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
+            array('file'=>'templates/backstrap/css/default/sidebar.css',),
         ),
         'jquery' => array(
             'core'    => true,
@@ -67,4 +67,9 @@ if(\CAT\Backend::getArea() == 'media')
 if(\CAT\Backend::getArea() == 'admintools')
 {
     $mod_headers['backend']['js'][] = 'templates/backstrap/js/dashboard.js';
+}
+
+if(\CAT\Backend::getArea() == 'roles')
+{
+    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_javascript/plugins/jquery.fancytree/skin-lion/ui.fancytree.min.css');
 }

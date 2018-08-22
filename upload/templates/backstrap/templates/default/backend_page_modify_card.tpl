@@ -72,9 +72,6 @@
                       {/if}
                       <li><span class="fa fa-eye" title="{translate('If you set visibility to false, the section will <strong>not</strong> be shown. This means, all other settings - like periods of time - are ignored.')}" data-id="{$block.section_id}"></span></li>
                       <li><span class="fa fa-calendar" title="{translate('Set publishing period')}" data-id="{$block.section_id}" data-pubstart="{$block.publ_start}" data-pubend="{$block.publ_end}" data-timestart="{$block.publ_by_time_start}" data-timeend="{$block.publ_by_time_end}"></span></li>
-                      {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
-                      <li><span class="fa fa-trash text-danger" title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
-                      {/if}
                       {if user_has_perm('pages_section_move') && user_has_module_perm($block.module)}
                       <li><span class="fa fa-external-link" title="{translate('Move')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
                       {/if}
@@ -82,12 +79,15 @@
                       <li><span class="fa fa-clone" title="{translate('View revisions')}"></span></li>
                       {/if}
                     {/if}
+                    {if user_has_perm('pages_section_delete') && user_has_module_perm($block.module)}
+                      <li><span class="fa fa-trash text-danger" title="{translate('Delete')}" data-id="{$block.section_id}" data-module="{$block.module}"></span></li>
+                    {/if}
                   </ul>
                   {/if}
                 </div>
                 <div class="card-content">
                   {if $block.options_file or $block.options_form}
-                  <div id="bsOptionsPanel_{$block.section_id}" style="display:none">
+                  <div id="bsOptionsPanel_{$block.section_id}" class="options-panel" style="display:none">
                   {if $block.options_file}{include $block.options_file}<br />{/if}
                   {if $block.options_form}{$block.options_form}{/if}
                   </div>

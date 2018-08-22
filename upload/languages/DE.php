@@ -47,7 +47,9 @@ $LANG = array(
 
     // --------------- Globals ---------------
     'Active'          => 'Aktiv',
+    'after'           => 'hinter',
     'All'             => 'Alle',
+    'before'          => 'vor',
     'Cancel'          => 'Abbrechen',
     'Cancel & close'  => 'Abbrechen & Schließen',
     'Close'           => 'Schließen',
@@ -87,6 +89,7 @@ $LANG = array(
     'Welcome'         => 'Willkommen',
     'Sorry, there is no content to show' => 'Entschuldigung, es gibt leider keine Inhalte anzuzeigen',
     'Successfully saved' => 'Erfolgreich gespeichert',
+    'View this page in other languages' => 'Diese Seite in anderen Sprachen ansehen',
 
     // --------------- Login page ---------------
     'Login'           => 'Anmelden',

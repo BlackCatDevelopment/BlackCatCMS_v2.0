@@ -31,7 +31,7 @@ class Language extends Module implements IAddon
 	protected static $code;
 
 	/**
-	 *
+	 * @inheritdoc
 	 */
 	public static function getInstance()
 	{
@@ -39,7 +39,7 @@ class Language extends Module implements IAddon
 	}
 
 	/**
-	 *
+	 * @inheritdoc
 	 */
 	public static function getCode()
 	{

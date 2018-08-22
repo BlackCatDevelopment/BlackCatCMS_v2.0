@@ -1,88 +1,31 @@
 <?php
 
-/**
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 3 of the License, or (at
- *   your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful, but
- *   WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- *   @author          Black Cat Development
- *   @copyright       2013 - 2016 Black Cat Development
- *   @link            http://blackcat-cms.org
- *   @license         http://www.gnu.org/licenses/gpl.html
- *   @category        CAT_Core
- *   @package         CAT_Core
- *
- */
+/*
+   ____  __      __    ___  _  _  ___    __   ____     ___  __  __  ___
+  (  _ \(  )    /__\  / __)( )/ )/ __)  /__\ (_  _)   / __)(  \/  )/ __)
+   ) _ < )(__  /(__)\( (__  )  (( (__  /(__)\  )(    ( (__  )    ( \__ \
+  (____/(____)(__)(__)\___)(_)\_)\___)(__)(__)(__)    \___)(_/\/\_)(___/
 
-if (!class_exists('CAT_Backend_Permissions'))
+   @author          Black Cat Development
+   @copyright       Black Cat Development
+   @link            https://blackcat-cms.org
+   @license         http://www.gnu.org/licenses/gpl.html
+   @category        CAT_Core
+   @package         CAT_Core
+
+*/
+
+declare(strict_types=1);
+
+namespace CAT\Backend;
+
+use CAT\Base as Base;
+use CAT\Helper\DB        as DB;
+
+if(!class_exists('\CAT\Backend\Permissions',false))
 {
-    if (!class_exists('CAT_Object', false))
+    class Permissions extends Base
     {
-        @include dirname(__FILE__) . '/../Object.php';
-    }
-
-    class CAT_Backend_Permissions extends CAT_Object
-    {
-        protected static $instance = NULL;
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function getInstance()
-        {
-            if(!is_object(self::$instance))
-                self::$instance = new self();
-            return self::$instance;
-        }   // end function getInstance()
-
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function index()
-        {
-            $self = self::getInstance();
-            CAT_Backend::print_header();
-            $perms = $self->perms()->getPerms();
-
-            // render recursive list (ul)
-            $l = \wblib\wbList::getInstance(array(
-                '__id_key'       => 'perm_id',
-                '__parent_key'   => 'requires',
-                'top_list_open'  => '<ol id="%%id%%" class="%%class%%">',
-                'top_list_close' => '</ol>',
-                'list_open'      => '<ol id="%%id%%" class="%%class%%">',
-                'list_close'     => '</ol>',
-
-            ));
-
-            // sort permissions by parents (if the template renders the list)
-            $lb = CAT_Helper_ListBuilder::getInstance()->config(array(
-                '__id_key'     => 'perm_id',
-                '__parent_key' => 'requires',
-            ));
-
-            // pass both variants to the template
-            $tpl_data = array(
-                'permissions'     => $lb->sort($perms,0)
-            );
-
-            $self->tpl()->output('backend_permissions', $tpl_data);
-            CAT_Backend::print_footer();
-        }   // end function index()
-        
         /**
          * returns the permissions for a role; the role_id is retrieved from
          * the route
@@ -92,52 +35,49 @@ if (!class_exists('CAT_Backend_Permissions'))
          **/
         public static function byrole()
         {
-            $self = self::getInstance();
-            if(!$self->user()->hasPerm('roles_perms'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
-            
-            $id    = $self->router()->getParam();
-            $perms = CAT_Permissions::getInstance()->getPerms($id);
-            $perms = CAT_Helper_Array::ArraySort($perms,'area','asc',true,true);
+            if(!self::user()->hasPerm('roles_perms'))
+                Json::printError('You are not allowed for the requested action!');
+
+            $id    = self::getPermID();
+            $perms = self::perms()->getPerms($id);
+
+            if(!is_array($perms)) {
+                $perms = array();
+            }
+
             if(self::asJSON())
             {
-                echo header('Content-Type: application/json');
-                echo json_encode($perms,true);
-                return;
+                echo json_encode($perms,1);
+                exit;
             }
         }   // end function byrole()
-        
+
         /**
-         * list permissions
+         * tries to retrieve 'page_id' by checking (in this order):
+         *
+         *    - $_POST['page_id']
+         *    - $_GET['page_id']
+         *    - Route param['page_id']
+         *
+         * also checks for numeric value
+         *
+         * @access private
+         * @return integer
          **/
-        public static function list()
+        protected static function getPermID()
         {
-            $self = self::getInstance();
-            if(!$self->user()->hasPerm('permissions_list'))
-                CAT_Object::json_error('You are not allowed for the requested action!');
-            # get the permissions
-            $perms = CAT_Permissions::getInstance()->getPerms();
-            # recursive
-            $rec   = $self->router()->getParam();
-            if($rec) {
-                $lb = CAT_Helper_ListBuilder::getInstance()->config(array(
-                    '__id_key'     => 'perm_id',
-                    '__parent_key' => 'requires',
-                ));
-                $perms = $lb->buildRecursion($perms);
-            }
+            $permID  = \CAT\Helper\Validate::sanitizePost('perm_id','numeric',NULL);
 
-            if(self::asJSON())
-            {
-                # sort by parents
-                #$perms = CAT_Helper_ListBuilder::buildRecursion($perms);
-                echo header('Content-Type: application/json');
-                echo json_encode($perms,true);
-                return;
-            }
-            return $perms;
-        }
+            if(!$permID)
+                $permID  = \CAT\Helper\Validate::sanitizeGet('perm_id','numeric',NULL);
 
-    } // class CAT_Helper_Permissions
+            if(!$permID)
+                $permID = self::router()->getParam(-1);
 
-} // if class_exists()
+            if(!$permID)
+                $permID = self::router()->getRoutePart(-1);
+
+            return intval($permID);
+        }   // end function getPermID()
+    }
+}

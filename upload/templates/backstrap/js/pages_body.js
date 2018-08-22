@@ -20,15 +20,34 @@ $(function() {
         });
     }
 
+    // $("#element").children().uniqueId().end().
     $(".space").sortable({
+    //$(".space").children().uniqueId().end().sortable({
         connectWith:".space",
         tolerance:"intersect",
         over:function(event,ui){ },
         receive:function(event, ui){
-            //var position = $(ui.item).offset();
-            //var newWidth = fullwidth - position.left + container_offset.left + 5;
-            //$(ui.item).find("div.card").css("width",newWidth);
             calcWidth($(".treecontainer > ul"));
+        },
+        update:function(event,ui){
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL + '/page/reorder',
+                data    : {
+                    page_id:  ui.item.data('id'),
+                    parent:   ui.item.parent().data('id'),
+                    position: ui.item.index()+1
+                },
+                dataType: 'json',
+                success : function(data, status) {
+                    if(data.success==true) {
+                        BCGrowl($.cattranslate('Success'),true);
+                        window.location.href = CAT_ADMIN_URL + '/pages'
+                    } else {
+                        BCGrowl(data.message);
+                    }
+                }
+            });
         }
     });
 

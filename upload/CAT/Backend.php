@@ -72,6 +72,9 @@ if (!class_exists('Backend', false))
                 {
                     $add_form   = FormBuilder::generateForm('be_page_add');
                     $add_form->getElement('page_type')->setValue("page");
+                    $add_form->getElement('default_radio')->setLabel('Insert');
+                    $add_form->getElement('default_radio')->setName('page_insert');
+                    $add_form->getElement('page_before_after')->setLabel(' ');
 
                     // for re-login dialog
                     self::tpl()->setGlobals(array(
@@ -97,19 +100,27 @@ if (!class_exists('Backend', false))
          * @access public
          * @return
          **/
-        public static function getArea()
+        public static function getArea(bool $getID = false)
         {
             $route = self::router()->getRoute();
             // example route: backend/page/edit/1
             $parts = explode('/',$route);
             if($parts[0]==CAT_BACKEND_PATH) array_shift($parts);
+            if($getID) {
+                $stmt = self::db()->query(
+                    'SELECT `id` FROM `:prefix:backend_areas` WHERE `name`=?',
+                    array($parts[0])
+                );
+                $data = $stmt->fetch();
+                return $data['id'];
+            }
             return $parts[0];
             return null;
         }   // end function getArea()
 
         /**
          * get the main menu (backend sections)
-         * checks the user priviledges
+         * checks the user privileges
          *
          * @access public
          * @return array
@@ -119,9 +130,10 @@ if (!class_exists('Backend', false))
             if(!self::$menu)
             {
                 // get backend areas
-                $r    = self::db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY `parent`,`position`');
+                $r = self::db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY  `level` ASC, `parent` ASC, `position` ASC');
                 self::$menu = $r->fetchAll(\PDO::FETCH_ASSOC);
                 self::log()->addDebug('main menu items from DB: '.print_r(self::$menu,1));
+
                 foreach(self::$menu as $i => $item)
                 {
                     self::$menu[$i]['title'] = self::lang()->t(ucfirst($item['name']));
@@ -136,33 +148,8 @@ if (!class_exists('Backend', false))
                     {
                         self::$menu[$i]['href'] = CAT_ADMIN_URL.'/'.$item['name'];
                     }
-                    self::$menu[$i]['controller'] = ( isset($item['controller']) ? $item['controller'] : $item['name'] );
-                    if(preg_match('~'.$item['name'].'$~i',self::$route))
-                    {
-                        self::$menu[$i]['is_current'] = 1;
-                        $parents = explode('/',$item['trail']);
-                        foreach(array_values($parents) as $pid)
-                        {
-                            $path = HArray::search($pid,self::$menu,'id');
-                            self::$menu[$path[0]]['is_in_trail'] = 1;
-                        }
-                    }
+                    self::$menu[$i]['controller'] = ( !empty($item['controller']) ? $item['controller'] : '\CAT\Backend\\'.ucfirst($item['name']) );
                 }
-
-/*
-            [id] => 1
-            [name] => dashboard
-            [position] => 1
-            [parent] => 0
-            [controller] =>
-            [level] => 0
-            [trail] => 1
-            [title] => Dashboard
-            [href] => https://localhost/backend/dashboard
-            [is_current] => 1
-            [is_in_trail] => 1
-*/
-
 
                 // get available settings categories / regions
                 $r       = self::db()->query('SELECT `region` FROM `:prefix:settings` GROUP BY `region`');
@@ -177,11 +164,7 @@ if (!class_exists('Backend', false))
                         'name'        => $region['region'],
                         'parent'      => $set_parent['id'],
                         'title'       => self::humanize($region['region']),
-                        'level'       => ($set_parent['level']+1),
                         'href'        => CAT_ADMIN_URL.'/settings/'.$region['region'],
-                        'is_current'  => false,
-                        'is_in_trail' => false,
-                        'trail'       => $set_parent['trail'].'/'.$id,
                     );
                     $id++;
                 }
@@ -346,6 +329,13 @@ if (!class_exists('Backend', false))
                         foreach(array_values($langs) as $l)
                             $langselect[$l] = $l;
                         Json::printSuccess($langselect);
+                        break;
+                    case 'form':
+                        $form = new \wblib\wbForms\Element\Select(
+                            'language'
+                        );
+                        $form->setData($langs);
+                        Json::printSuccess($form->render());
                         break;
                 }
             }

@@ -23,7 +23,7 @@ use \CAT\Helper\Page as HPage;
 use \wblib\wbForms\Form;
 use \wblib\wbForms\Element;
 
-require CAT_ENGINE_PATH.'/modules/lib_wblib/wblib/wbForms/autoload.php';
+#require CAT_ENGINE_PATH.'/modules/lib_wblib/wblib/wbForms/autoload.php';
 
 if (!class_exists('FormBuilder'))
 {
@@ -34,6 +34,7 @@ if (!class_exists('FormBuilder'))
 
         public static function generate($name,$items,$formdata=array(),$legend_key='fieldset')
         {
+
             \wblib\wbForms\Base::$lang_path = CAT_ENGINE_PATH.'/CAT/Backend/languages';
             $form = new Form($name);
 
@@ -50,15 +51,6 @@ if (!class_exists('FormBuilder'))
                     }
 
                     $type = 'wblib\wbForms\Element\\'.ucfirst($item['fieldtype']);
-
-                    // list of values for checkbox and radio
-                    if($item['fieldtype']=='checkbox' || $item['fieldtype']=='radio')
-                    {
-                        if(isset($formdata[$item['name']]) && strlen($formdata[$item['name']]) && substr_count($formdata[$item['name']],","))
-                        {
-                            $formdata[$item['name']] = explode(",",$formdata[$item['name']]);
-                        }
-                    }
 
                     // if no label is given, use the field name as label
                     $label = strlen($item['label'])
@@ -80,6 +72,16 @@ if (!class_exists('FormBuilder'))
                         )
                     );
                     $e = $form->addElement(new $type($item['name'],$element));
+
+                    // list of values for checkbox and radio
+                    if(in_array($item['fieldtype'],array('checkbox','radio','select')))
+                    {
+                        if(isset($item['data']) && strlen($item['data']) && substr_count($item['data'],","))
+                        {
+                            $e->setData(explode(",",$item['data']));
+                        }
+                    }
+
 
                     // add values from fieldhandler
                     if(strlen($item['fieldhandler'])) {
@@ -105,6 +107,7 @@ if (!class_exists('FormBuilder'))
                     self::lang()->translate('Cancel')
                 ));
             }
+
             return $form;
         }   // end function generate()
 

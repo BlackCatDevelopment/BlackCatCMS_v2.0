@@ -22,6 +22,20 @@
         var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
+    function bsChangeLangSelect() {
+        count = $('select#linked_page option[data-lang="' + $('select#relation_lang').val() + '"]').length;
+        if(count==0) {
+            $('select#linked_page').parent().parent().hide();
+            $('button#bsSaveLangRelation').hide();
+            $('#bsNoPagesInfo').show();
+        } else {
+            $('select#linked_page').parent().parent().show();
+            $('button#bsSaveLangRelation').show();
+            $('#bsNoPagesInfo').hide();
+        }
+        $('select#linked_page option[data-lang!="' + $('select#relation_lang').val() + '"]').attr('disabled','disabled');
+    }
+
     // get the time period settings template
     var bsPublishingTemplate = $('#publishing').detach();
     var bsModalTemplate      = $('#bsDialog').clone().detach();
@@ -186,50 +200,47 @@ console.log(data);
         }
     }
 
+    // language relations
+    $('select#relation_lang').on('focus,change', function() {
+        bsChangeLangSelect();
+    });
+    bsChangeLangSelect(); // initial
 
-    //
-    $.get(CAT_URL+'/backend/languages/select', function(result) {
-        $('div#bsLangSelect').html(result.message);
-        $('select#language').find('option[value="'+$('#bsPageHeader').data('lang')+'"]').remove();
-        $('select#language').on('change', function(e) {
-            var lang  = $(this).val();
-            var _this = $(this);
+    $('button#bsSaveLangRelation').on('click', function(e) {
+        e.preventDefault();
+        if($('select#linked_page option:selected').val()=="") {
+            BCGrowl($.cattranslate('Please select a page to link to'));
+        } else {
             $.ajax({
-                type    : 'GET',
-                url     : CAT_ADMIN_URL+'/page/list/'+lang,
+                type    : 'POST',
+                url     : CAT_ADMIN_URL + '/page/save',
                 dataType: 'json',
+                data    : $('form#bsAddPageRelation').serialize(),
                 success : function(data, status) {
-                    if(data.length)
-                    {
-                        var $clone  = _this.parent().parent().clone();
-                        $clone.find('label').html($.cattranslate('Page title'));
-                        var $select = $clone.find('select');
-                        $select.find('option').remove();
-                        $select.attr('name','page').attr('id','page');
-                        for(index in data) {
-                            var item = data[index];
-                            $select.append('<option value="'+item.page_id+'">'+item.menu_title+'</option>');
-                        }
-                        _this.parent().parent().after($clone);
+                    if(data.success==true) {
+                        BCGrowl($.cattranslate('Success'),true);
+                    } else {
+                        BCGrowl(data.message);
                     }
                 }
             });
-        });
+        }
     });
 
-    // ----- unlink page -------------------------------------------------------
+    // ----- remove page relation ----------------------------------------------
     $('.fa-chain-broken').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
-        $('.modal-body').html(
+        var _this = $(this);
+        $('#bsDialog .modal-body').html(
             $.cattranslate('Do you really want to unlink the selected page?') +
             '<br />' +
             $(this).parent().next('td').next('td').text()
         );
-        $('.modal-title').text($.cattranslate('Remove relation'));
-        $('#modal_dialog').modal('show');
-        $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
+        $('#bsDialog .modal-title').text($.cattranslate('Remove relation'));
+        $('#bsDialog').modal('show');
+        $('#bsDialog .modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
-            $('#modal_dialog').modal('hide');
+            $('#bsDialog').modal('hide');
             $.ajax({
                 type    : 'POST',
                 url     : CAT_ADMIN_URL + '/page/unlink',
@@ -239,7 +250,8 @@ console.log(data);
                     unlink: id
                 },
                 success : function(data, status) {
-                    window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
+                    _this.parent().parent().remove();
+                    BCGrowl($.cattranslate('Success'),true);
                 }
             });
         });
@@ -302,7 +314,7 @@ console.log(data);
                     section_id: id
                 },
                 success : function(data, status) {
-                    BCGrowl($.cattranslate(data.message));
+                    BCGrowl($.cattranslate(data.message),true);
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
@@ -315,25 +327,25 @@ console.log(data);
     // ----- recover section ---------------------------------------------------
     $('.fa-life-saver').unbind('click').on('click', function(e) {
         var id = $(this).data('id');
-        $('.modal-body').html(
+        $('#bsDialog .modal-body').html(
             $.cattranslate('Do you really want to recover this section?')
         );
-        $('.modal-title').html('<i class="fa fa-fw fa-life-saver"></i> '+$.cattranslate('Recover section'));
-        $('#modal_dialog').modal('show');
-        $('.modal-content button.btn-primary').unbind('click').on('click',function(e) {
+        $('#bsDialog .modal-title').html('<i class="fa fa-fw fa-life-saver"></i> '+$.cattranslate('Recover section'));
+        $('#bsDialog').modal('show');
+        $('#bsDialog .modal-content button.btn-primary').unbind('click').on('click',function(e) {
             e.preventDefault();
             $.ajax({
                 type    : 'POST',
                 url     : CAT_ADMIN_URL + '/section/recover/' + id,
                 dataType: 'json',
                 success : function(data, status) {
-                    BCGrowl($.cattranslate(data.message));
+                    BCGrowl($.cattranslate('Success'),true);
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
                 }
             });
-            $('#modal_dialog').modal('hide');
+            $('#bsDialog').modal('hide');
         });
     });
 
@@ -351,7 +363,7 @@ console.log(data);
                     page_id: pageID
                 },
                 success : function(data, status) {
-                    BCGrowl($.cattranslate(data.message));
+                    BCGrowl($.cattranslate(data.message),true);
                     if(data.success) {
                         window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID
                     }
@@ -367,15 +379,14 @@ console.log(data);
         $(dialog).find('.modal-title').text($.cattranslate('Move section to another page'));
         $.ajax({
             type    : 'POST',
-            url     : CAT_ADMIN_URL + '/page',
+            url     : CAT_ADMIN_URL + '/page/list',
             dataType: 'json',
             success : function(data, status) {
                 var select = $('<select name="page" id="page">');
-                for(index in data.pages) {
-                    // skip current page
-                    if(data.pages[index].page_id != pageID) {
-                        select.append('<option value="'+data.pages[index].page_id+'">'+data.pages[index].menu_title+'</option>');
-                    }
+                var prefix = "|- ";
+                for(index in data) {
+                    var offset = prefix.repeat(data[index].level);
+                    select.append('<option value="'+data[index].page_id+'"'+(data[index].page_id==pageID ? ' disabled="disabled"' : '')+'>'+offset+data[index].menu_title+'</option>');
                 }
                 select.appendTo($(dialog).find('.modal-body'));
                 $(dialog).modal('show');
@@ -551,7 +562,7 @@ console.log(data);
                             .attr('data-pubend',data.publ_end)
                             .attr('data-timestart',data.publ_by_time_start)
                             .attr('data-timeend',data.publ_by_time_end);
-                        BCGrowl($.cattranslate('Successfully saved'));
+                        BCGrowl($.cattranslate('Successfully saved'),true);
                     }
                 });
             }
@@ -569,7 +580,27 @@ console.log(data);
             dataType: 'json',
             data    : { variant: variant},
             success : function(data, status) {
-                window.location.href = CAT_ADMIN_URL + '/page/edit/' + id;
+                window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID;
+            }
+        });
+    });
+
+    // ----- save settings -----------------------------------------------------
+    $('div#contents.tab-pane.active div.options-panel form input.btn.btn-primary').unbind('click').on('click', function(e) {
+        e.preventDefault();
+        var section_id = $('div#contents.tab-pane.active div.options-panel form input[name=section_id]').val();
+        $.ajax({
+            type    : 'POST',
+            url     : CAT_ADMIN_URL + '/section/save/' + section_id,
+            data    : $('div#contents.tab-pane.active div.options-panel form').serialize(),
+            dataType: 'json',
+            success : function(data, status) {
+                if(data.success) {
+                    BCGrowl($.cattranslate(data.message),data.success);
+                    window.location.href = CAT_ADMIN_URL + '/page/edit/' + pageID;
+                } else {
+                    BCGrowl($.cattranslate(data.message));
+                }
             }
         });
     });

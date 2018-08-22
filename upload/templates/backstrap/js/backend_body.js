@@ -95,10 +95,14 @@
         $("#add_page_modal .modal-title").text($.cattranslate("Add page"));
         // remove buttons from form
         $("#add_page_modal .form-group.row.buttonline").remove();
-        // select parent
+        // select parent; e.target is the icon so we need parent()
         parent = $(e.target).parent().data("parent");
+        self   = $(e.target).parent().data("id");
+        pos    = $(e.target).parent().data("pos");
         if(typeof parent == "undefined") { parent = 0; }
         $("#add_page_modal select[name=page_parent]").val(parent).change();
+        $("#add_page_modal input[value=\""+pos+"\"]").attr("checked","checked");
+        $("#add_page_modal input[name=page_before_after]").val($("#add_page_modal select[name=page_parent] option[value="+self+"]").text().replace(/\|-- /g,""));
         $("#add_page_modal").modal("show");
         var _this = $(this);
         $("#add_page_modal .modal-content button.btn-primary").unbind("click").on("click",function(e) {
@@ -150,10 +154,11 @@
                .appendTo('.breadcrumb');
     });
 
-    // format buttons
-    $('input[type="submit"]').addClass('btn btn-primary');
+    // attach Bootstrap classes to form elements
+    $('input[type="submit"],button[type="submit"]').addClass('btn btn-primary');
     $('input[type="reset"]').addClass('btn btn-default');
     $('input[type="button"]').addClass('btn btn-default');
+    $('input[type="text"],textarea').addClass('form-control');
 
     // avoid modal contents to be sent more than once
     $('body').on('hidden.bs.modal', '.modal', function() {

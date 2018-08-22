@@ -19,7 +19,7 @@
 namespace CAT;
 use \CAT\Base as Base;
 
-if (!class_exists('Roles'))
+if (!class_exists('\CAT\Roles'))
 {
     class Roles extends Base
     {
@@ -128,8 +128,6 @@ if (!class_exists('Roles'))
                 if(!isset($opt['for']) || !in_array($opt['for'],array('user','group')))
                     return false;
 
-                $self = self::getInstance();
-
                 $table = $opt['for'];
                 $query = 'SELECT * '
                        . 'FROM `:prefix:rbac_%sroles` AS t1 '
@@ -154,11 +152,14 @@ if (!class_exists('Roles'))
                     $query_options = array('id'=>$opt['role_id']);
                 }
 
-                $sth = $self->db()->query(
+                $sth = self::db()->query(
                     sprintf($query,$table),
                     $query_options
                 );
-
+                return $sth->fetchAll(\PDO::FETCH_ASSOC);
+            } else {
+                $query = 'SELECT * FROM `:prefix:rbac_roles`';
+                $sth = self::db()->query($query);
                 return $sth->fetchAll(\PDO::FETCH_ASSOC);
             }
         }   // end function getRoles()

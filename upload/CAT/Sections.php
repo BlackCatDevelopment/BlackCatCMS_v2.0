@@ -157,13 +157,8 @@ if ( ! class_exists( 'Sections', false ) ) {
             // delete section
             if(self::exists($section_id))
             {
-                if(self::getSetting('trash_enabled')===true)
+                if(self::getSetting('trash_enabled')!==true || self::isDeletable($section_id))
                 {
-                    self::db()->query(
-                        'UPDATE `:prefix:sections` SET `state_id`=? WHERE `section_id`=?',
-                        array(self::getStateID('deleted'), $section_id)
-                    );
-                } else {
                     self::db()->query(
                         'DELETE FROM `:prefix:pages_sections` WHERE `section_id`=:id',
                         array('id'=>$section_id)
@@ -171,6 +166,11 @@ if ( ! class_exists( 'Sections', false ) ) {
                 	self::db()->query(
                         'DELETE FROM `:prefix:sections` WHERE `section_id`=:id',
                         array('id'=>$section_id)
+                    );
+                } else {
+                    self::db()->query(
+                        'UPDATE `:prefix:sections` SET `state_id`=? WHERE `section_id`=?',
+                        array(self::getStateID('deleted'), $section_id)
                     );
                 }
             	return ( self::db()->isError() ? false : true );
@@ -257,7 +257,8 @@ if ( ! class_exists( 'Sections', false ) ) {
                    . '    `t2`.`publ_start`, `t2`.`publ_end`, '
                    . '    `t2`.`publ_by_time_start`, `t2`.`publ_by_time_end`, '
                    . '    `t2`.`name`, `t2`.`variant`, '
-                   . '    `t4`.`state_id`, `t5`.`directory` as `module` '
+                   . '    `t4`.`state_id`, `t4`.`state_name` as `state`, '
+                   . '    `t5`.`directory` as `module` '
                    . 'FROM `:prefix:sections` AS `t1` '
                    . 'JOIN `:prefix:pages_sections` AS `t2` '
                    . 'ON `t1`.`section_id`=`t2`.`section_id` '
@@ -533,6 +534,23 @@ if ( ! class_exists( 'Sections', false ) ) {
          * @access public
          * @return
          **/
+        public static function isDeletable(int $section_id) : bool
+        {
+            if(!self::$sections) { self::getSections(); }
+            $s = self::$index_map[$section_id];
+            $section = self::$sections[$s['pageID']][$s['blockID']][$s['index']];
+            if(!isset($section) || !isset($section['state_id']))
+                return false;
+            if(self::getSetting('trash_enabled')!==true || $section['state']=='deleted')
+                return true;
+            return false;
+        }   // end function isDeletable()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function recoverSection(int $section_id)
         {
             if(self::exists($section_id))
@@ -564,6 +582,11 @@ if ( ! class_exists( 'Sections', false ) ) {
                 self::db()->query(
                     'UPDATE `:prefix:pages_sections` SET `variant`=:v WHERE `section_id` = :id',
                     array('v'=>$variant,'id'=>$section_id)
+                );
+                // remove any old options
+                self::db()->query(
+                    'DELETE FROM `:prefix:section_options` WHERE `page_id`=? AND `section_id`=?',
+                    array($section['page_id'], $section_id)
                 );
                 return (!self::db()->isError());
             }

@@ -20,7 +20,7 @@ namespace CAT\Addon;
 interface IAddon
 {
     public static function getInfo();
-	public static function initialize();
+	public static function initialize(array $section);
 	public static function modify(array $section);
 	public static function install();
 	public static function uninstall();

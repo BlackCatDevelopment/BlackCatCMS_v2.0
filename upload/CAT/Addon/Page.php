@@ -25,8 +25,8 @@ class Page extends Module implements IAddon, IPage
 	 * @var void
 	 */
 	protected static $type     = 'page';
-	protected static $addonID  = NULL;
-    protected static $template = NULL;
+	protected static $addonID  = 0;
+    protected static $template = '';
 
 	public function __construct()
 	{
@@ -40,7 +40,7 @@ class Page extends Module implements IAddon, IPage
     /**
      * default add function; override to add your own actions
      **/
-	public static function add()
+	public static function add() : integer
 	{
 		self::setIDs();
 		// Add a new section
@@ -54,10 +54,10 @@ class Page extends Module implements IAddon, IPage
 				)
 			)
 		) {
-			self::$addonID = self::db()->lastInsertId();
+			self::$addonID = (int)self::db()->lastInsertId();
 			return self::$addonID;
 		}
-		else return NULL;
+		else return 0;
 	}
 
     /**
@@ -67,21 +67,10 @@ class Page extends Module implements IAddon, IPage
      * @param  array  $section - section settings
      * @return string
      **/
-	public static function view($section)
+	public static function view(array $section)
 	{
 		self::$template	= 'view';
-        $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
-        $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant'].'/languages');
-        if(is_dir($tpl_path)) {
-            self::tpl()->setPath($tpl_path);
-        }
-        if(is_dir($lang_path)) {
-            self::addLangFile($lang_path);
-        }
-        $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
-        if(is_dir($def_path))
-            self::tpl()->setFallbackPath($def_path);
-	}
+    }
 
     /**
      * default remove function

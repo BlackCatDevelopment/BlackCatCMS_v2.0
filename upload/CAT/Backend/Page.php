@@ -63,6 +63,7 @@ if (!class_exists('Page'))
             $pageID   = NULL;
 
             $add_form = FormBuilder::generateForm('be_page_add');
+
             if($add_form->isValid())
             {
                 $data   = $add_form->getData();
@@ -115,12 +116,6 @@ if (!class_exists('Page'))
                     $query->setValue('root_parent',$query->createNamedParameter(0));
                     // set link
                     $query->setValue('link',$query->createNamedParameter('/'.$title));
-                    // set trail
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// DER TRAIL MUSS NACH DEM ANLEGEN DER SEITE AKTUALISIERT WERDEN, DA ER DIE
-// ID DER SEITE SELBST BEINHALTET!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    $query->setValue('page_trail',$query->createNamedParameter(0));
                 }
 
                 // save page
@@ -159,6 +154,8 @@ if (!class_exists('Page'))
 // TODO
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             Backend::print_header();
+echo "HIER SOLLTE ICH NICHT SEIN!<br />";
+exit;
             self::tpl()->output('backend_page_add', $tpl_data);
             Backend::print_footer();
         }   // end function add()
@@ -171,23 +168,8 @@ if (!class_exists('Page'))
          **/
         public static function index()
         {
-/*
             // note: the access rights for index() are checked by the Backend
             // class, so there's no need to do it here
-            $pages = self::list(true);
-            // sort pages by children
-            $tpl_data = array(
-                'pages' => self::lb()->sort($pages,0),
-            );
-            if(self::asJSON())
-            {
-                echo json_encode($tpl_data,1);
-                exit;
-            }
-            Backend::print_header();
-            self::tpl()->output('backend_pages', $tpl_data);
-            Backend::print_footer();
-*/
             return self::router()->reroute('/pages/index');
         }   // end function index()
 
@@ -218,6 +200,8 @@ if (!class_exists('Page'))
             $tpl_data = array(
                 'blocks'  => NULL,
                 'addable' => $addable,
+                'langs'   => self::getLanguages(1), // available languages
+                'pages'   => HPage::getPages(1),
             );
 
             // catch errors on wrong pageID
@@ -317,7 +301,7 @@ if (!class_exists('Page'))
                             // special case
                             if($module=='wysiwyg')
                             {
-                                \CAT\Addon\WYSIWYG::initialize();
+                                \CAT\Addon\WYSIWYG::initialize($section);
                                 $section_content = \CAT\Addon\WYSIWYG::modify($section);
                                 // Time until wysiwyg is rendered: 0.031202 Seconds
                             }
@@ -388,7 +372,9 @@ if (!class_exists('Page'))
          *
          * also checks for numeric value
          *
-         * @access private
+         * access is 'public' as it is used by the Assets helper
+         *
+         * @access public
          * @return integer
          **/
         public static function getPageID()
@@ -497,12 +483,12 @@ Array
             $footerfiles = Assets::getAssets('footer',$pageID,false,true);
             $files       = array('js'=>array(),'css'=>array());
 
-            if(count($headerfiles['js'])) {
+            if(isset($headerfiles['js']) && count($headerfiles['js'])) {
                 foreach($headerfiles['js'] as $file) {
                     $files['js'][] = array('file'=>$file,'pos'=>'header');
                 }
             }
-            if(count($footerfiles['js'])) {
+            if(isset($footerfiles['js']) && count($footerfiles['js'])) {
                 foreach($footerfiles['js'] as $file) {
                     $files['js'][] = array('file'=>$file,'pos'=>'footer');
                 }
@@ -510,7 +496,9 @@ Array
 
             if(self::asJSON())
             {
-                Json::printSuccess(array(
+                Backend::initPaths();
+                Json::printData(array(
+                    'success' => true,
                     'files'   => $files,
                     'content' => self::tpl()->get('backend_page_headerfiles', array(
                         'files'   => $files,
@@ -525,15 +513,7 @@ Array
                 ));
                 Backend::print_footer();
             }
-return;
 
-            if(self::asJSON())
-            {
-                echo json_encode(array(
-                    'byplugin' => $headerfiles_by_plugin,
-                    'forms'    => $forms,
-                ));
-            }
         }   // end function headerfiles()
 
         /**
@@ -619,14 +599,35 @@ return;
          **/
         public static function reorder()
         {
-/*
-                        // page moved? (reorder)
-                        if(isset($data['page_position']) && $old_position!=$data['page_position'])
-                        {
-                            //DB::reorder('pages',$pageID,$data['page_position'],'position','page_id');
-                            $page['position'] = $data['page_position'];
-                        }
-*/
+            $pageID  = self::getPageID();
+
+            // the user needs to have the global pages_settings permission plus
+            // permissions for the current page
+            if(!self::user()->hasPerm('pages_settings') || !self::user()->hasPagePerm($pageID,'pages_settings'))
+                Base::printFatalError('You are not allowed for the requested action!');
+
+            $parent = Validate::get('_REQUEST','parent');
+            $pos    = Validate::get('_REQUEST','position');
+            $page   = HPage::properties($pageID);
+
+            // new parent
+            if($parent != $page['parent'])
+            {
+                self::db()->query(
+                    'UPDATE `:prefix:pages` SET `parent`=?, `position`=0 WHERE `page_id`=?',
+                    array($parent,$pageID)
+                );
+            }
+
+            if(true===self::db()->reorder('pages',(int)$pageID,(int)$pos,'position','page_id'))
+            {
+                if(self::asJSON())
+                {
+                    echo Json::printSuccess('Success');
+                } else {
+                    echo Json::printError('Failed');
+                }
+            }
         }   // end function reorder()
         
 
@@ -643,6 +644,36 @@ return;
             // permissions for the current page
             if(!self::user()->hasPerm('pages_edit') || !self::user()->hasPagePerm($pageID,'pages_edit'))
                 self::printFatalError('You are not allowed for the requested action!');
+
+            // page relation by language
+            if(
+                   ($lang=Validate::get('_REQUEST','relation_lang'))!==''
+                && ($linkto=Validate::get('_REQUEST','linked_page'))!==''
+                && HPage::exists($pageID) && HPage::exists($linkto)
+            ) {
+                // already linked?
+                if(!HPage::isLinkedTo($pageID,$linkto,$lang))
+                {
+                    self::db()->query(
+                        'INSERT INTO `:prefix:pages_langs` (`page_id`,`lang`,`link_page_id`) '
+                        .'VALUES(?,?,?)',
+                        array($pageID,$lang,$linkto)
+                    );
+                } else {
+                    echo Json::printResult(false,self::lang()->t('The pages are already linked together'));
+                }
+            }
+
+            if(self::asJSON())
+            {
+                echo Json::printResult(
+                    ( self::db()->isError() ? false : true ),
+                    'Success'
+                );
+                return;
+            }
+
+            self::edit();
 
         }   // end function save()
 
@@ -664,7 +695,7 @@ return;
             $form       = FormBuilder::generateForm('be_page_settings',$page);
             $form->setAttribute('action',CAT_ADMIN_URL.'/page/settings/'.$pageID);
 
-            // template select
+            // fill template select
             $templates = array(''=>self::lang()->translate('System default'));
             if(is_array(($tpls=Addons::getAddons('template'))))
                 foreach(array_values($tpls) as $dir => $name)
@@ -678,7 +709,7 @@ return;
             // remove variant select if no variants are available
             $variants   = Template::getVariants($curr_tpl);
             if(!$variants) $form->removeElement('template_variant');
-            else           $form->getElement('template_variant')->setValue($variants);
+            else           $form->getElement('template_variant')->setData($variants);
 
             // remove menu select if there's only one menu block
             $menus      = Template::get_template_menus($curr_tpl);

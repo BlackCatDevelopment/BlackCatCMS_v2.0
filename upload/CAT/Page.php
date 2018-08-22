@@ -92,6 +92,7 @@ if (!class_exists('\CAT\Page', false))
                             self::$curr_page = \CAT\Helper\Page::getPageForRoute($route);
                         }
                     }
+                    define('CAT_PAGE_ID',self::$curr_page);
                 } else {
                     return \CAT\Backend\Page::getPageID();
                 }
@@ -123,6 +124,7 @@ if (!class_exists('\CAT\Page', false))
                 || !\CAT\Helper\Page::isActive($page_id)  // page not active
             ) {
                 return self::print404();
+                exit;
             }
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -135,6 +137,10 @@ if (!class_exists('\CAT\Page', false))
                 // global perm
                 if(!self::user()->hasPagePerm($page_id,'pages_view'))
                 {
+                    self::log()->addError(sprintf(
+                        'User with ID [%s] tried to view page [%d], but does not have the pages_view permission',
+                        self::user()->getID(), $page_id
+                    ));
                     self::printFatalError('You are not allowed to view this page!');
                 }
             }

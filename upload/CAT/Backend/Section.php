@@ -195,7 +195,8 @@ if (!class_exists('\CAT\Backend\Section'))
         {
             $pageID = self::getPageID();
             self::checkPerm($pageID,'pages_section_recover');
-            $sectionID = self::router()->getParam();
+            $sectionID = self::getSectionID();
+            self::checkPerm($pageID,'pages_section_recover');
             if(!\CAT\Sections::exists($sectionID))
                 Base::printFatalError('Invalid data!')
                 . (self::$debug ? '(CAT_Backend_Section::recover())' : '');
@@ -226,6 +227,25 @@ if (!class_exists('\CAT\Backend\Section'))
             if(null!=($variant=\CAT\Helper\Validate::sanitizePost('variant')))
             {
                 $result = \CAT\Sections::setVariant($sectionID,$variant);
+                $module_path = \CAT\Helper\Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module']);
+                if(file_exists($module_path.'/templates/'.$variant.'/inc.forms.php'))
+                {
+                    // get default form data
+                    $form = \wblib\wbForms\Form::loadFromFile('options','inc.forms.php',$module_path.'/templates/'.$variant);
+                    $defaults = $form->getData();
+                    if(is_array($defaults) && count($defaults)>0)
+                    {
+                        foreach($defaults as $key => $val)
+                        {
+                            if($key=='options') continue;
+                            self::db()->query(
+                                'REPLACE INTO `:prefix:section_options` (`page_id`,`section_id`,`option`,`value`) '
+                                . 'VALUES(?,?,?,?)',
+                                array($pageID,$sectionID,strip_tags($key),strip_tags($val))
+                            );
+                        }
+                    }
+                }
             }
             // options
             if(null!=($options=\CAT\Helper\Validate::sanitizePost('options')))

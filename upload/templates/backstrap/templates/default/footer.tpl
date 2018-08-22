@@ -1,7 +1,7 @@
             </main>
         </div>
         <footer class="navbar fixed-bottom navbar-expand navbar-dark bg-dark">
-            <div>{$WEBSITE_TITLE}</div>
+            <div class="text-muted">{$WEBSITE_TITLE}</div>
             <div id="sessiontimer" class="navbar-nav flex-row ml-md-auto d-none d-md-flex text-muted">{translate('Remaining session time')}: <span id="sesstime">{$SESSION_TIME}</span></div>
         </footer>
         {include(file='backend_modal.tpl' modal_id='bsDialog' modal_title='', modal_text='', modal_savebtn='1')}

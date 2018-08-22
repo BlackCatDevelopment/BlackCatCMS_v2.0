@@ -33,6 +33,16 @@ if (!class_exists('Page'))
          * current instance (singleton pattern)
          **/
         private   static $instance            = NULL;
+
+        /**
+         * tables used in this class
+         **/
+        private   static $pages_table         = ':prefix:pages';
+        private   static $headers_table       = ':prefix:pages_headers';
+        private   static $page_refs_table     = ':prefix:pages_langs';
+        private   static $visibility_table    = ':prefix:visibility';
+
+
         private   static $pages               = array();
         private   static $id_to_index         = array();
         private   static $pages_sections      = array();
@@ -108,7 +118,7 @@ if (!class_exists('Page'))
             else
             {
                 $sth = self::$instance->db()->query(
-                    "SELECT `page_id` FROM `:prefix:pages` WHERE link=:link",
+                    "SELECT `page_id` FROM `'.self::$pages_table.'` WHERE link=:link",
                     array('link'=>$id)
                 );
                 if ($sth->rowCount() > 0)
@@ -166,10 +176,38 @@ if (!class_exists('Page'))
          * @access public
          * @return
          **/
+        public static function getDescendants($page_id)
+        {
+            $desc = array();
+            $stmt = self::db()->query(
+                    'SELECT `u`.`page_id` '
+                  . 'FROM `cat_pages_closure` AS `c` '
+                  . 'INNER JOIN `cat_pages_copy` AS `u` '
+                  . 'ON (u.page_id = c.descendant) '
+                  . 'WHERE `site_id`=? AND c.ancestor = ? AND c.depth >= 1 '
+                  . 'ORDER BY `parent` ASC, `position` ASC',
+                  array(CAT_SITE_ID,CAT_PAGE_ID)
+            );
+            $data = $stmt->fetchAll();
+            if(is_array($data) && count($data)>0)
+            {
+                foreach($data as $index => $item)
+                {
+                    $desc[] = $item['page_id'];
+                }
+            }
+            return $desc;
+        }   // end function getDescendants()
+        
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function getExtraHeaderFiles($page_id=NULL)
         {
             $data = array(); //'js'=>array(),'css'=>array(),'code'=>''
-            $q    = 'SELECT * FROM `:prefix:pages_headers` WHERE `page_id`=:page_id';
+            $q    = 'SELECT * FROM `'.self::$headers_table.'` WHERE `page_id`=:page_id';
             $r    = Base::db()->query($q,array('page_id'=>$page_id));
             $data = $r->fetchAll();
 
@@ -234,8 +272,8 @@ if (!class_exists('Page'))
          **/
         public static function getLinkedByLanguage($page_id)
         {
-            $sql     = 'SELECT * FROM `:prefix:pages_langs` AS t1'
-                     . ' RIGHT OUTER JOIN `:prefix:pages` AS t2'
+            $sql     = 'SELECT * FROM `'.self::$page_refs_table.'` AS t1'
+                     . ' RIGHT OUTER JOIN `'.self::$pages_table.'` AS t2'
                      . ' ON `t1`.`link_page_id`=`t2`.`page_id`'
                      . ' WHERE `t1`.`page_id` = :id'
                      ;
@@ -246,7 +284,7 @@ if (!class_exists('Page'))
                 $items = array();
                 while (($row = $results->fetch()) !== false)
                 {
-                    $row['href'] = self::getLink($row['link']) . (($row['lang'] != '') ? '?lang=' . $row['lang'] : NULL);
+                    $row['href'] = self::getLink($row['link']);
                     $items[]     = $row;
                 }
                 return $items;
@@ -262,6 +300,7 @@ if (!class_exists('Page'))
         public static function getPageForRoute($route)
         {
             if(\CAT\Backend::isBackend()) return 0;
+            $route  = urldecode($route);
             // remove suffix from route
             $route  = str_ireplace(Registry::get('PAGE_EXTENSION'), '', $route);
             // remove trailing /
@@ -270,7 +309,7 @@ if (!class_exists('Page'))
             if(substr($route,0,1) !== '/') $route = '/'.$route;
             // find page in DB
             $result = self::db()->query(
-                'SELECT `page_id` FROM `:prefix:pages` WHERE `link`=?',
+                'SELECT `page_id` FROM `'.self::$pages_table.'` WHERE `link`=?',
                 array($route)
             );
             $data   = $result->fetch();
@@ -482,7 +521,7 @@ if (!class_exists('Page'))
             $ids = array();
             while(self::properties($page_id,'parent') !== NULL)
             {
-                if ( self::properties($page_id,'level') == 0 )
+                if ( self::properties($page_id,'level') == 1 )
                     break;
                 $ids[]   = self::properties($page_id,'parent');
                 $page_id = self::properties($page_id,'parent');
@@ -524,7 +563,7 @@ if (!class_exists('Page'))
             if(!count(self::$visibilities))
             {
                 $sth = self::db()->query(
-                    'SELECT * FROM `:prefix:visibility`'
+                    'SELECT * FROM `'.self::$visibility_table.'`'
                 );
                 $temp = $sth->fetchAll();
                 foreach($temp as $item)
@@ -548,7 +587,7 @@ if (!class_exists('Page'))
             if(self::isDeleted($page_id))
                 return false;
             $sections = \CAT\Sections::getSections($page_id,null,true);
-            if(count($sections))
+            if(is_array($sections) && count($sections))
                 return true;
             return false;
         } // end function isActive()
@@ -567,6 +606,21 @@ if (!class_exists('Page'))
                 return true;
             return false;
         } // end function isDeleted()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function isLinkedTo($page_id,$linked_id,$lang)
+        {
+            $data = self::db()->query(
+                'SELECT * FROM `'.self::$page_refs_table.'` WHERE '
+                .'`page_id`=? AND `lang`=? AND `link_page_id`=?',
+                array($page_id,$lang,$linked_id)
+            );
+            return $data->rowCount();
+        }   // end function isLinkedTo()
 
         /**
          * Check whether a page is visible or not
@@ -691,31 +745,52 @@ if (!class_exists('Page'))
             {
                 $result = self::db()->query(
                       'SELECT `t1`.*, `t2`.`vis_name` AS `visibility` '
-                    . 'FROM `:prefix:pages` AS `t1` '
-                    . 'JOIN `:prefix:visibility` AS `t2` '
+                    . 'FROM `'.self::$pages_table.'` AS `t1` '
+                    . 'JOIN `'.self::$visibility_table.'` AS `t2` '
                     . 'ON `t1`.`vis_id`=`t2`.`vis_id` '
                     . 'WHERE `site_id`=? '
-                    . 'ORDER BY `level` ASC, `position` ASC',
+                    //. 'ORDER BY `level` ASC, `position` ASC',
+                    . 'ORDER BY `parent` ASC, `position` ASC',
                     array(CAT_SITE_ID)
                 );
+
+/*
+                $result = self::db()->query(
+                       'SELECT `u`.* '
+                     . 'FROM `cat_pages_closure` AS `c` '
+                     . 'INNER JOIN `cat_pages_copy` AS `u` '
+                     . 'ON (u.page_id = c.descendant) '
+                     . 'WHERE `site_id`=? AND c.ancestor = 1 AND c.depth >= 1 '
+                     . 'ORDER BY `parent` ASC, `position` ASC',
+                     array(CAT_SITE_ID)
+                );
+
+                // get descendants
+                $desc = self::getDescendants(CAT_PAGE_ID);
+*/
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Das fuehrt zu einer Endlos-Schleife, wenn die Default-Page gesucht wird!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 #$curr = \CAT\Page::getID();
+                #$curr = CAT_PAGE_ID;
                 $curr = 0;
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO:
 //     Infos zu is_in_trail etc fehlen noch
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 self::$pages = $result->fetchAll();
+
                 // map index to page id
                 foreach(self::$pages as $index => $page)
                 {
                     // note: order is important! $id_to_index first!
-                    self::$id_to_index[$page['page_id']] = $index;
-                    self::$pages[$index]['href']       = self::getLink($page['page_id']);
-                    self::$pages[$index]['is_current'] = ($curr==$page['page_id'] ? true : false);
-                    self::$pages[$index]['is_in_trail'] = true;
+                    self::$id_to_index[$page['page_id']]  = $index;
+                    self::$pages[$index]['href']          = self::getLink($page['page_id']);
+                    self::$pages[$index]['link']          = '<a href="'.self::$pages[$index]['href'].'">'.self::$pages[$index]['menu_title'].'</a>';
+                    self::$pages[$index]['is_current']    = ($curr==$page['page_id'] ? true : false);
+                    self::$pages[$index]['is_in_trail']   = true;
+//                    self::$pages[$index]['is_descendant'] = in_array($page['page_id'],$desc);
                 }
             }
 

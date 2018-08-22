@@ -82,37 +82,7 @@
 
 {* ------------------------- START #relations tab-pane -------------------- *}
       <div role="tabpanel" class="tab-pane" id="relations">
-        <div class="alert alert-info">
-        {translate('You can link any page to other pages in different languages that have the same content.')}
-        {translate('Use {language_menu()} in your frontend template to show links to the pages listed below.')}
-        </div>
-        {if $linked}
-        <table class="table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>{translate('Language')}</th>
-              <th>{translate('Linked page')}</th>
-              <th>{translate('Last modified')}</th>
-            </tr>
-          </thead>
-          <tbody>
-          {foreach $linked item}
-          <tr>
-            <td><span class="fa fa-fw fa-chain-broken" data-id="{$item.page_id}"></span></td>
-            <td>{$item.lang}</td>
-            <td>{$item.menu_title} (ID: {$item.page_id})</td>
-            <td>{cat_format_date($item.modified_when)}</td>
-          </tr>
-          {/foreach}
-          </tbody>
-        </table>
-        {else}
-        <div class="alert alert-warning">{translate('There are no linked pages yet')}</div>
-        {/if}
-        <div id="bsLangSelect">
-         
-        </div>
+        {include file="backend_page_modify_relations.tpl"}
       </div>{* END relations tab-pane *}
 
 {* ------------------------- START #headerfiles tab-pane -------------------- *}

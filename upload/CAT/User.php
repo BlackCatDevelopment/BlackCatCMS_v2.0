@@ -165,7 +165,7 @@ if (!class_exists('User'))
          **/
         public function getID()
         {
-            return ( $this->id ? $this->id : -1 );
+            return ( $this->id ? $this->id : 2 );
         }   // end function getID()
         
         /**
@@ -363,9 +363,9 @@ if (!class_exists('User'))
          **/
         public function is_authenticated()
         {
-            if(!isset($this->user) || $this->user['user_id'] == -1)
+            if(!isset($this->user) || $this->user['user_id'] == 2)
                 self::getInstance();
-            if(isset($this->user) && $this->user['user_id'] != -1)
+            if(isset($this->user) && $this->user['user_id'] != 2)
                 return true;
             else
                 return false;
@@ -413,7 +413,7 @@ if (!class_exists('User'))
         public function reset()
         {
             self::log()->addDebug('reset()');
-            $this->user   = array('user_id'=>-1,'display_name'=>'unknown','username'=>'unknown');
+            $this->user   = array('user_id'=>2,'display_name'=>'unknown','username'=>'unknown');
             $this->roles  = array();
             $this->perms  = array();
             $this->groups = array();
@@ -430,7 +430,7 @@ if (!class_exists('User'))
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: check global setting and group settings
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if($this->getID() == -1 || $this->get('tfa_enabled') == 'Y')
+            if($this->getID() == 2 || $this->get('tfa_enabled') == 'Y')
             {
                 return true;
             }

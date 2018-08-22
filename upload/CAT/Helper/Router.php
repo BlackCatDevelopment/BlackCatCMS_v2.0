@@ -102,6 +102,16 @@ if(!class_exists('Router',false))
             $this->controller = "\\CAT\\".($this->backend ? 'Backend' : 'Frontend'); // \CAT\Backend || \CAT\Frontend
             $this->function   = ( (is_array($this->parts) && count($this->parts)>0 ) ? $this->parts[0] : 'index' );
 
+            // load template language files
+            if(self::isBackend()) {
+                $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_THEME').'/languages');
+            } else {
+                $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_TEMPLATE').'/languages');
+            }
+            if(is_dir($lang_path)) {
+                self::addLangFile($lang_path);
+            }
+
 #echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
             self::log()->addDebug(sprintf(
                 'controller [%s] function [%s]',
@@ -121,7 +131,10 @@ if(!class_exists('Router',false))
                 }
             }
 
-// forward to modules
+            // ----- forward to modules ----------------------------------------
+            // Note: This may be dangerous, but for now, we do not have a
+            //       whitelist for allowed file names
+            // -----------------------------------------------------------------
             if(self::router()->match('~^modules/~i') && $suffix=='php')
             {
                 require CAT_ENGINE_PATH.'/'.self::router()->getRoute();
@@ -158,7 +171,7 @@ if(!class_exists('Router',false))
                 {
                     self::log()->addDebug('found getPublicRoutes() method in controller');
                     $public_routes = $this->controller::getPublicRoutes();
-                    if(in_array($this->route,$public_routes))
+                    if(is_array($public_routes) && in_array($this->route,$public_routes))
                     {
                         self::log()->addDebug('found current route in public routes, unprotecting it');
                         $this->protected = false;
@@ -181,33 +194,6 @@ if(!class_exists('Router',false))
             }
 
             \CAT\Page::print404();
-/*
-SITE INDEX
-CAT\Helper\Router Object
-(
-    [route:CAT\Helper\Router:private] =>
-    [query:CAT\Helper\Router:private] =>
-    [controller:CAT\Helper\Router:private] =>
-    [func:CAT\Helper\Router:private] =>
-    [params:CAT\Helper\Router:private] =>
-    [handler:CAT\Helper\Router:private] =>
-    [protected] =>
-    [perm:CAT\Helper\Router:private] =>
-)
-
-BACKEND ROUTE
-CAT\Helper\Router Object
-(
-    [route:CAT\Helper\Router:private] => backend/Page
-    [query:CAT\Helper\Router:private] =>
-    [controller:CAT\Helper\Router:private] => \CAT\Backend
-    [func:CAT\Helper\Router:private] => Page
-    [params:CAT\Helper\Router:private] =>
-    [handler:CAT\Helper\Router:private] =>
-    [protected] =>
-    [perm:CAT\Helper\Router:private] =>
-)
-*/
 
         }   // end function dispatch()
         
@@ -243,7 +229,7 @@ CAT\Helper\Router Object
          **/
         public function getFunction()
         {
-            if($this->func) return $this->func;
+            if($this->function) return $this->function;
             return false;
         }   // end function getFunction()
 
@@ -381,7 +367,10 @@ CAT\Helper\Router Object
          **/
         public function getQuery()
         {
-            if($this->query) return $this->query;
+            if($this->query) {
+                parse_str($this->query,$query);
+                return $query;
+            }
             return false;
         }   // end function getQuery()
         
@@ -431,7 +420,7 @@ CAT\Helper\Router Object
                 list($route,$ignore) = explode('?',$route,2);
 
             // remove site subfolder
-            $route = preg_replace('~^\/'.self::site()['subfolder'].'\/?~i','',$route);
+            $route = preg_replace('~^\/'.self::site()['site_folder'].'\/?~i','',$route);
 
             // remove index.php
             $route = str_ireplace('index.php','',$route);

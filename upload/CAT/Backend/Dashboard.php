@@ -291,7 +291,7 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = HDash::getDashboardID(self::router()->getParam(-1));
+                $dash = self::getDashID();
             // check if dashboard exists
             if(!HDash::exists($dash))
                 echo Json::printError('Invalid data')
@@ -310,7 +310,7 @@ Array
         {
             // validate path
             if(!$dash)
-                $dash = HDash::getDashboardID(self::router()->getParam(-1));
+                $dash = self::getDashID();
             // check if dashboard exists
             if(!HDash::exists($dash))
                 echo Json::printError('Invalid data')

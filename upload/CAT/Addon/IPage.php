@@ -21,5 +21,5 @@ interface IPage
 {
 	public static function add();
 	public static function remove();
-	public static function view($section);
+	public static function view(array $section);
 }

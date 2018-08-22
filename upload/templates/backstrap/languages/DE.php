@@ -17,9 +17,12 @@
 
 $LANG = array(
     'Add files...'      => 'Dateien hinzufügen...',
+    'Add page before'   => 'Seite oberhalb hinzufügen',
+    'Add page below'    => 'Seite unterhalb hinzufügen',
     'Cancel upload'     => 'Upload abbrechen',
     'Context menu'      => 'Kontextmenü',
     'Delete item'       => 'Element löschen',
+    'Edit page'         => 'Seite bearbeiten',
     'Filter by type'    => 'Nach Typ filtern',
     'Grid'              => 'Kacheln',
     'List'              => 'Liste',
@@ -39,11 +42,13 @@ $LANG = array(
     'Set publishing period' => 'Veröffentlichungs-Zeitraum bearbeiten',
     'Sorry, no preview available for this mime type!' => 'Für diesen Mime-Typ ist leider keine Vorschau verfügbar!',
     'The loading of the settings form failed!' => 'Das Nachladen des Einstellungen-Formulars ist fehlgeschlagen!',
+    'The page type.' => 'Typ der Seite.',
     'There are no linked pages yet' => 'Es sind noch keine Seiten verknüpft',
     'This section has unsaved changes' => 'Diese Sektion hat ungespeicherte Änderungen',
+    'To select a permission with all children, double click on the checkbox.' => 'Um eine Einstellung mit allen nachgeordneten Elementen zu markieren, auf die Checkbox doppelt klicken.',
     'Unlink plugin file' => 'Plugin-Datei entfernen',
     'Use widget setting' => 'Einstellung des Widgets verwenden',
     'You can set a date and time period in which this content section will be visible.' => 'Hier kann eine Zeitspanne definiert werden, in welcher dieser Inhalt sichtbar ist.',
     'Your browser does not support the video tag' => 'Der Browser unterstützt das video Tag nicht',
-    '<span id="modalicon" class="fa fa-fw fa-warning"></span> Are you sure?' => '<span id="modalicon" class="fa fa-fw fa-warning"></span> Sind Sie sicher?'
+    '<span id="modalicon" class="fa fa-fw fa-warning"></span> Are you sure?' => '<span id="modalicon" class="fa fa-fw fa-warning"></span> Sind Sie sicher?',
 );
