@@ -67,6 +67,19 @@ if (!class_exists('Validate'))
         }   // end function check()
 
         /**
+         * deletes all form data
+         *
+         * @access public
+         * @return
+         **/
+        public static function cleanup()
+        {
+            $_GET = array();
+            $_POST = array();
+            $_REQUEST = array();
+        }   // end function cleanup()
+
+        /**
          * global method to get data from globals
          *
          * @access public
@@ -150,6 +163,8 @@ if (!class_exists('Validate'))
             return $fieldname;
         }   // end function createFieldname()
 
+
+
         /**
          * dump all items; you should NEVER use this method in production code!
          *
@@ -223,6 +238,16 @@ if (!class_exists('Validate'))
             return $url;
         }   // end function getURI()
 
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function isSet($field)
+        {
+            return isset($_REQUEST[$field]);
+        }   // end function isSet()
+        
         /**
          * Get POST data
          *

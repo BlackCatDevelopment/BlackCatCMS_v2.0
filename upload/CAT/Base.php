@@ -377,10 +377,12 @@ if(!class_exists('Base',false))
                 Base::$objects['tpl'] = Template::getInstance('Dwoo');
                 Base::$objects['tpl']->setGlobals(array(
                     'WEBSITE_DESCRIPTION' => Registry::get('WEBSITE_DESCRIPTION'),
-                    'CAT_CORE'            => 'BlackCat CMS',
+                    'WEBSITE_TITLE'       => Registry::get('WEBSITE_TITLE'),
                     'CAT_VERSION'         => Registry::get('CAT_VERSION'),
-                    'CAT_BUILD'           => Registry::get('CAT_BUILD'),
-                    'CAT_DATE_FORMAT'     => Registry::get('CAT_DATE_FORMAT'),
+                    'CAT_SITE_URL'        => CAT_SITE_URL,
+#                    'CAT_CORE'            => 'BlackCat CMS',
+#                    'CAT_BUILD'           => Registry::get('CAT_BUILD'),
+#                    'CAT_DATE_FORMAT'     => Registry::get('CAT_DATE_FORMAT'),
                     'LANGUAGE'            => Registry::get('LANGUAGE'),
                 ));
             }
@@ -469,6 +471,31 @@ if(!class_exists('Base',false))
             }
             return $result;
         }   // end function getEncodings()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getItemID(string $key) : int
+        {
+            $itemID  = \CAT\Helper\Validate::sanitizePost($key,'numeric',NULL);
+
+            if(!$itemID)
+                $itemID  = \CAT\Helper\Validate::sanitizeGet($key,'numeric',NULL);
+
+            if(!$itemID)
+                $itemID = self::router()->getParam(-1);
+
+            if(!$itemID)
+                $itemID = self::router()->getRoutePart(-1);
+
+            if(!$itemID || !is_numeric($itemID))
+                $itemID = 0;
+
+            return (int)$itemID;
+        }   // end function getItemID()
+        
         
         /**
          * returns a list of installed languages
@@ -740,7 +767,7 @@ echo "level now: ", $class::$loglevel, "<br />";
                 if (
                        !isset(Base::$objects['tpl'])
                     || !is_object(Base::$objects['tpl'])
-                    || ( !Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
+                    || ( !self::router()->isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
                 ) {
                     self::err_page_header();
                 }
@@ -749,7 +776,7 @@ echo "level now: ", $class::$loglevel, "<br />";
             if (
                    !isset(Base::$objects['tpl'])
                 || !is_object(Base::$objects['tpl'])
-                || Backend::isBackend()
+                || self::router()->isBackend()
             )
             //if (!is_object(Base::$objects['tpl']) || ( !Backend::isBackend() && !defined('CAT_PAGE_CONTENT_DONE')) )
             {

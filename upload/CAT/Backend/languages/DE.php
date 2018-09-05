@@ -20,6 +20,8 @@ include CAT_ENGINE_PATH.'/languages/DE.php';
 $LANG = array_merge($LANG,array(
     // --------------- Backend ---------------
     'Close all'         => 'Alle schließen',
+    'disabled'          => 'deaktiviert',
+    'enabled'           => 'aktiviert',
     'Home'              => 'Dashboard',
     'Keep open'         => 'Offenhalten',
     'Logout'            => 'Abmelden',
@@ -225,6 +227,7 @@ $LANG = array_merge($LANG,array(
     'Bits per sample'   => 'Auflösung',
     'Date'              => 'Datum',
     'Filename'          => 'Dateiname',
+    'Files'             => 'Dateien',
     'Foldername'        => 'Verzeichnisname',
     'Folders'           => 'Verzeichnisse',
     'Images'            => 'Bilder',

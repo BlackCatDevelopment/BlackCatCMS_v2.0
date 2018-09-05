@@ -14,11 +14,28 @@
          }
     });
 
+    /* page tree open/closed state */
+    if(typeof(Storage)!=="undefined") {
+        $('div#sidebar .collapse').on('hide.bs.collapse', function (e) {
+            e.stopPropagation();
+            window.localStorage.removeItem('bsCollState_#'+$(this).attr('id'));
+        });
+        $('div#sidebar .collapse').on('show.bs.collapse', function (e) {
+            e.stopPropagation();
+            window.localStorage.setItem('bsCollState_#'+$(this).attr('id'), 1); // saves with no expiration
+        });
+        $('div#sidebar div.list-group.panel div.list-group-item.collapsed').each(function() {
+            if(window.localStorage.getItem('bsCollState_'+$(this).data('target')) !== null) {
+                $(this).trigger('click');
+            }
+        });
+    }
+
     /* page tree filter */
     $("input#bsPageSearch").keyup(function() {
         var find = $(this).val().toLowerCase();
         if(find.length) {
-            $('div#sidebar li span.pagename').each(function() {
+            $('div#sidebar div span.pagename').each(function() {
                 var text = $(this).text().toLowerCase();
                 if(text.indexOf(find) != -1) {
                     $(this).removeClass('text-muted').addClass('text-danger');
@@ -27,7 +44,7 @@
                 }
             });
         } else {
-            $('div#sidebar li span.pagename').removeClass('text-muted').removeClass('text-danger');
+            $('div#sidebar div span.pagename').removeClass('text-muted').removeClass('text-danger');
         }
     });
 
@@ -38,6 +55,9 @@
         $('#bsDialog .modal-body').html('<div class="text-danger">'+$.cattranslate(message)+'</div>');
         $('#bsDialog').modal('show');
     }
+
+    /* x-editable */
+    $('.editable').editable();
 
     /* handle session timeout and re-login */
     function CATSessionTimedOut()
@@ -128,7 +148,7 @@
     });
 
     // convert fieldsets to tabs
-    $('form.tabbed').fieldset_to_tabs();
+    //$('form.tabbed').fieldset_to_tabs();
 
     // tooltips
     if(typeof tippy != 'undefined') {
@@ -136,17 +156,7 @@
     } else {
         alert('no tippy');
     }
-/**
-    // page tree hover tooltips
-    $('.hasTooltip').each(function() { // Notice the .each() loop, discussed below
-        $(this).qtip({
-            content: {
-                text: $(this).next('div').html() // Use the "div" element next to this for the content
-            },
-            style: { classes: 'qtip-bootstrap' }
-        });
-    });
-**/
+
     // detach = move to region header
     $('.detach').each( function() {
         $(this).detach()
@@ -156,6 +166,7 @@
 
     // attach Bootstrap classes to form elements
     $('input[type="submit"],button[type="submit"]').addClass('btn btn-primary');
+    $('input.cancel').addClass('btn btn-link');
     $('input[type="reset"]').addClass('btn btn-default');
     $('input[type="button"]').addClass('btn btn-default');
     $('input[type="text"],textarea').addClass('form-control');

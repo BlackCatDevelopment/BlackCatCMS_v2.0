@@ -57,7 +57,8 @@ class dashboard_widget_logs extends \CAT\Addon\Widget
                     'file'      => str_ireplace('logs/','',$file),
                     'size'      => \CAT\Helper\Directory::humanize($f['size']),
                     'removable' => $removable,
-                    'date'      => str_ireplace(array('log_','logs/','.txt'),'',$file)
+                    'date'      => \CAT\Helper\DateTime::getDateTime(filemtime($f['file'])),
+                    //str_ireplace(array('log_','logs/','.txt'),'',$file)
                 );
             }
         }

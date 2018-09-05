@@ -16,6 +16,7 @@ $FORMS = array(
             'label'    => 'Use border',
             'name'     => 'border',
             'options'  => array(1=>'Yes'),
+            'value'    => 1,
             'helptext' => 'Adds CSS class "mod-wysiwyg-column-bordered" to the columns. To adjust details like colors see frontend.css.',
         ),
         array(
@@ -29,7 +30,7 @@ $FORMS = array(
             'label'    => 'Columns per row',
             'name'     => 'columns',
             'options'  => array_merge(array(0=>'auto'),range(1,6)),
-            'value'    => 0,
+            'value'    => 3,
         ),
         array(
             'type'     => 'text',

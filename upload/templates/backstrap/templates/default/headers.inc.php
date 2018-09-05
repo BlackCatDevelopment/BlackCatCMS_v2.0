@@ -33,13 +33,14 @@ $mod_headers = array(
             array('file'=>'modules/lib_javascript/jquery-ui/themes/base/jquery-ui.css',),
             array('file'=>'templates/backstrap/js/datetimepicker/jquery.datetimepicker.min.css',),
             array('file'=>'modules/lib_javascript/plugins/jquery.datatables/css/dataTables.bootstrap4.min.css',),
+            array('file'=>'templates/backstrap/js/bootstrap4-editable/css/bootstrap-editable.css',),
             array('file'=>'templates/backstrap/css/default/theme.css',),
             array('file'=>'templates/backstrap/css/default/sidebar.css',),
         ),
         'jquery' => array(
             'core'    => true,
             'ui'      => true,
-            'plugins' => array ('jquery.cattranslate','jquery.cookies','jquery.mark','jquery.columns'),
+            'plugins' => array ('jquery.cattranslate','jquery.cookies','jquery.mark'),
         ),
         'js' => array(
             array(
@@ -58,10 +59,10 @@ if(file_exists(CAT_JQUERY_PATH.'/jquery-ui/ui/i18n/jquery-ui-i18n.min.js'))
 
 if(\CAT\Backend::getArea() == 'media')
 {
-    //$mod_headers['backend']['css'][] = array('file'=>'plugins/jquery.fileupload/css/jquery.fileupload.css');
-    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_javascript/plugins/jquery.gridder/css/gridder.css');
+    $mod_headers['backend']['css'][] = array('file'=>'templates/backstrap/css/default/ekko-lightbox.css');
+    $mod_headers['backend']['js'][]  = 'templates/backstrap/js/bootstrap.lightbox/ekko-lightbox.min.js';
+    $mod_headers['backend']['css'][] = array('file'=>'modules/lib_javascript/plugins/jquery.fileupload/css/jquery.fileupload-ui.css');
     $mod_headers['backend']['js'][]  = 'modules/lib_javascript/plugins/jquery.datatables/js/jquery.dataTables.min.js';
-    $mod_headers['backend']['js'][]  = 'modules/lib_javascript/plugins/jquery.gridder/js/gridder.js';
 }
 
 if(\CAT\Backend::getArea() == 'admintools')

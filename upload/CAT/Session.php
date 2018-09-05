@@ -112,8 +112,10 @@ if(!class_exists('\CAT\Session',false))
             }
 
             // Make sure the session hasn't expired, and destroy it if it has
-        	if(!self::validateSession())
+        	if(!self::validateSession(session_id()))
         	{
+self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
+                #self::stop_session();
         		$_SESSION = array();
         		session_destroy();
         		session_start();
@@ -227,7 +229,13 @@ if(!class_exists('\CAT\Session',false))
             return false;
         }   // end function write()
 
+        /**
+         * @inheritdoc
+         **/
         public function destroy($sessionId) {
+            self::log()->addDebug(sprintf(
+                'destroying session %s',$sessionId
+            ));
             $sql = self::getStatement('delete');
             if(false!==$sql)
             {
@@ -236,6 +244,7 @@ if(!class_exists('\CAT\Session',false))
                 $stmt->bindValue(':time', time()    , \PDO::PARAM_STR);
                 $stmt->execute();
             }
+            return true;
         }
 
         /**
@@ -246,6 +255,9 @@ if(!class_exists('\CAT\Session',false))
          **/
         public function gc($maxlifetime)
         {
+            self::log()->addDebug(sprintf(
+                'gc(%s)',$maxlifetime
+            ));
             $this->gcCalled = true;
             return true;
         }   // end function gc()
@@ -435,18 +447,33 @@ if(!class_exists('\CAT\Session',false))
             );
         }
 
-        private static function validateSession()
+        private static function validateSession($sessionId)
         {
-
-        	if(isset($_SESSION['OBSOLETE']) && !isset($_SESSION['EXPIRES']))
+            self::log()->addDebug(sprintf(
+                'validateSession(%s)',$sessionId
+            ));
+            // cleanup expired sessions
+            $sql = self::getStatement('delete');
+            if(false!==$sql)
             {
-        		return false;
+                $stmt = \CAT\Base::db()->prepare($sql);
+                $stmt->bindValue(':id'  , 'ignore', \PDO::PARAM_STR);
+                $stmt->bindValue(':time', time()  , \PDO::PARAM_STR);
+                $stmt->execute();
             }
-        	if(isset($_SESSION['EXPIRES']) && $_SESSION['EXPIRES'] < time())
+            // if the session was killed, there will be no key
+            $sql = self::getStatement('getkey');
+            $key = null;
+            if(false!==$sql)
             {
-        		return false;
+                $stmt = \CAT\Base::db()->prepare($sql);
+                $stmt->bindValue(':id', $sessionId, \PDO::PARAM_STR);
+                $stmt->execute();
+                $data = $stmt->fetch();
+                $key  = $data['sess_key'];
+                return !empty($key);
             }
-        	return true;
+            return false;
         }
     }
 }

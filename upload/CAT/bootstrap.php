@@ -104,14 +104,9 @@ if(!Registry::exists('LANGUAGE') && Registry::exists('DEFAULT_LANGUAGE'))
 // Set theme
 //******************************************************************************
 Registry::register('CAT_THEME_PATH'  ,CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_THEME')   , true);
-Registry::register('CAT_TEMPLATE_DIR',CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE'), true);
 
 //******************************************************************************
 // Set as constants for simpler use
 //******************************************************************************
 Registry::register('CAT_VERSION'     ,Registry::get('CAT_VERSION')                                   , true);
 
-//******************************************************************************
-// register some globals
-//******************************************************************************
-$parser = Base::tpl();

@@ -74,17 +74,22 @@ if (!class_exists('\CAT\Addon\Module', false))
          **/
         public static function initialize(array $section)
         {
-            $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
-            $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant'].'/languages');
-            if(is_dir($tpl_path)) {
-                self::tpl()->setPath($tpl_path);
+            if(!empty($section)) {
+                if(!isset($section['variant'])) {
+                    $section['variant'] = 'default';
+                }
+                $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
+                $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant'].'/languages');
+                if(is_dir($tpl_path)) {
+                    self::tpl()->setPath($tpl_path);
+                }
+                if(is_dir($lang_path)) {
+                    self::addLangFile($lang_path);
+                }
+                $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
+                if(is_dir($def_path))
+                    self::tpl()->setFallbackPath($def_path);
             }
-            if(is_dir($lang_path)) {
-                self::addLangFile($lang_path);
-            }
-            $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
-            if(is_dir($def_path))
-                self::tpl()->setFallbackPath($def_path);
         }   // end function initialize()
 
 		/**

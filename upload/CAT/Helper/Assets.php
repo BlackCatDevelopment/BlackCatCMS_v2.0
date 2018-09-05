@@ -352,16 +352,16 @@ if(!class_exists('Assets'))
                 case 'frontend':
                     $filter = 'frontend';
                     // CSS
-                    array_push($paths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/css/'.Registry::get('default_template_variant')));
-                    array_push($paths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/css'));
+                    array_push($paths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/css/'.Registry::get('default_template_variant')));
+                    array_push($paths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/css'));
                     // JS
-                    array_push($paths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/js/'.Registry::get('default_template_variant')));
-                    array_push($paths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/js'));
+                    array_push($paths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/js/'.Registry::get('default_template_variant')));
+                    array_push($paths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/js'));
                     // *.inc.php - fallback sorting; search will stop on first occurance
-                    array_push($incpaths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/templates/'.Registry::get('default_template_variant')));
-                    array_push($incpaths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/templates/default'));
-                    array_push($incpaths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template').'/templates'));
-                    array_push($incpaths,Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.Registry::get('default_template')));
+                    array_push($incpaths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/templates/'.Registry::get('default_template_variant')));
+                    array_push($incpaths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/templates/default'));
+                    array_push($incpaths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR').'/templates'));
+                    array_push($incpaths,Directory::sanitizePath(\CAT\Registry::get('CAT_TEMPLATE_DIR')));
                     break;
                 case 'backend':
                     $filter = 'backend|theme';

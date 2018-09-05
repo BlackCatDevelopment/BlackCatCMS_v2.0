@@ -104,6 +104,7 @@ if(!class_exists('Router',false))
 
             // load template language files
             if(self::isBackend()) {
+                Backend::initialize();
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_THEME').'/languages');
             } else {
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_TEMPLATE').'/languages');
@@ -325,6 +326,17 @@ if(!class_exists('Router',false))
             if($this->params && is_array($this->params)) return $this->params;
             return false;
         }   // end function getParams()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getParts() : array
+        {
+            if($this->parts) return $this->parts;
+            return array();
+        }   // end function getParts()
 
         /**
          * accessor to private route (example: 'backend/dashboard')

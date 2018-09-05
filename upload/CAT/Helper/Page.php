@@ -270,7 +270,7 @@ if (!class_exists('Page'))
          * @param  integer  $page_id
          * @return mixed
          **/
-        public static function getLinkedByLanguage($page_id)
+        public static function getLinkedByLanguage(int $page_id) : array
         {
             $sql     = 'SELECT * FROM `'.self::$page_refs_table.'` AS t1'
                      . ' RIGHT OUTER JOIN `'.self::$pages_table.'` AS t2'
@@ -289,7 +289,7 @@ if (!class_exists('Page'))
                 }
                 return $items;
             }
-            return false;
+            return array();
         }   // end function getLinkedByLanguage()
 
         /**
@@ -586,10 +586,10 @@ if (!class_exists('Page'))
         {
             if(self::isDeleted($page_id))
                 return false;
-            $sections = \CAT\Sections::getSections($page_id,null,true);
-            if(is_array($sections) && count($sections))
-                return true;
-            return false;
+#            $sections = \CAT\Sections::getSections($page_id,null,true);
+#            if(is_array($sections) && count($sections))
+#                return true;
+            return true;
         } // end function isActive()
 
         /**

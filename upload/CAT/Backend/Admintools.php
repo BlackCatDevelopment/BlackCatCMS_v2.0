@@ -126,6 +126,12 @@ if (!class_exists('Backend\Admintools'))
             if(!self::user()->hasPerm('tools_list'))
                 self::printFatalError('You are not allowed for the requested action!');
             $tool    = self::getTool();
+
+            // kind of dirty hack...
+            if(!$tool || $tool=='admintools') {
+                self::router()->reroute('/backend/admintools');
+                return;
+            }
             $name    = Addons::getDetails($tool,'name');
             $handler = NULL;
             foreach(array_values(array(str_replace(' ','',$name),$tool)) as $classname) {
@@ -163,7 +169,7 @@ if (!class_exists('Backend\Admintools'))
                 }
                 if(is_callable(array($classname,'initialize')))
                 {
-                    $classname::initialize();
+                    $classname::initialize(array());
                 }
 
                 // check for function call in route
@@ -209,20 +215,11 @@ if (!class_exists('Backend\Admintools'))
                 $tool  = Validate::sanitizeGet('tool','scalar',NULL);
             if(!$tool)
                 $tool = self::router()->getParam(-1);
-#            if(!$tool)
-#                $tool = self::router()->getRoutePart(-1);
             if(!$tool) {
                 $route = self::router()->getRoute();
                 $route = str_ireplace('admintools/tool/','',$route);
                 $tool  = explode('/',$route)[0];
             }
-
-            if(!$tool || !is_scalar($tool) || !Addons::exists($tool))
-                self::printFatalError('Invalid data')
-                . (self::$debug ? '(Backend_Admintools::getTool())' : '');
-
-            if(!Addons::exists($tool))
-                self::printFatalError('No such tool');
 
             return $tool;
         }   // end function getTool()

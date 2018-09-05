@@ -144,19 +144,18 @@ if(!class_exists('\CAT\Backend\Dashboard'))
             $query   = self::router()->getQuery();
             if($query)
             {
-                parse_str($query,$query_data);
                 // widget id?
-                if(isset($query_data['widget']))
+                if(isset($query['widget']))
                 {
                     // check if widget exists
-                    if(Widget::exists($query_data['widget']))
+                    if(Widget::exists($query['widget']))
                     {
                         // check if widget is visible on current dashboard
-                        if(Widget::isOnDashboard($query_data['widget'],$dash))
+                        if(Widget::isOnDashboard($query['widget'],$dash))
                         {
                             // forward
-                            $widget = Widget::getWidget($query_data['widget']);
-                            Widget::handleCall($widget,$query_data);
+                            $widget = Widget::getWidget($query['widget']);
+                            Widget::handleCall($widget,$query);
                         }
                     }
                 }

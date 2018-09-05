@@ -3,7 +3,7 @@
 <div class="dashboard" data-id="{$dashboard.id}" data-columns="{$dashboard.columns}">
 {if count($dashboard.widgets)}
     <button role="button" class="btn btn-sm btn-warning detach" id="dashboard_reset" data-id="{$dashboard.id}">{translate('Reset Dashboard')}</button>
-    <div class="card-columns">
+    <div class="card-columns column-count-{$dashboard.columns}">
 {foreach $dashboard.widgets widget}
             <div class="card"{if $widget.widget_id} data-id="{$widget.widget_id}"{/if}>
                 <div class="card-header">

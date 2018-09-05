@@ -1,3 +1,7 @@
+        <div class="alert alert-info">
+            {translate('Please note: The admin role cannot be edited here, since the global administrator always has all rights.')}
+        </div>
+
         <table class="table">
             <thead>
                 <tr>

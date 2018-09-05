@@ -29,9 +29,8 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
         private static $e_name = null;
         private static $e      = null;
 
-        public static function initialize(array $section)
+        public static function init()
         {
-            parent::initialize($section);
             self::$e_name = Registry::get('wysiwyg_editor');     // name
             self::$e_url  = Registry::get('wysiwyg_editor_url'); // url
             self::$e      = new \CAT\Addon\WYSIWYG\CKEditor4();
@@ -48,6 +47,11 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
             // get the contents, ordered by 'order' column; returns an array
             $contents = self::getContent($section['section_id']);
 
+            // variant
+            $variant  = \CAT\Sections::getVariant($section['section_id']);
+
+            // add to template search path
+            self::tpl()->setPath(CAT_ENGINE_PATH.'/modules/wysiwyg/templates/'.$variant);
 
             // render template
             $output  = self::tpl()->get(
@@ -117,7 +121,7 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
 
         public static function getJS()
         {
-            if(!is_object(self::$e)) self::initialize();
+            if(!is_object(self::$e)) self::init();
             return self::$e->getJS();
         }
 
@@ -130,6 +134,8 @@ if(!class_exists('\CAT\Addon\WYSIWYG',false))
 		public static function modify(array $section)
         {
             parent::modify($section); // sets template path(s)
+
+            if(!is_object(self::$e)) self::init();
 
             $id       = $section['section_id'];
 

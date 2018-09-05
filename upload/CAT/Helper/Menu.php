@@ -42,47 +42,66 @@ if(!class_exists('\CAT\Helper\Menu',false))
          * @access public
          * @return
          **/
-        public static function getLanguageMenu(array &$options = array())
+        public static function show(int $id, $attr) : string
         {
-             $pid = NULL;
-             self::checkPageId($pid);
-             #self::checkOptions($options);
-             $pages = HPage::getLinkedByLanguage($pid);
-             $lb    = Base::lb();
-             $lb->set('more_info','language');
-             return $lb->buildList($pages,$options);
-        }   // end function getLanguageMenu()
+// !!!!! TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// $attr verarbeiten
+            // get type
+            $stmt = self::db()->query(
+                'SELECT `type_id` FROM `:prefix:menus` WHERE `menu_id`=?',
+                array($id)
+            );
+            $type     = $stmt->fetch();
+            $defaults = self::getSettings('type',$type['type_id']); // type (defaults)
+            $settings = self::getSettings('menu',$id); // menu
+            $settings = array_merge($settings,$defaults); // merge defaults with special settings
+            $renderer = self::getRenderer($settings); // pass settings to renderer
+            
+            return $renderer->render(self::tree($settings['type']));
+        }   // end function show()
 
         /**
          *
          * @access public
          * @return
          **/
-        public static function show(int $id, $attr)
+        public static function showType(int $type) : string
         {
-            $pid = NULL;
-            self::checkPageId($pid);
+            $settings = self::getSettings('type',$type);
+            $renderer = self::getRenderer($settings);
 
-            // get menu settings
-            $stmt = self::db()->query(
-                  'SELECT `type_name`, `attribute`, `value` FROM `:prefix:menus` AS `t1` '
-                . 'LEFT JOIN `:prefix:menu_options` AS `t2` '
-                . 'ON `t1`.`menu_id`=`t2`.`menu_id` '
-                . 'JOIN `:prefix:menu_types` AS `t3` '
-                . 'ON `t1`.`type_id`=`t3`.`type_id` '
-                . 'WHERE `t1`.`menu_id`=?',
-                array($id)
-            );
+            return $renderer->render(self::tree($settings['type']));
 
-            $data = $stmt->fetchAll();
-            $settings = array();
-            if(is_array($data) && count($data)>0) {
-                $settings['type'] = ( isset($data[0]['type_name']) ? $data[0]['type_name'] : 'fullmenu' );
-                foreach($data as $i => $item) {
-                    $settings[$item['attribute']] = $item['value'];
+        }   // end function showType()
+        
+
+        /**
+         * makes sure that we have a valid page id; the visibility does not
+         * matter here
+         *
+         * @access protected
+         * @param  integer   $id (reference!)
+         * @return void
+         **/
+        protected static function checkPageId(&$pid=NULL)
+        {
+            if($pid===NULL) {
+                if(self::router()->isBackend()) {
+                    $pid = \CAT\Backend::getArea(1);
+                } else {
+                    $pid = \CAT\Page::getID();
                 }
             }
+            #if($pid===0)    $pid = \CAT\Helper\Page::getRootParent($page_id);
+        }   // end function checkPageId()
 
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function getRenderer(array $settings)
+        {
             $formatter = '\wblib\wbList\Formatter\ListFormatter';
             switch($settings['type']) {
                 case 'breadcrumb':
@@ -108,94 +127,96 @@ if(!class_exists('\CAT\Helper\Menu',false))
                 }
             }
 
-            return $renderer->render(self::tree($settings['type']));
-        }   // end function show()
+            return $renderer;
+        }   // end function getRenderer()
+        
 
         /**
-         * makes sure that we have a valid page id; the visibility does not
-         * matter here
          *
          * @access protected
-         * @param  integer   $id (reference!)
-         * @return void
+         * @return
          **/
-        protected static function checkPageId(&$pid=NULL)
+        protected static function getSettings(string $for, int $id) : array
         {
-            if($pid===NULL) {
-                if(self::router()->isBackend()) {
-                    $pid = \CAT\Backend::getArea(1);
-                } else {
-                    $pid = \CAT\Page::getID();
+            switch($for) {
+                case 'type':
+                    $stmt = self::db()->query(
+                          'SELECT `t1`.`type_name`, `t2`.`attribute`, `t2`.`value` '
+                        . 'FROM  `:prefix:menu_types` AS `t1` '
+                        . 'LEFT JOIN `:prefix:menutype_options` AS `t2` '
+                        . 'ON `t1`.`type_id`=`t2`.`type_id` '
+                        . 'WHERE `t1`.`type_id`=?',
+                        array($id)
+                    );
+                    break;
+                case 'menu':
+                    $stmt = self::db()->query(
+                          'SELECT `type_name`, `attribute`, `value` FROM `:prefix:menus` AS `t1` '
+                        . 'LEFT JOIN `:prefix:menu_options` AS `t2` '
+                        . 'ON `t1`.`menu_id`=`t2`.`menu_id` '
+                        . 'JOIN `:prefix:menu_types` AS `t3` '
+                        . 'ON `t1`.`type_id`=`t3`.`type_id` '
+                        . 'WHERE `t1`.`menu_id`=?',
+                        array($id)
+                    );
+                    break;
+            }
+            $data     = $stmt->fetchAll();
+            $settings = array();
+            if(is_array($data) && count($data)>0) {
+                $settings['type'] = ( isset($data[0]['type_name']) ? $data[0]['type_name'] : 'fullmenu' );
+                foreach($data as $i => $item) {
+                    $settings[$item['attribute']] = $item['value'];
                 }
             }
-            #if($pid===0)    $pid = \CAT\Helper\Page::getRootParent($page_id);
-        }   // end function checkPageId()
+            return $settings;
+        }   // end function getSettings()
+        
 
         /**
-         * 
+         * creates a wbList Tree object
+         *   + frontend: pages
+         *   + backend: depends
+         *
+         * @access protected
+         * @param  string    $type
+         * @return object
          **/
-        protected static function tree(string $type)
+        protected static function tree(string $type) : \wblib\wbList\Tree
         {
             if(self::router()->isBackend()) {
-                $menu = \CAT\Backend::getMainMenu();
                 $rootid = 0;
-                $pid = NULL;
-                self::checkPageId($pid);
+                $pid    = NULL;
 
-                // some areas (like page -> edit) do not have an entry in
-                // the backend_areas table, so for the breadcrumb menu, we
-                // have to add them here
-                if($type=='breadcrumb') {
-                    // current controller
-                    $curr = self::router()->getController();
-                    // if the controller is not in the menu...
-                    $seen = false;
-                    for($i=0;$i<count($menu);$i++) {
-                        if(isset($menu[$i]['controller']) && $menu[$i]['controller']==$curr) {
-                            $seen = true;
-                            break;
-                        }
-                    }
-                    if(!$seen) {
-                        $temp = explode('\\',(self::router()->getController()));
-                        end($temp);
-                        $area = $temp[key($temp)];
-                        $menu[] = array(
-                            'id' => $area,
-                            'name' => $area,
-                            'position' => 1,
-                            'parent' => 0,
-                            'level' => 1,
-                            'controller' => self::router()->getController(),
-                            'title' => self::lang()->t(ucfirst($area)),
-                            'href' => '#'
-                        );
-                        $menu[] = array(
-                            'id' => self::router()->getFunction(),
-                            'name' => self::router()->getFunction(),
-                            'position' => 2,
-                            'parent' => $area,
-                            'level' => 2,
-                            'controller' => self::router()->getController(),
-                            'title' => self::lang()->t(ucfirst(self::router()->getFunction())),
-                            'href' => '#',
-                            'is_current' => true,
-                        );
-                        $rootid = $area;
-                        $pid = self::router()->getFunction();
-                    }
+                switch($type) {
+                    case 'breadcrumb':
+                        $menu   = \CAT\Backend::getBreadcrumb();
+                        $rootid = $menu[0]['id'];
+                        end($menu);
+                        $pid    = $menu[key($menu)]['id'];
+                        reset($menu);
+                        break;
+                    default:
+                        $menu   = \CAT\Backend::getMainMenu();
+                        $pid    = \CAT\Page::getID();
+                        break;
                 }
 
-                return new Tree(
-                    $menu,
-                    array('value'=>'title','linkKey'=>'href','root_id'=>$rootid,'current'=>$pid)
-                );
+                $options = array('value'=>'title','linkKey'=>'href','root_id'=>$rootid,'current'=>$pid);
+                return new Tree($menu,$options);
             }
 
-            return new Tree(
-                HPage::getPages(),
-                array('id'=>'page_id','value'=>'menu_title','linkKey'=>'href')
-            );
+            // ----- frontend -----
+            $pid = NULL;
+            self::checkPageId($pid);
+            $options = array('id'=>'page_id','value'=>'menu_title','linkKey'=>'href','current'=>$pid);
+
+            if($type=='language') {
+                $pages = HPage::getLinkedByLanguage($pid);
+                return new Tree($pages,$options);
+            } else {
+                return new Tree(HPage::getPages(),$options);
+            }
         }
 
 

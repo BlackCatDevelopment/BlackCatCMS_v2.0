@@ -67,6 +67,29 @@ if (!class_exists('\CAT\Backend\Media'))
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function delete()
+        {
+            if(!self::user()->hasPerm('media_delete'))
+                self::printFatalError('You are not allowed for the requested action!');
+            $mediaID = self::getMediaID();
+            $result  = \CAT\Helper\Media::removeFolder($mediaID,\CAT\Helper\Media::getFolderByID($mediaID));
+
+            if(self::asJSON())
+            {
+                echo Json::printResult(
+                    $result,
+                    ( $result ? 'Success' : 'Error' )
+                );
+                return;
+            }
+        }   // end function delete()
+        
         
         /**
          *
@@ -88,60 +111,19 @@ if (!class_exists('\CAT\Backend\Media'))
                 #\CAT\Backend::print_footer();
             }
         }   // end function details()
-        
-        /**
-         *
-         * @access public
-         * @return
-         **/
-        public static function index()
-        {
-            $subdir = self::getPath();
-            $home   = self::user()->getHomeFolder();
-            $dirs   = \CAT\Helper\Media::getFolders();
-
-            // add some info for easier layout
-            foreach($dirs as $index => $dir) {
-                $dirs[$index]['level'] = count(explode('/',$dir['path']));
-                $dirs[$index]['name']  = pathinfo($dir['path'],PATHINFO_FILENAME);
-            }
-
-            $tpl_data = array(
-                'dirs'        => $dirs,
-                'files'       => self::list($home.'/'.urldecode($subdir),true),
-                'curr_folder' => urldecode(\CAT\Helper\Directory::sanitizePath($subdir)),
-                'media_url'   => \CAT\Helper\Validate::sanitize_url(CAT_SITE_URL.'/'.\CAT\Registry::get('media_directory').'/'.urldecode(\CAT\Helper\Directory::sanitizePath($subdir))),
-            );
-
-            if(self::asJSON())
-            {
-                \CAT\Helper\Json::printData($tpl_data);
-            }
-            else
-            {
-                \CAT\Backend::print_header();
-                self::tpl()->output('backend_media', $tpl_data);
-                \CAT\Backend::print_footer();
-            }
-        }   // end function index()
 
         /**
          *
          * @access public
          * @return
          **/
-        public static function list($path,$return=false)
+        public static function files()
         {
-            if(!$path)
-            {
-                $subfolder = self::getPath();
-                $path      = self::user()->getHomeFolder(true) . '/' . $subfolder;
-            } else {
-                $subfolder = '';
-            #    $path      = self::user()->getHomeFolder(true) . '/' . $path;
-            }
-
-            // check permissions
+            // global list permission
+            if(!self::user()->hasPerm('media_list'))
+                self::printFatalError('You are not allowed for the requested action!');
+            list($dirID,$path) = self::init();
+            // path permission
             if(!self::user()->hasPathPerm($path))
             {
                 self::log()->addError(sprintf(
@@ -151,50 +133,62 @@ if (!class_exists('\CAT\Backend\Media'))
                 self::printFatalError('You are not allowed for the requested action!');
             }
 
-            // validate path
-            if(!\CAT\Helper\Directory::checkPath($path,'media'))
-            {
-                self::log()->addError(sprintf(
-                    'User [%s] requested access to path [%s], invalid path (outside MEDIA)',
-                    self::user()->get('display_name'), $path
-                ));
-                self::printFatalError('You are not allowed for the requested action!');
-            }
-
-            $filter    = \CAT\Helper\Validate::sanitizePost('filter');
-
-            // make sure we have all the data
-            \CAT\Helper\Media::updateFiles($path,$filter);
-
             $files     = \CAT\Helper\Media::getFiles($path);
-            $depth     = 0;
 
-            $parts = (substr_count($subfolder,'/')>1 ? explode('/',$subfolder) : array());
-            $depth = count($parts);
-
-            $result = array(
-                'files'  => $files,
-                'dirs'   => \CAT\Helper\Media::getFiles($path),
-                'folder' => \CAT\Helper\Directory::getName($subfolder),
-                'depth'  => $depth,
+            $tpl_data = array(
+                'baseurl' => CAT_SITE_URL.\CAT\Helper\Validate::path2uri($path),
+                'dirs'    => \CAT\Helper\Media::getFolders(),
+                'files'   => \CAT\Helper\Media::getFiles($path),
+                'current' => 'files',
+                'curr_folder' => $dirID,
             );
-
-            if($return)
-            {
-                return $result['files'];
-            }
 
             if(self::asJSON())
             {
-                \CAT\Helper\Json::printData($result);
+                echo \CAT\Helper\Json::printData($tpl_data);
             }
             else
             {
                 \CAT\Backend::print_header();
-                self::tpl()->output('backend_media', $result);
+                self::tpl()->output('backend_media_files', $tpl_data);
                 \CAT\Backend::print_footer();
             }
-        }   // end function list()
+        }   // end function files()
+        
+        
+        /**
+         * by default, the media backend area shows the available folders
+         *
+         * @access public
+         * @return
+         **/
+        public static function index()
+        {
+            self::init();
+            $dirs   = \CAT\Helper\Media::getFolders();
+
+            // add some info for easier layout
+            foreach($dirs as $index => $dir) {
+                $dirs[$index]['level'] = count(explode('/',$dir['path']));
+                $dirs[$index]['name']  = pathinfo($dir['path'],PATHINFO_FILENAME);
+            }
+
+            $tpl_data = array(
+                'dirs' => $dirs,
+                'current' => 'folders',
+            );
+
+            if(self::asJSON())
+            {
+                echo \CAT\Helper\Json::printData($tpl_data);
+            }
+            else
+            {
+                \CAT\Backend::print_header();
+                self::tpl()->output('backend_media_folders', $tpl_data);
+                \CAT\Backend::print_footer();
+            }
+        }   // end function index()
 
         /**
          *
@@ -276,7 +270,25 @@ if (!class_exists('\CAT\Backend\Media'))
             );
 
         }   // end function unprotect()
-        
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function update()
+        {
+            // global list permission
+            if(!self::user()->hasPerm('media_update'))
+                self::printFatalError('You are not allowed for the requested action!');
+            list($dirID,$path) = self::init();
+            // make sure all folders are in the db
+            \CAT\Helper\Media::updateFolderData($path);
+            \CAT\Helper\Media::updateFiles($path);
+            return self::router()->reroute('/backend/media/index');
+
+        }   // end function update()
+
         /**
          *
          * @access public
@@ -284,52 +296,55 @@ if (!class_exists('\CAT\Backend\Media'))
          **/
         public static function upload()
         {
+
+echo "FILE [",__FILE__,"] FUNC [",__FUNCTION__,"] LINE [",__LINE__,"]<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r($_FILES);
+echo "</textarea><br />";
+
             if(!self::user()->hasPerm('media_upload'))
                 self::printFatalError('You are not allowed for the requested action!');
-
-            $base   = self::user()->getHomeFolder();
-            $folder = \CAT\Helper\Validate::sanitizePost('folder');
-            if($folder)
-                $path = \CAT\Helper\Directory::sanitizePath($base.'/'.$folder);
-            else
-                $path = $folder;
-
+            list($dirID,$path) = self::init();
+            // path permission
             if(!self::user()->hasPathPerm($path))
             {
                 self::log()->addError(sprintf(
-                    'User [%s] requested upload access to path [%s], missing path permission',
+                    'User [%s] requested list access to path [%s], missing path permission',
                     self::user()->get('display_name'), $path
                 ));
                 self::printFatalError('You are not allowed for the requested action!');
             }
-
-            list($ok,$errors) = \CAT\Helper\Upload::upload('files',$path);
-/*
-{"files": [
-  {
-    "name": "picture1.jpg",
-    "size": 902604,
-    "url": "http:\/\/example.org\/files\/picture1.jpg",
-    "thumbnailUrl": "http:\/\/example.org\/files\/thumbnail\/picture1.jpg",
-    "deleteUrl": "http:\/\/example.org\/files\/picture1.jpg",
-    "deleteType": "DELETE"
-  },
-  {
-    "name": "picture2.jpg",
-    "size": 841946,
-    "url": "http:\/\/example.org\/files\/picture2.jpg",
-    "thumbnailUrl": "http:\/\/example.org\/files\/thumbnail\/picture2.jpg",
-    "deleteUrl": "http:\/\/example.org\/files\/picture2.jpg",
-    "deleteType": "DELETE"
-  }
-]}
-*/
-            if(self::asJSON()) {
-                \CAT\Helper\Json::printData(array('success'=>$ok,'errors'=>$errors));
+            $tpl_data = array();
+            if(self::asJSON())
+            {
+                echo \CAT\Helper\Json::printData($tpl_data);
+            }
+            else
+            {
+                \CAT\Backend::print_header();
+                self::tpl()->output('backend_media_upload', $tpl_data);
+                \CAT\Backend::print_footer();
             }
         }   // end function upload()
+
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function init() : array
+        {
+            $itemID = self::getItemID('dir_id');
+            $subdir = self::getPath($itemID);
+            $home   = self::user()->getHomeFolder();
+            return array(
+                (int)$itemID,
+                (string)$home.'/'.$subdir
+            );
+        }   // end function init()
         
-        protected static function generatePassword($length = 12) {
+        
+        protected static function generatePassword($length = 12)
+        {
             $r    = array_merge(range("a", "z"), range("a", "z"), range("A", "Z"), range(1, 9), range(1, 9));
             $not  = array('i', 'l', 'o', 'I', 'O');
             $r    = array_diff($r, $not);
@@ -339,48 +354,15 @@ if (!class_exists('\CAT\Backend\Media'))
         } // generatePassword()
 
         /**
-         * tries to retrieve 'media_id' by checking (in this order):
-         *
-         *    - $_POST['page_id']
-         *    - $_GET['page_id']
-         *    - Route param['page_id']
-         *
-         * also checks for numeric value
-         *
-         * @access private
-         * @return integer
-         **/
-        protected static function getMediaID()
-        {
-            $mediaID  = \CAT\Helper\Validate::sanitizePost('media_id','numeric',NULL);
-
-            if(!$mediaID)
-                $mediaID  = \CAT\Helper\Validate::sanitizeGet('media_id','numeric',NULL);
-
-            if(!$mediaID)
-                $mediaID = self::router()->getParam(-1);
-
-            if(!$mediaID || !is_numeric($mediaID))
-                $mediaID = NULL;
-
-            return $mediaID;
-        }   // end function getPageID()
-
-        /**
          *
          * @access private
          * @return
          **/
-        private static function getPath()
+        private static function getPath(int $dirID) : string
         {
-            //$base  = CAT_BACKEND_PATH.'/'.CAT_Backend::getArea();
-            $base = CAT_BACKEND_PATH.'/'.\CAT\Registry::get('media_directory');
-
-            // example route: backend/media/index/video
-            //                backend/media/list/video
-            // ...where 'video' is the name of the requested sub folder
-            $route  = self::router()->getRoute();
+            $base   = CAT_BACKEND_PATH.'/'.\CAT\Registry::get('media_directory');
             $subdir = '';
+            $route  = \CAT\Helper\Media::getFolderByID($dirID);
 
             if($route != $base)
                 $subdir = str_ireplace(array($base.'/index',$base.'/list',$base.'/protect',$base.'/unprotect',$base),'',$route);

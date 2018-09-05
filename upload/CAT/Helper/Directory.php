@@ -482,14 +482,15 @@ $directories[] = $name;
          * convert bytes to human readable string
          *
          * @access public
-         * @param  integer $bytes
+         * @param  string $bytes
          * @return string
          **/
-        public static function format(int $bytes)
+        public static function humanize(string $bytes) : string
         {
-        	$symbol = array(' bytes', ' KB', ' MB', ' GB', ' TB');
-        	$exp = 0;
+        	$symbol          = array(' bytes', ' KB', ' MB', ' GB', ' TB');
+        	$exp             = 0;
         	$converted_value = 0;
+            $bytes           = (int)$bytes;
         	if ($bytes > 0)
         	{
         		$exp = floor( log($bytes) / log(1024));
@@ -514,6 +515,48 @@ $directories[] = $name;
             }
             return self::$is_win;
         }   // end function isWin()
+
+        /**
+         * remove directory recursively
+         *
+         * @access public
+         * @param  string  $directory
+         * @return boolean
+         *
+         **/
+        public static function removeDirectory(string $directory) : bool
+        {
+            // If suplied dirname is a file then unlink it
+            if (is_file($directory))
+            {
+                return unlink($directory);
+            }
+            // Empty the folder
+            if (is_dir($directory))
+            {
+                $dir = dir($directory);
+                while (false !== $entry = $dir->read())
+                {
+                    // Skip pointers
+                    if ($entry == '.' || $entry == '..')
+                    {
+                        continue;
+                    }
+                    // recursive delete
+                    if (is_dir($directory . '/' . $entry))
+                    {
+                        self::removeDirectory($directory . '/' . $entry);
+                    }
+                    else
+                    {
+                        unlink($directory . '/' . $entry);
+                    }
+                }
+                // Now delete the folder
+                $dir->close();
+                return rmdir($directory);
+            }
+        }   // end function removeDirectory()
 
         /**
          * convert string to a valid filename

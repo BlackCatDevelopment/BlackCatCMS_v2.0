@@ -18,6 +18,7 @@
 namespace CAT;
 
 use \CAT\Base as Base;
+use \CAT\Helper\Page as HPage;
 
 if (!class_exists('\CAT\Page', false))
 {
@@ -149,7 +150,7 @@ if (!class_exists('\CAT\Page', false))
             $sections = \CAT\Sections::getSections($page_id,$block,true);
 
             // in fact, this should never happen, als isActive() does the same
-            if(!count($sections)) // no content for this block
+            if(!is_array($sections) || !count($sections)) // no content for this block
                 return false;
 
             $output = array();
@@ -231,29 +232,15 @@ if (!class_exists('\CAT\Page', false))
          **/
         public function setTemplate()
         {
-/*
             if(!defined('TEMPLATE'))
             {
-                $prop = $this->getProperties();
-                // page has it's own template
-                if(isset($prop['template']) && $prop['template'] != '') {
-                    if(file_exists(\CAT\PATH.'/templates/'.$prop['template'].'/index.php')) {
-                        \CAT\Registry::register('TEMPLATE', $prop['template'], true);
-                    } else {
-                        \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
-                    }
-                // use global default
-                } else {
-                    \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
-                }
+                define('TEMPLATE',HPage::getPageTemplate($this->page_id));
             }
             $dir = '/templates/'.TEMPLATE;
-            // Set the template dir (which is, in fact, the URL, but for backward
-            // compatibility, we have to keep this irritating name)
-            \CAT\Registry::register('TEMPLATE_DIR', CAT_URL.$dir, true);
+            // Set the template url
+            \CAT\Registry::register('CAT_TEMPLATE_URL', CAT_URL.$dir);
             // This is the REAL dir
-            \CAT\Registry::register('CAT_TEMPLATE_DIR', CAT_PATH.$dir, true);
-*/
+            \CAT\Registry::register('CAT_TEMPLATE_DIR', CAT_ENGINE_PATH.$dir);
         }   // end function setTemplate()
 
         /**
@@ -283,7 +270,7 @@ if (!class_exists('\CAT\Page', false))
             $this->log()->addDebug('including template');
 
             ob_start();
-                require CAT_TEMPLATE_DIR.'/index.php';
+                require \CAT\Registry::get('CAT_TEMPLATE_DIR').'/index.php';
                 $output = ob_get_contents();
             ob_clean();
 

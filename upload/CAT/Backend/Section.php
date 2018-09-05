@@ -273,7 +273,7 @@ if (!class_exists('\CAT\Backend\Section'))
             // special case
             if($section['module']=='wysiwyg')
             {
-                \CAT\Addon\WYSIWYG::initialize();
+                \CAT\Addon\WYSIWYG::initialize($section);
                 $result = \CAT\Addon\WYSIWYG::save($sectionID);
             }
             else

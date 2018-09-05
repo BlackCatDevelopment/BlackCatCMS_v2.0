@@ -194,8 +194,16 @@ if ( !class_exists( 'Addons' ) )
                     break;
             } // end switch()
 
-            if($names_only)
+            if($names_only) {
                 $data = HArray::extractList($data,'name','directory');
+            } else {
+                for($i=0;$i<count($data);$i++) {
+                    $info = self::getInfo($data[$i]['directory']);
+                    if(is_array($info) && !empty($info)) {
+                        $data[$i] = array_merge($data[$i],$info);
+                    }
+                }
+            }
 
             return $data;
         } // end function getAddons()
@@ -210,7 +218,7 @@ if ( !class_exists( 'Addons' ) )
         public static function getDetails($addon,$field='*')
         {
             // sanitize column name
-            if(!in_array($field,array('*','addon_id','type','directory','name','description','function','version','guid','platform','author','license','installed','upgraded','removable','bundled')))
+            if(!in_array($field,array('*','addon_id','type','directory','name','installed','upgraded','removable','bundled')))
                 return NULL; // silently fail
             $q = 'SELECT %s FROM `:prefix:addons` WHERE ';
             if(is_numeric($addon)) $q .= '`addon_id`=:val';

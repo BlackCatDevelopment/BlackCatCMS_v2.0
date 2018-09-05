@@ -5,6 +5,7 @@
                     <a href="{$_root.CAT_ADMIN_URL}/page/edit/{$item.page_id}" class="list-group-link" title="{translate('Edit page')}"><i class="fa fa-cogs"></i></a>
                     <a href="{$_root.CAT_ADMIN_URL}/page/add/{$item.page_id}" class="list-group-link bsAddPage" title="{translate('Add page before')}" data-id="{$item.page_id}" data-parent="{$item.parent}" data-pos="before"><i class="fa fa-hand-o-up"></i></a>
                     <a href="{$_root.CAT_ADMIN_URL}/page/add/{$item.page_id}" class="list-group-link bsAddPage" title="{translate('Add page below')}" data-id="{$item.page_id}" data-parent="{$item.parent}" data-pos="after"><i class="fa fa-hand-o-down"></i></a>
+                    <a href="{$item.href}" class="list-group-link" title="{translate('Open in frontend (in new window/tab)')}" target=”_blank”><i class="fa fa-home"></i></a>
                 </span>
                 <span class="hidden-sm-down pagename">{$item.menu_title}</span>
             </div>
@@ -18,7 +19,7 @@
 
 
     <div class="col-md-2 col-xs-1 p-l-0 p-r-0 collapse show" id="sidebar">
-        <input class="form-control" id="bsPageSearch" placeholder="Search..." autocomplete="off" type="search" /><br />
+        <input class="form-control" id="bsPageSearch" placeholder="{translate('Search')}..." autocomplete="off" type="search" /><br />
         <div class="list-group panel">
         {pagetree $pages}
         </div>
