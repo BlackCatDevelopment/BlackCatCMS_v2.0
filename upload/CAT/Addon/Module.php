@@ -25,6 +25,15 @@ if (!class_exists('\CAT\Addon\Module', false))
 {
 	abstract class Module extends Base implements IAddon
 	{
+
+        protected static $type        = '';
+        protected static $directory   = '';
+        protected static $name        = '';
+        protected static $version     = '';
+        protected static $description = "";
+        protected static $author      = "";
+        protected static $guid        = "";
+        protected static $license     = "";
 		/**
 		 *
 		 */
@@ -95,14 +104,33 @@ if (!class_exists('\CAT\Addon\Module', false))
 		/**
 		 * Default install routine
 		 */
-		public static function install()
+		public static function install() : array
 		{
-            $errors  = array();
+            $class  = get_called_class();
+            $errors = array();
+
+            // add database entry
+            self::db()->query(
+                'REPLACE INTO `:prefix:addons` VALUES( null, :type, :directory, :name, :time, :time, "Y","N")',
+                array(
+                    'type' => $class::$type,
+                    'directory' => $class::$directory,
+                    'name' => $class::$name,
+                    'time' => time()
+                )
+            );
+            if(self::db()->isError()) {
+                $errors[] = self::db()->getError();
+                return $errors;
+            }
+            
             $sqlfile = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/inc/install.sql');
-            if(file_exists($sqlfile))
-                $errors	= self::sqlProcess();
+            if(file_exists($sqlfile)) {
+                $errors = self::sqlProcess();
+            }
+
 			return $errors;
-		}
+		}   // end function install()
 
 		/**
 		 * Default modify routine

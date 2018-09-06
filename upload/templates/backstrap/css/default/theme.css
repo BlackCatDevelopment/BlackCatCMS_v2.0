@@ -36,6 +36,9 @@ ul.breadcrumb > button{margin-right:5px}
 /* margin for tablist */
 ul[role="tablist"]{margin-bottom:15px;}
 
+/* fix small bottom border on active tab */
+.nav-tabs .nav-item{margin-bottom:-2px}
+
 /* form buttons */
 .buttonline{border-top:1px solid #ccc;padding:5px;background-color:#f5f5f5;}
 

@@ -21,8 +21,10 @@ use \CAT\Base as Base;
 use \CAT\Backend as Backend;
 use \CAT\Helper\Addons as HAddons;
 use \CAT\Helper\DateTime as DateTime;
+use \CAT\Helper\Directory as Directory;
 use \CAT\Helper\GitHub as GitHub;
 use \CAT\Helper\Json as Json;
+use \CAT\Helper\Validate as Validate;
 
 if (!class_exists('\CAT\Backend\Addons'))
 {
@@ -49,9 +51,14 @@ if (!class_exists('\CAT\Backend\Addons'))
          **/
         public static function index()
         {
-            $self = self::getInstance();
+            if(!self::user()->hasPerm('addons_list'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            // some backend themes may show all addons on one page, while
+            // others (like Backstrap) use tabs. So we pick them both here.
             $data = HAddons::getAddons(NULL,'name',false,true); // all
             $ftp  = HAddons::getAddons(NULL,'name',false,true,true);
+
             foreach($data as $i => $item)
             {
                 $data[$i]['install_date'] = DateTime::getDate($item['installed']);
@@ -62,11 +69,12 @@ if (!class_exists('\CAT\Backend\Addons'))
                 'modules_json' => json_encode($data, JSON_NUMERIC_CHECK),
                 'notinstalled' => $ftp,
                 'notinstalled_json' => json_encode($ftp, JSON_NUMERIC_CHECK),
+                'current'      => 'installed',
             );
             Backend::print_header();
-            $self->tpl()->output('backend_addons', $tpl_data);
+            self::tpl()->output('backend_addons', $tpl_data);
             Backend::print_footer();
-        }   // end function Addons()
+        }   // end function index()
 
         /**
          *
@@ -77,15 +85,18 @@ if (!class_exists('\CAT\Backend\Addons'))
         {
             if(!file_exists(CAT_ENGINE_PATH."/temp/catalog.json"))
             {
-                self::update_catalog();
+                self::updateCatalog();
             }
-            $catalog = self::get_catalog();
+            $catalog = self::getCatalog();
             // get installed
             $modules = HAddons::getAddons(NULL,'name',false); // all
             // map installed
             $installed = array();
-            foreach($modules as $i => $m)
-                $installed[$m['directory']] = $m['version'];
+            foreach($modules as $i => $m) {
+                if(isset($m['version'])) {
+                    $installed[$m['directory']] = $m['version'];
+                }
+            }
             // find installed in catalog
             foreach($catalog['modules'] as $i => $m)
             {
@@ -105,13 +116,140 @@ if (!class_exists('\CAT\Backend\Addons'))
                 {
                     $catalog['modules'][$i]['type'] = 'module';
                 }
+                // get description for current language
+                if(isset($m['description'])) {
+                    if(isset($m['description'][LANGUAGE]['title'])) {
+                        $catalog['modules'][$i]['description'] = $m['description'][LANGUAGE]['title'];
+                    } elseif(isset($m['description']['en']['title'])) {
+                        $catalog['modules'][$i]['description'] = $m['description']['en']['title'];
+                    } else {
+                        $catalog['modules'][$i]['description'] = 'n/a';
+                    }
+                }
+                // check requirements
+                if(isset($m['require']['core']['release'])) {
+                    if(HAddons::versionCompare(CAT_VERSION,$m['require']['core']['release'],'<')) {
+                        $catalog['modules'][$i]['warn'] = self::lang()->t('This module requires BlackCat CMS v').$m['require']['core']['release'];
+                    }
+                }
             }
+
             if(self::asJSON())
             {
                 print json_encode(array('success'=>true,'modules'=>$catalog['modules']));
                 exit();
             }
+
+            $tpl_data = array(
+                'modules'      => $catalog['modules'],
+                'current'      => 'catalog',
+            );
+
+            Backend::print_header();
+            self::tpl()->output('backend_addons', $tpl_data);
+            Backend::print_footer();
         }   // end function catalog()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function install()
+        {
+            if(!self::user()->hasPerm('addons_install'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            $addon = self::getAddonName();
+            $path  = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$addon);
+            $handler = null;
+            $classname = null;
+
+            // already there? (uploaded via FTP)
+            if(is_dir($path)) {
+                $info = HAddons::getInfo($addon);
+                $names = array($addon);
+                if(isset($info['name']) && $info['name']!=$addon) {
+                    $names[] = $info['name'];
+                }
+                if(isset($info['directory']) && $info['directory']!=$addon) {
+                    $names[] = $info['directory'];
+                }
+                foreach(array_values($names) as $name) {
+                    $filename = \CAT\Helper\Directory::sanitizePath($path.'/inc/class.'.$name.'.php');
+                    if(file_exists($filename)) {
+                         $handler = $filename;
+                         $classname = '\CAT\Addon\\'.$name;
+                         break;
+                    }
+                }
+                if($handler)
+                {
+                    include_once $handler;
+                    $errors = $classname::install();
+                    if(!count($errors)) {
+                        self::router()->reroute('/backend/addons');
+                    } else {
+                        $tpl_data = array(
+                            'modules'      => array(),
+                            'current'      => 'notinstalled',
+                            'errors'       => $errors,
+                        );
+
+                        Backend::print_header();
+                        self::tpl()->output('backend_addons', $tpl_data);
+                        Backend::print_footer();
+                    }
+                }
+            }
+        }   // end function install()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function notinstalled()
+        {
+            if(!self::user()->hasPerm('addons_install'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            $data  = HAddons::getAddons(NULL,'name',false,true,true);
+
+            if(self::asJSON())
+            {
+                print json_encode(array('success'=>true,'modules'=>$data));
+                exit();
+            }
+
+            $tpl_data = array(
+                'modules'      => $data,
+                'current'      => 'notinstalled',
+            );
+
+            Backend::print_header();
+            self::tpl()->output('backend_addons', $tpl_data);
+            Backend::print_footer();
+        }   // end function notinstalled()
+
+        /**
+         *
+         **/
+        public static function getAddonName() : string
+        {
+            $name  = Validate::sanitizePost('addon','string',NULL);
+
+            if(!$name)
+                $name  = Validate::sanitizeGet('addon','string',NULL);
+
+            if(!$name)
+                $name = self::router()->getParam(-1);
+
+            if(!$name)
+                $name = self::router()->getRoutePart(-1);
+
+            return $name;
+        }   // end function getAddonName()
         
         /**
          * get the catalog contents from catalog.json
@@ -119,15 +257,16 @@ if (!class_exists('\CAT\Backend\Addons'))
          * @access private
          * @return array
          **/
-        private static function get_catalog()
+        private static function getCatalog()
         {
             $string    = file_get_contents(CAT_ENGINE_PATH."/temp/catalog.json");
             $catalog   = json_decode($string,true);
-            if(is_array($catalog))
+            if(is_array($catalog)) {
                 return $catalog;
-            else
+            } else {
                 return array();
-        }
+            }
+        }   // end function getCatalog()
 
         /**
          * update the catalog.json from GitHub
@@ -135,7 +274,7 @@ if (!class_exists('\CAT\Backend\Addons'))
          * @access private
          * @return void
          **/
-        private static function update_catalog()
+        private static function updateCatalog()
         {
             $ch   = GitHub::init_curl(GITHUB_CATALOG_LOCATION);
             $data = curl_exec($ch);
