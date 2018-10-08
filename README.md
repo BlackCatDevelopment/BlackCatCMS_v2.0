@@ -1,6 +1,6 @@
-# BlackCatCMS_v2.0
+# BlackCatCMS v2.0
 
-This is an EXPERIMENTAL repository for BC v2.0
+Repository for BC v2.0 (complete rewrite of BlackCat CMS)
 
 # Important note!
 
