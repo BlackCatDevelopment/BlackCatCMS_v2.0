@@ -302,7 +302,7 @@ $LANG = array_merge($LANG,array(
     'Default language'  => 'Standard-Sprache',
     'Default template'  => 'Standard-Template',
     'Default theme'     => 'Standard-Template',
-    'Favicon tilecolor' => 'Hintergrundfarbe Kachel',
+    'Favicon tilecolor' => 'Favicon Hintergrundfarbe',
     'Manage Favicon'    => 'Favicons verwalten',
     'Media directory'   => 'Medien-Verzeichnis',
     'Network'           => 'Netzwerk',
@@ -328,6 +328,20 @@ $LANG = array_merge($LANG,array(
         => 'Das CMS schaut außerdem nach einer &quot;browserconfig.xml&quot; (für Internet Explorer >= 11) und manifest.json (für Web Apps).',
     'While there are several different sizes (for older devices in most cases), we only look for the files with the highest possible pixel rate, as these will still look good when sized down by the device.'
         => 'Obwohl eine Vielzahl unterschiedlicher Größen möglich ist (oft für ältere Geräte), sucht BlackCat CMS nur nach den Dateien mit der jeweils höchsten Auflösung, da diese auch dann gut aussehen, wenn sie vom Gerät herunterskaliert werden.',
+
+    // ---------- Backend -> Settings -> Socialmedia ----------
+    'Account' => 'Konto',
+    'Add service' => 'Service hinzufügen',
+    'Data' => 'Daten',
+    'These are the <strong>globally</strong> available social media services.' => 'Dieses sind die <strong>global</strong> verfügbaren Social Media Dienste.',
+    'Services added here are available for all sites.' => 'Hier hinzugefügte Dienste sind für alle Sites verfügbar.',
+    'Services deleted here will no longer be available on all sites. (!)' => 'Hier gelöschte Dienste sind auf keiner (!) Site mehr verfügbar.',
+    'Placeholders' => 'Platzhalter',
+    'Will be replaced with the name of the configured service account' => 'Wird mit dem konfigurierten Kontonamen des Service ersetzt',
+    'Will be replaced with the URL of the current page' => 'Wird mit der Adresse (URL) der aktuellen Seite ersetzt',
+    'Will be replaced with the page title of the current page' => 'Wird mit dem Seitentitel der aktuellen Seite ersetzt',
+    'Will be replaced with the description META information of the current page' => 'Wird mit der Beschreibung (META) der aktuellen Seite ersetzt',
+    'The services can be configured using the "Social Media Services" Admin Tool.' => 'Die Dienste können mit Hilfe des "Social Media Services" Admin Tools konfiguriert werden.',
 
     // ---------- Backend -> Sites ----------
     'Basedir' => 'Basisverzeichnis',

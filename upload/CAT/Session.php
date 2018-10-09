@@ -21,8 +21,8 @@ if(!class_exists('\CAT\Session',false))
 {
     class Session extends Base implements \SessionHandlerInterface
     {
-        protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        #protected static $loglevel = \Monolog\Logger::DEBUG;
+        #protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        protected static $loglevel = \Monolog\Logger::DEBUG;
 
         private        $domain;
         private        $path     = '/';
@@ -64,6 +64,8 @@ if(!class_exists('\CAT\Session',false))
          **/
         public function start_session()
         {
+            self::log()->addDebug('start_session()');
+
             // Hash algorithm to use for the session.
             // (use hash_algos() to get a list of available hashes.)
             $session_hash = null;
@@ -106,7 +108,7 @@ if(!class_exists('\CAT\Session',false))
             // Change the session name
             session_name($name);
 
-            // Now we cat start the session
+            // Start the session
             if (session_status() !== PHP_SESSION_ACTIVE) {
                 session_start();
             }
@@ -130,6 +132,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
          **/
         public static function stop_session()
         {
+            self::log()->addDebug('stop_session()');
             // invalidate cookie
             $params = session_get_cookie_params();
             setcookie(session_name(), '', 0, $params['path'], $params['domain'], $params['secure'], isset($params['httponly']));
@@ -145,6 +148,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
          **/
         public function close()
         {
+            self::log()->addDebug('close()');
             if ($this->gcCalled)
             {
                 $this->gcCalled = false;
@@ -166,7 +170,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
         public function read($sessionId)
         {
             self::log()->addDebug(sprintf(
-                'reading data from session [%s]',$sessionId
+                'read() - reading data from session [%s]',$sessionId
             ));
             $sql = self::getStatement('read');
             if(false!==$sql)
@@ -179,8 +183,9 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
                     if(is_array($session) && count($session)>0)
                     {
                         if($session['sess_obsolete'] == 'Y') {
+                            self::log()->addDebug('session is marked as obsolete, deleted it');
                             destroy($sessionId);
-                            return false;
+                            return '';
                         }
                         return empty($session['sess_data'])
                              ? ''
@@ -189,6 +194,9 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
                 } catch ( \Exception $e ) {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO
+                    self::log()->addDebug(sprintf(
+                        'catched exception [%s]', $e->getMessage()
+                    ));
                     return false;
                 }
             }
@@ -201,7 +209,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
         public function write($sessionId,$data)
         {
             self::log()->addDebug(sprintf(
-                'writing data to session [%s]',$sessionId
+                'write() - writing data to session [%s]',$sessionId
             ));
             self::log()->addDebug(print_r($data,1));
 
@@ -234,7 +242,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
          **/
         public function destroy($sessionId) {
             self::log()->addDebug(sprintf(
-                'destroying session %s',$sessionId
+                'destroy() - destroying session %s',$sessionId
             ));
             $sql = self::getStatement('delete');
             if(false!==$sql)
@@ -456,6 +464,7 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
             $sql = self::getStatement('delete');
             if(false!==$sql)
             {
+                self::log()->addDebug('cleanup sessions');
                 $stmt = \CAT\Base::db()->prepare($sql);
                 $stmt->bindValue(':id'  , 'ignore', \PDO::PARAM_STR);
                 $stmt->bindValue(':time', time()  , \PDO::PARAM_STR);
@@ -466,11 +475,15 @@ self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
             $key = null;
             if(false!==$sql)
             {
+                self::log()->addDebug(sprintf(
+                    'SQL: %s', $sql
+                ));
                 $stmt = \CAT\Base::db()->prepare($sql);
                 $stmt->bindValue(':id', $sessionId, \PDO::PARAM_STR);
                 $stmt->execute();
                 $data = $stmt->fetch();
                 $key  = $data['sess_key'];
+                self::log()->addDebug(sprintf('KEY [%s]',$key));
                 return !empty($key);
             }
             return false;

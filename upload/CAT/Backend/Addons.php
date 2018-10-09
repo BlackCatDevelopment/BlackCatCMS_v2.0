@@ -188,7 +188,7 @@ if (!class_exists('\CAT\Backend\Addons'))
                     include_once $handler;
                     $errors = $classname::install();
                     if(!count($errors)) {
-                        self::router()->reroute('/backend/addons');
+                        self::router()->reroute(CAT_BACKEND_PATH.'/addons');
                     } else {
                         $tpl_data = array(
                             'modules'      => array(),

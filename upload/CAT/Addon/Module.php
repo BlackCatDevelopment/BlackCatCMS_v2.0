@@ -21,11 +21,9 @@ use \CAT\Base as Base;
 use \CAT\Helper\Addons as Addons;
 use \CAT\Helper\Directory as Directory;
 
-if (!class_exists('\CAT\Addon\Module', false))
-{
-	abstract class Module extends Base implements IAddon
-	{
-
+if (!class_exists('\CAT\Addon\Module', false)) {
+    abstract class Module extends Base implements IAddon
+    {
         protected static $type        = '';
         protected static $directory   = '';
         protected static $name        = '';
@@ -34,17 +32,17 @@ if (!class_exists('\CAT\Addon\Module', false))
         protected static $author      = "";
         protected static $guid        = "";
         protected static $license     = "";
-		/**
-		 *
-		 */
-		public function __construct()
-		{
-			parent::__construct();
-		}
-		public function __destruct()
-		{
-			parent::__destruct();
-		}
+        /**
+         *
+         */
+        public function __construct()
+        {
+            parent::__construct();
+        }
+        public function __destruct()
+        {
+            parent::__destruct();
+        }
 
         /**
          * gets the details of an addon
@@ -53,16 +51,17 @@ if (!class_exists('\CAT\Addon\Module', false))
          * @param  string  $value - required info item
          * @return string
          */
-        public static function getInfo(string $value=NULL) : array
+        public static function getInfo(string $value=null) : array
         {
-            if($value)
+            if ($value) {
                 return static::$$value;
+            }
             // get 'em all
             $info = array();
-            foreach(array_values(array(
+            foreach (array_values(array(
                 'name', 'directory', 'version', 'author', 'license', 'description', 'guid', 'home', 'platform', 'type'
             )) as $key) {
-                if(isset(static::$$key) && strlen(static::$$key)) {
+                if (isset(static::$$key) && strlen(static::$$key)) {
                     $info[$key] = static::$$key;
                 }
             }
@@ -83,29 +82,30 @@ if (!class_exists('\CAT\Addon\Module', false))
          **/
         public static function initialize(array $section)
         {
-            if(!empty($section)) {
-                if(!isset($section['variant'])) {
+            if (!empty($section)) {
+                if (!isset($section['variant'])) {
                     $section['variant'] = 'default';
                 }
                 $tpl_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant']);
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/'.$section['variant'].'/languages');
-                if(is_dir($tpl_path)) {
+                if (is_dir($tpl_path)) {
                     self::tpl()->setPath($tpl_path);
                 }
-                if(is_dir($lang_path)) {
+                if (is_dir($lang_path)) {
                     self::addLangFile($lang_path);
                 }
                 $def_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.$section['module'].'/templates/default');
-                if(is_dir($def_path))
+                if (is_dir($def_path)) {
                     self::tpl()->setFallbackPath($def_path);
+                }
             }
         }   // end function initialize()
 
-		/**
-		 * Default install routine
-		 */
-		public static function install() : array
-		{
+        /**
+         * Default install routine
+         */
+        public static function install() : array
+        {
             $class  = get_called_class();
             $errors = array();
 
@@ -119,47 +119,50 @@ if (!class_exists('\CAT\Addon\Module', false))
                     'time' => time()
                 )
             );
-            if(self::db()->isError()) {
+            if (self::db()->isError()) {
                 $errors[] = self::db()->getError();
                 return $errors;
             }
             
             $sqlfile = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/inc/install.sql');
-            if(file_exists($sqlfile)) {
+            if (file_exists($sqlfile)) {
                 $errors = self::sqlProcess();
             }
 
-			return $errors;
-		}   // end function install()
+            return $errors;
+        }   // end function install()
 
-		/**
-		 * Default modify routine
-		 */
-		public static function modify(array $section)
-		{
+        /**
+         * Default modify routine
+         */
+        public static function modify(array $section)
+        {
+        }
 
-		}
-
-		/**
-		 * Default uninstall routine
-		 */
-		public static function uninstall()
-		{
+        /**
+         * Default uninstall routine
+         */
+        public static function uninstall()
+        {
             $errors  = array();
             $sqlfile = Directory::sanitizePath(CAT_ENGINE_PATH.'/modules/'.static::$directory.'/inc/uninstall.sql');
-            if(file_exists($sqlfile))
+            if (file_exists($sqlfile)) {
                 $errors	= self::sqlProcess();
-			return $errors;
-		}
+            }
+            return $errors;
+        }
 
-		/**
-		 *
-		 */
-		public static function upgrade() {}
-		/**
-		 *
-		 */
-		public static function save(int $section_id) {}
-
-	}
+        /**
+         *
+         */
+        public static function upgrade()
+        {
+        }
+        /**
+         *
+         */
+        public static function save(int $section_id)
+        {
+        }
+    }
 }

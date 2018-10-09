@@ -27,8 +27,8 @@ if (!class_exists('Backend', false))
 {
     class Backend extends Base
     {
-        protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        #protected static $loglevel = \Monolog\Logger::DEBUG;
+        #protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        protected static $loglevel = \Monolog\Logger::DEBUG;
 
         private   static $instance    = array();
         private   static $form        = NULL;
@@ -93,29 +93,28 @@ if (!class_exists('Backend', false))
                 for($i=0;$i<count($menu);$i++) {
                     if($menu[$i]['name']==$item) {
                         $menu[$i]['id'] = $item;
+                        $menu[$i]['parent'] = $last;
                         array_push($bread,$menu[$i]);
                         $seen[$item] = 1;
                         $last = $item;
-                        $level = $menu[$i]['level'];
-                        break;
+                        $level = (isset($menu[$i]['level']) ? $menu[$i]['level'] : 1);
+                        continue;
                     }
                 }
-            }
-            for($i=0;$i<count($parts);$i++) {
-                $item = $parts[$i];
                 if(!isset($seen[$item])) {
                     array_push($bread,array(
                         'id'          => $item,
                         'name'        => $item,
                         'parent'      => $last,
-                        'title'       => self::humanize($item),
+                        'title'       => self::lang()->t(self::humanize($item)),
                         'href'        => CAT_ADMIN_URL."/".implode("/", array_slice($parts,0,($i+1))),
                         'level'       => ++$level,
                         'is_current' => true,
                     ));
+                    $last = $item;
                 }
-                $last = $item;
             }
+
             return $bread;
         }   // end function getBreadcrumb()
 
@@ -371,6 +370,7 @@ if (!class_exists('Backend', false))
          **/
         public static function login($msg=null)
         {
+            self::log()->addDebug('printing login page');
             self::initPaths();
             // we need this twice, so we use a var here
             $username_fieldname = Validate::createFieldname('username_');

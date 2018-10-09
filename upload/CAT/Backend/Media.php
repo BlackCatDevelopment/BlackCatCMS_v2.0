@@ -285,7 +285,7 @@ if (!class_exists('\CAT\Backend\Media'))
             // make sure all folders are in the db
             \CAT\Helper\Media::updateFolderData($path);
             \CAT\Helper\Media::updateFiles($path);
-            return self::router()->reroute('/backend/media/index');
+            return self::router()->reroute(CAT_BACKEND_PATH.'/media/index');
 
         }   // end function update()
 

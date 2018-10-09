@@ -117,8 +117,8 @@ if (!class_exists('Page'))
             }
             else
             {
-                $sth = self::$instance->db()->query(
-                    "SELECT `page_id` FROM `'.self::$pages_table.'` WHERE link=:link",
+                $sth = self::db()->query(
+                    "SELECT `page_id` FROM `'.self::$pages_table.'` WHERE `route`=:link",
                     array('link'=>$id)
                 );
                 if ($sth->rowCount() > 0)
@@ -243,15 +243,15 @@ if (!class_exists('Page'))
          * @params integer  $page_id
          * @return string
          **/
-        public static function getLink($page_id)
+        public static function getLink($page_id) : string
         {
             if(!is_numeric($page_id))
                 $link = $page_id;
             else
-                $link = self::properties($page_id,'link');
+                $link = self::properties($page_id,'route');
 
             if(!$link)
-                return NULL;
+                return '';
 
             // Check for :// in the link (used in URL's) as well as mailto:
             if (strstr($link, '://') == '' && substr($link, 0, 7) != 'mailto:')
@@ -284,7 +284,7 @@ if (!class_exists('Page'))
                 $items = array();
                 while (($row = $results->fetch()) !== false)
                 {
-                    $row['href'] = self::getLink($row['link']);
+                    $row['href'] = self::getLink($row['route']);
                     $items[]     = $row;
                 }
                 return $items;
@@ -309,7 +309,7 @@ if (!class_exists('Page'))
             if(substr($route,0,1) !== '/') $route = '/'.$route;
             // find page in DB
             $result = self::db()->query(
-                'SELECT `page_id` FROM `'.self::$pages_table.'` WHERE `link`=?',
+                'SELECT `page_id` FROM `'.self::$pages_table.'` WHERE `route`=?',
                 array($route)
             );
             $data   = $result->fetch();

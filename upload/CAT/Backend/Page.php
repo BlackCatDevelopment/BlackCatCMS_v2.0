@@ -379,10 +379,10 @@ exit;
          **/
         public static function getPageID()
         {
-            $pageID  = Validate::sanitizePost('page_id','numeric',NULL);
+            $pageID  = Validate::sanitizePost('page_id','numeric');
 
             if(!$pageID)
-                $pageID  = Validate::sanitizeGet('page_id','numeric',NULL);
+                $pageID  = Validate::sanitizeGet('page_id','numeric');
 
             if(!$pageID)
                 $pageID = self::router()->getParam(-1);

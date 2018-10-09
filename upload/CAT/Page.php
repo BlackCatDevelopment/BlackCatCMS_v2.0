@@ -211,9 +211,9 @@ if (!class_exists('\CAT\Page', false))
          **/
         public static function print404()
         {
-            if(\CAT\Registry::exists('ERR_PAGE_404'))
+            if(\CAT\Registry::get('err_page_404')!==0)
             {
-                $err_page_id = \CAT\Registry::get('ERR_PAGE_404');
+                $err_page_id = \CAT\Registry::get('err_page_404');
                 header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
                 header('Location: '.\CAT\Helper\Page::getLink($err_page_id));
             }

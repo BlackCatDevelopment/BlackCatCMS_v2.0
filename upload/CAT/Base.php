@@ -479,10 +479,10 @@ if(!class_exists('Base',false))
          **/
         public static function getItemID(string $key) : int
         {
-            $itemID  = \CAT\Helper\Validate::sanitizePost($key,'numeric',NULL);
+            $itemID  = \CAT\Helper\Validate::sanitizePost($key,'numeric');
 
             if(!$itemID)
-                $itemID  = \CAT\Helper\Validate::sanitizeGet($key,'numeric',NULL);
+                $itemID  = \CAT\Helper\Validate::sanitizeGet($key,'numeric');
 
             if(!$itemID)
                 $itemID = self::router()->getParam(-1);

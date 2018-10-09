@@ -129,7 +129,7 @@ if (!class_exists('Backend\Admintools'))
 
             // kind of dirty hack...
             if(!$tool || $tool=='admintools') {
-                self::router()->reroute('/backend/admintools');
+                self::router()->reroute(CAT_BACKEND_PATH.'/admintools');
                 return;
             }
             $name    = Addons::getDetails($tool,'name');
@@ -209,10 +209,10 @@ if (!class_exists('Backend\Admintools'))
          **/
         public static function getTool()
         {
-            $tool  = Validate::sanitizePost('tool','scalar',NULL);
+            $tool  = Validate::sanitizePost('tool','scalar');
 
             if(!$tool)
-                $tool  = Validate::sanitizeGet('tool','scalar',NULL);
+                $tool  = Validate::sanitizeGet('tool','scalar');
             if(!$tool)
                 $tool = self::router()->getParam(-1);
             if(!$tool) {

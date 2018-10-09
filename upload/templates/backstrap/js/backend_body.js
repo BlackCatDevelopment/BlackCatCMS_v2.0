@@ -192,26 +192,6 @@
         });
     });
 
-    // populate AdminTools list
-    $.ajax({
-        type    : "GET",
-        url     : CAT_ADMIN_URL+"/admintools/list",
-        dataType: "json",
-        success : function(data, status) {
-            if(data) {
-                submenu = $("<ul></ul>");
-                submenu.addClass("dropdown-menu");
-                for(index=0;index<=data.length;index++) {
-                    submenu.append('<li><a class="dropdown-item" href="//localhost:444/site1/backend/addons">Erweiterungen</a></li>');
-                }
-                //console.log(submenu);
-            }
-        }
-    });
-
-    // style file upload form fields
-    //$(":file").filestyle({buttonName:"btn-primary"});
-
     // add session timer
     var sess_time = CATTimeStringToSecs($('div#sessiontimer span#sesstime').text());
     CATSessionSetTimer(sess_time,CATSessionTimedOut,'span#sesstime','sesstimealert');

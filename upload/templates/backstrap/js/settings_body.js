@@ -1,3 +1,3 @@
 $(function() {
-    $('form').fieldset_to_tabs();
+//    $('form').fieldset_to_tabs();
 });

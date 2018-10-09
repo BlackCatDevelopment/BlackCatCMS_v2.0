@@ -1,4 +1,5 @@
 html,body{height:100%;min-height:100%;}
+main{overflow:hidden;margin-bottom:50px}
 
 /* top menu */
 .navbar-brand{font-size:1.2em;}
@@ -130,6 +131,10 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
   margin-top: 0;
 }
 
+/* labels inside table cols (backend_settings_socialmedia.tpl) */
+table tbody tr td{white-space:nowrap;}
+table tbody tr td .label{display:inline-block;width:10em;font-weight:500}
+
 
 
 /* https://bootsnipp.com/snippets/gv6Pe */
@@ -139,6 +144,7 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
   margin-right: 0;
   cursor: pointer;
 }
+.custom-control{display:inline-block}
   .custom-checkbox .custom-control-indicator {
     content: "";
     display: inline-block;
@@ -170,6 +176,7 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
     }
   .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator {
     background-image: none;
+    background-color: rgb(0,153,0);
     box-shadow: none !important;
   }
     .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator:after {

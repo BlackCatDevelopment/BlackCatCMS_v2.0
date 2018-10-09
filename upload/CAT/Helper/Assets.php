@@ -68,6 +68,9 @@ if(!class_exists('Assets'))
                 preg_match('~^(.*)s\.inc\.php$~i',pathinfo($file,PATHINFO_BASENAME),$m);
                 $pos = ( isset($m[1]) ? $m[1] : 'header' );
             }
+            self::log()->addDebug(sprintf(
+                'addInclude file [%s] position [%s]', $file, $pos
+            ));
             if(!isset(self::$includes[$pos])) self::$includes[$pos] = array();
             self::$includes[$pos][] = Directory::sanitizePath($file);
         }   // end function addInclude()
@@ -79,6 +82,10 @@ if(!class_exists('Assets'))
          **/
         public static function analyzeID($id)
         {
+            self::log()->addDebug(sprintf(
+                'analyzeID [%s]', $id
+            ));
+
             if(!$id)
             {
                 if(Backend::isBackend())
@@ -110,6 +117,8 @@ if(!class_exists('Assets'))
          **/
         public static function getAssets($pos, $id=null, $ignore_inc=false, $as_array=false)
         {
+            self::log()->addDebug('getAssets()');
+
             list($id,$for) = self::analyzeID($id);
 
             self::log()->addDebug(sprintf(
@@ -338,6 +347,8 @@ if(!class_exists('Assets'))
          **/
         public static function getPaths($id,$pos)
         {
+            self::log()->addDebug('getPaths()');
+
             list($id,$for) = self::analyzeID($id); // sanitize ID
 
             $paths    = array();
@@ -415,6 +426,7 @@ if(!class_exists('Assets'))
          **/
         public static function isValid($file)
         {
+            self::log()->addDebug(sprintf('isValid file [%s]',$file));
             $type = pathinfo($file,PATHINFO_EXTENSION);
             if(!strlen($type) || !array_key_exists($type,self::$mime_map))
                 return false;
@@ -428,6 +440,7 @@ if(!class_exists('Assets'))
          **/
         public static function renderAssets($pos, $id=null, $ignore_inc=false, $print=true)
         {
+            self::log()->addDebug('renderAssets()');
             $am = self::getAssets($pos,$id,$ignore_inc);
             $output = null;
             switch($pos)
@@ -452,6 +465,7 @@ if(!class_exists('Assets'))
          **/
         public static function serve($type,$files,$print=false)
         {
+            self::log()->addDebug('serve()');
             if(!is_array($files) || !count($files)>0) return false;
             if($type=='images'||$type=='svg')
             {
@@ -469,8 +483,8 @@ if(!class_exists('Assets'))
                         if(isset(self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]))
                         {
                             header('Content-Type: '.self::$mime_map[strtolower(pathinfo($file,PATHINFO_EXTENSION))]);
-readfile(CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
-return;
+                            readfile(CAT_PATH.'/assets/'.pathinfo($file,PATHINFO_BASENAME));
+                            return;
                         }
                         echo CAT_SITE_URL.'/assets/'.pathinfo($file,PATHINFO_BASENAME);
                     }

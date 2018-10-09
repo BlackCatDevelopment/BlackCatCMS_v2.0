@@ -107,4 +107,8 @@ $LANG = array(
     'Scan the following image with your app and enter the code below' => 'Bitte das Image mit einer entsprechenden App scannen und den Code unten eintragen',
     'Two-Step Authentication' => 'Zwei-Faktor-Authentifizierung',
     'Your OTP code (PIN)' => 'OTP Code (PIN)',
+
+    // ----- Socialmedia -----
+    'Follow us on' => 'Folgen Sie uns auf',
+    'Share this page on' => 'Teilen Sie diese Seite auf',
 );

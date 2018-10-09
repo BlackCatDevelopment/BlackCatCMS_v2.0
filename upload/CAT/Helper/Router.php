@@ -142,7 +142,7 @@ if(!class_exists('Router',false))
                 return;
             }
 
-#echo "is callable [", is_callable(array($this->controller,$this->function)), "]<br />";
+#echo "is callable controller[", $this->controller, "] function [", $this->function,"] result [", is_callable(array($this->controller,$this->function)), "]<br />";
             // ----- internal handler? ex \CAT\Backend::index() ----------------
             if(!is_callable(array($this->controller,$this->function)))
             {
@@ -164,7 +164,7 @@ if(!class_exists('Router',false))
             self::log()->addDebug(sprintf(
                 'handler [%s]', $handler
             ));
-#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
+#echo sprintf("is_callable controller [%s] func [%s]<br />", $this->controller, $this->function);
             if(is_callable(array($this->controller,$this->function)))
             {
                 self::log()->addDebug('is_callable() succeeded');
@@ -185,7 +185,7 @@ if(!class_exists('Router',false))
                         'protected route [%s], forwarding to login page',
                         $this->route
                     ));
-                    $this->reroute('/backend/login');
+                    $this->reroute(CAT_BACKEND_PATH.'/login');
                 } else {
                     // forward to route handler
                     self::log()->addDebug('forwarding request to route handler');

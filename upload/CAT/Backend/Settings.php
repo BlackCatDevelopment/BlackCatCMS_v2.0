@@ -33,7 +33,15 @@ if (!class_exists('\CAT\Backend\Settings'))
 
         public static function __callstatic($name,$arguments)
         {
-            call_user_func([__CLASS__, 'index'] ,$name);
+            $stmt = self::db()->query(
+                'SELECT `region` FROM `:prefix:settings` AS `t1` GROUP BY `region`'
+            );
+            $data = $stmt->fetchAll();
+            for($i=0;$i<count($data);$i++) {
+                if($name==$data[$i]['region']) {
+                    call_user_func([__CLASS__, 'index'] ,$name);
+                }
+            }
         }   // end function __callstatic()
 
         /**
@@ -52,6 +60,23 @@ if (!class_exists('\CAT\Backend\Settings'))
         }   // end function getInstance()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function get($name)
+        {
+            if(!self::$avail_settings) {
+                self::getSettings();
+            }
+            return (
+                  isset(self::$avail_settings[$name])
+                ? self::$avail_settings[$name]
+                : null
+            );
+        }   // end function get()
+
+        /**
          * get available settings
          **/
         public static function getSettings()
@@ -63,7 +88,7 @@ if (!class_exists('\CAT\Backend\Settings'))
                     . 'JOIN `:prefix:forms_fieldtypes` AS `t2` '
                     . 'ON `t1`.`fieldtype`=`t2`.`type_id` '
                     . 'WHERE `is_editable`=? '
-                    . 'ORDER BY `region`',
+                    . 'ORDER BY `region`,`name`',
                     array('Y')
                 );
                 if($data)
@@ -81,24 +106,31 @@ if (!class_exists('\CAT\Backend\Settings'))
          **/
         public static function index()
         {
+            if(!self::user()->hasPerm('settings_list'))
+                self::printFatalError('You are not allowed for the requested action!');
+
             $settings = self::getSettings();
-            if(!is_array($settings) || !count($settings))
+            if(!is_array($settings) || !count($settings)) {
                 self::printFatalError('missing settings!');
+            }
 
             // there *may* be a region name
-            $region     = self::router()->getParam();
-            if(!$region)
-                $region = self::router()->getFunction();
-            if(!$region)
-                $region = self::router()->getRoutePart(1);
+            $region = self::getRegion();
 
             // filter settings by region
-            if($region && $region != 'index')
-                $settings = \CAT\Helper\hArray::filter($settings,'region',$region,'matching');
+            if($region && $region != 'index') {
+                $settings = \CAT\Helper\HArray::filter($settings,'region',$region,'matching');
+            }
+
+            // get the form
+            $form = \CAT\Helper\FormBuilder::generate(
+                'settings',          // form name
+                $settings,           // form items
+                self::loadSettings() // form data
+            );
 
             if(!self::asJSON())
             {
-                $form = self::renderForm($settings);
                 Backend::print_header();
                 self::tpl()->output(
                     'backend_settings',
@@ -109,20 +141,21 @@ if (!class_exists('\CAT\Backend\Settings'))
                 Backend::print_footer();
             }
         }   // end function index()
-        
+
         /**
          *
          * @access protected
          * @return
          **/
-        protected static function renderForm($settings)
+        protected static function getRegion()
         {
-            return \CAT\Helper\FormBuilder::generate(
-                'settings',  // form name
-                $settings,   // form items
-                self::loadSettings()
-            );
-        }   // end function renderForm()
+            $region     = self::router()->getParam();
+            if(!$region)
+                $region = self::router()->getFunction();
+            if(!$region)
+                $region = self::router()->getRoutePart(1);
+            return $region;
+        }   // end function getRegion()
         
     } // class CAT_Backend_Settings
 } // if class_exists()
