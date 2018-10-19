@@ -24,20 +24,6 @@ if (!class_exists('\CAT\Backend\Pages'))
     class Pages extends Base
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        protected static $instance = NULL;
-
-        /**
-         * Singleton
-         *
-         * @access public
-         * @return object
-         **/
-        public static function getInstance()
-        {
-            if(!is_object(self::$instance))
-                self::$instance = new self();
-            return self::$instance;
-        }   // end function getInstance()
 
         /**
          *
@@ -46,19 +32,22 @@ if (!class_exists('\CAT\Backend\Pages'))
          **/
         public static function index()
         {
+            if(!Base::user()->hasPerm('pages_list'))
+                self::printFatalError('You are not allowed for the requested action!');
+
             \CAT\Helper\Page::setTitle('BlackCat CMS Backend / Pages');
 
             $pages      = \CAT\Helper\Page::getPages(true);
             $pages_list = self::lb()->buildRecursion($pages);
 
-            \CAT\Backend::print_header();
+            \CAT\Backend::printHeader();
             self::tpl()->output(
                 'backend_pages',
                 array(
                     'pages'         => $pages_list,
                 )
             );
-            \CAT\Backend::print_footer();
+            \CAT\Backend::printFooter();
         }   // end function index()
     }
 }

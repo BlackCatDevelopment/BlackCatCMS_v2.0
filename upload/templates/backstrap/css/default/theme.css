@@ -89,7 +89,7 @@ div.form-group.form-row div.form-check.form-check-inline.enum:not(:last-child){b
 .fa-theme:before{content:"\f26c"}
 .fa-tool:before{content:"\f0ad"}
 .fa-users:before{content:"\f183";}
-.fa-wysiwyg:before{content:"\f2c3"}
+.fa-WYSIWYG:before{content:"\f2c3"}
 
 /* fix for Boostrap v4: Multilevel Sub Menu for top navbar */
 .dropdown-submenu{position:relative;}

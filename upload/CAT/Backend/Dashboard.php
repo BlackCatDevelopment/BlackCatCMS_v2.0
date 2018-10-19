@@ -88,10 +88,10 @@ if(!class_exists('\CAT\Backend\Dashboard'))
          **/
         public static function getDashID()
         {
-            $dashID  = Validate::sanitizePost('dash_id','numeric',NULL);
+            $dashID  = Validate::sanitizePost('dash_id','numeric');
 
             if(!$dashID)
-                $dashID  = Validate::sanitizeGet('dash_id','numeric',NULL);
+                $dashID  = Validate::sanitizeGet('dash_id','numeric');
 
             if(!$dashID)
                 $dashID = self::router()->getParam(-1);
@@ -180,9 +180,9 @@ Array
                 'MAIN_MENU' => Backend::getMainMenu(),
             );
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_dashboard', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function index()
         
         /**

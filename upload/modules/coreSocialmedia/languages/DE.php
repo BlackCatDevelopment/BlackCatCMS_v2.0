@@ -8,5 +8,6 @@ $LANG = array(
     'Enable "Share This"' => '"Share This" aktivieren',
     '"Follow" URL' => '"Follow" URL',
     '"Share This" URL' => '"Share This" URL',
+    'Manage your Social Media Services here' => 'Social Media Dienste verwalten',
 );
 

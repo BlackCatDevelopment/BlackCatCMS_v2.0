@@ -89,7 +89,7 @@ if (!class_exists('Validate'))
          * @param  boolean $escape  - wether to use add_slashes(), default false
          * @return mixed
          **/
-        public static function get(string $key, string $require=NULL, bool $escape=false, string $global=null ) : string
+        public static function get(string $key, string $require=NULL, bool $escape=false, string $global=null )
         {
             if(is_null($global)) {
                 $global = '_REQUEST';
@@ -263,7 +263,7 @@ if (!class_exists('Validate'))
          * @param  boolean $escape  - use add_slashes(); default: false
          * @return mixed
          **/
-        public static function sanitizePost(string $field,string $require=NULL,bool $escape=false ) : string
+        public static function sanitizePost(string $field,string $require=NULL,bool $escape=false )
         {
             self::log()->addDebug(sprintf(
                 'get field [%s] from $_POST, require type [%s], escape [%s]',$field,$require,$escape
@@ -281,7 +281,7 @@ if (!class_exists('Validate'))
          * @param  string  $require - value type (scalar, numeric, array)
          * @return mixed
          **/
-        public static function sanitizeGet(string $field,string $require=NULL,bool $escape=false) : string
+        public static function sanitizeGet(string $field,string $require=NULL,bool $escape=false)
         {
             self::log()->addDebug(sprintf(
                 'get field [%s] from $_GET, require type [%s], escape [%s]',$field,$require,$escape

@@ -32,7 +32,7 @@
               <p><strong>{$module.name}</strong></p>
               <span class="small">
               {if $module.install_date}<a href="#" class="btn btn-sm btn-danger{if $module.removable != 'Y'} disabled{/if}"><span class="fa fa-remove"></span> {translate('Uninstall')}</a>
-              {else}<a href="{$CAT_ADMIN_URL}/addons/install/{$module.directory}" class="btn btn-sm btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>
+              {else}{if user_has_perm('addon_install') && not $module.warn}<a href="{$CAT_ADMIN_URL}/addons/install/{$module.directory}" class="btn btn-sm btn-success"><span class="fa fa-plus"></span> {translate('Install')}</a>{/if}
               {/if}
               </span>
             </td>

@@ -24,6 +24,16 @@ class Template extends Module implements IAddon
 	 * @var void
 	 */
 	protected static $instance = NULL;
+    protected static $blocks   = array();
+
+    /**
+	 *
+	 */
+	public static function getBlocks()
+	{
+        $class = get_called_class();
+		return $class::$blocks;
+	}
 
 	/**
 	 *

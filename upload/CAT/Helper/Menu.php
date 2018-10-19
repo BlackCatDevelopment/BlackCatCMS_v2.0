@@ -69,9 +69,7 @@ if(!class_exists('\CAT\Helper\Menu',false))
         {
             $settings = self::getSettings('type',$type);
             $renderer = self::getRenderer($settings);
-
             return $renderer->render(self::tree($settings['type']));
-
         }   // end function showType()
         
 
@@ -103,13 +101,15 @@ if(!class_exists('\CAT\Helper\Menu',false))
         protected static function getRenderer(array $settings)
         {
             $formatter = '\wblib\wbList\Formatter\ListFormatter';
+            $variant   = 'navbar';
             switch($settings['type']) {
                 case 'breadcrumb':
                     $formatter = '\wblib\wbList\Formatter\BreadcrumbFormatter';
+                    $variant   = 'no_defaults';
                     break;
             }
 
-            $renderer = new $formatter();
+            $renderer = new $formatter(array('template_variant'=>$variant));
             $renderer->setMaxDepth(self::tree($settings['type'])->getDepth());
             $renderer->setOption('id_prefix','area','li');
 

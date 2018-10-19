@@ -70,6 +70,10 @@ if(!class_exists('Base',false))
          * current settings (data from settings DB table(s))
          **/
         protected static $settings   = NULL;
+        /**
+         * global settings (fallback if no data found in $settings)
+         **/
+        protected static $globals    = NULL;
 
         /**
          * inheritable constructor; allows to set object variables
@@ -570,7 +574,9 @@ if(!class_exists('Base',false))
             if(!self::$settings || !is_array(self::$settings))
             {
                 self::$settings = array();
+                self::$globals  = array();
 
+                // populate self::$settings
                 $sql = 'SELECT `t1`.`name`, '
                      . 'IFNULL(`t2`.`value`, `t1`.`value`) AS `value` '
                      . 'FROM `:prefix:settings_global` AS `t1` '
@@ -578,7 +584,7 @@ if(!class_exists('Base',false))
                      . 'ON `t1`.`name`=`t2`.`name` AND `t2`.`site_id`=? '
                      . 'ORDER BY `t1`.`name`';
 
-                if($stmt = DB::getInstance()->query($sql,array(CAT_SITE_ID)))
+                if(null!==($stmt=self::db()->query($sql,array(CAT_SITE_ID))))
                 {
                     $rows = $stmt->fetchAll();
                     foreach($rows as $row)
@@ -604,6 +610,7 @@ if(!class_exists('Base',false))
                     Base::printFatalError("No settings found in the database, please check your installation!");
                 }
             }
+
             return self::$settings;
         }   // end function loadSettings()
 
@@ -743,11 +750,12 @@ echo "level now: ", $class::$loglevel, "<br />";
          * @param  array    $args
          * @return void
          **/
-        public static function printError(string $message=NULL,string $link='index.php',bool $print_header=true,array $args=array())
+        public static function printError(string $message='',string $link='index.php',bool $print_header=true,array $args=array())
         {
 
-            if(!$message)
-                'unknown error';
+            if(empty($message)) {
+                $message = 'unknown error';
+            }
             self::log()->addError($message);
             self::errorstate(500);
 
@@ -757,7 +765,7 @@ echo "level now: ", $class::$loglevel, "<br />";
                 exit; // should never be reached
             }
 
-            $message = Base::lang()->translate($message);
+            $message = Base::lang()->t($message);
             $errinfo = Base::lang()->t(self::$state[self::errorstate()]);
 
             $print_footer = false;
@@ -767,9 +775,14 @@ echo "level now: ", $class::$loglevel, "<br />";
                 if (
                        !isset(Base::$objects['tpl'])
                     || !is_object(Base::$objects['tpl'])
-                    || ( !self::router()->isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
+#                    || ( !self::router()->isBackend() && !defined('CAT_PAGE_CONTENT_DONE'))
                 ) {
+                    // template helper not available
                     self::err_page_header();
+                } else {
+                    if(self::router()->isBackend()) {
+                        \CAT\Backend::printHeader();
+                    }
                 }
             }
 
@@ -783,9 +796,15 @@ echo "level now: ", $class::$loglevel, "<br />";
                 require dirname(__FILE__).'/templates/error_content.php';
             }
 
-            if ($print_footer && (!isset(Base::$objects['tpl']) || !is_object(Base::$objects['tpl'])))
+            if($print_footer)
             {
-                self::err_page_footer();
+                if (!isset(Base::$objects['tpl']) || !is_object(Base::$objects['tpl']))
+                {
+                    self::err_page_footer();
+                }
+                if(self::router()->isBackend()) {
+                    \CAT\Backend::printFooter();
+                }
             }
 
         }   // end function printError()

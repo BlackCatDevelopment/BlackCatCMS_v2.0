@@ -141,8 +141,11 @@ if ( !class_exists( 'Addons' ) )
 
                     // always order by type
                     $q->orderBy('type', 'ASC'); // default order
-                    if($order && $order != 'name')
+                    if($order) {
                         $q->addOrderBy($order, 'ASC');
+                    } else {
+                        $q->addOrderBy('name','ASC');
+                    }
 
                     // get the data
                     $data = $q->execute()->fetchAll();

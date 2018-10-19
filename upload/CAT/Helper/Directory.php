@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace CAT\Helper;
 
 use \CAT\Base as Base;
+use \CAT\Registry as Registry;
 
 if (!class_exists('\CAT\Helper\Directory'))
 {
@@ -365,6 +366,27 @@ $directories[] = $name;
 
             return $files;
         }   // end function findFiles()
+
+        /**
+         *
+         *
+         **/
+        public static function getDirectorySize(string $path, bool $humanize=false)
+        {
+            $bytestotal = 0;
+            $path = realpath($path);
+            if($path!==false && $path!='' && file_exists($path)){
+                foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object){
+                    try {
+                        $bytestotal += $object->getSize();
+                    } catch( Exception $e ) {
+                    }
+                }
+            }
+            return (
+                $humanize ? self::humanize((string)$bytestotal) : $bytestotal
+            );
+        }
 
         /**
          * tries several methods to get the mime type of a file

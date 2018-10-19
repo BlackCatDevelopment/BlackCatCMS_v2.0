@@ -121,7 +121,7 @@ if(!class_exists('\CAT\Backend\Socialmedia'))
          **/
         public static function index()
         {
-            if(!self::user()->hasPerm('socialmedia'))
+            if(!self::user()->hasPerm('socialmedia_list'))
                 self::printError('You are not allowed for the requested action!');
 
             // get available services
@@ -129,14 +129,14 @@ if(!class_exists('\CAT\Backend\Socialmedia'))
 
             if(!self::asJSON())
             {
-                \CAT\Backend::print_header();
+                \CAT\Backend::printHeader();
                 self::tpl()->output(
                     'backend_settings_socialmedia',
                     array(
                         'services' => $services
                     )
                 );
-                \CAT\Backend::print_footer();
+                \CAT\Backend::printFooter();
             }
         }   // end function index()
 

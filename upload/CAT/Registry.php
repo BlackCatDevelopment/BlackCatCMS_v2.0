@@ -75,6 +75,7 @@ if (!class_exists('\CAT\Registry', false))
          **/
         public static function exists($key,$empty_allowed=true)
         {
+            $key = strtoupper($key);
             if(isset(Registry::$REGISTRY[$key]) || defined($key))
             {
                 if(
@@ -108,11 +109,17 @@ if (!class_exists('\CAT\Registry', false))
         public static function get($key, $validate=NULL, $default=NULL)
         {
             $return_value = NULL;
+            $key          = strtoupper($key);
+
             if(isset(Registry::$REGISTRY[$key]))
+            {
                 if($validate)
+                {
                     $return_value = Validate::check(Registry::$REGISTRY[$key],$validate);
-                else
+                } else {
                     $return_value = Registry::$REGISTRY[$key];
+                }
+            }
 
             // try to get the value from the settings table
             if(!$return_value && ! \CAT\Helper\DB::connectionFailed())
@@ -128,6 +135,7 @@ if (!class_exists('\CAT\Registry', false))
                     .'WHERE `t1`.`name`=?',
                     array(strtolower($key))
                 );
+
                 $row = $result->fetch();
                 if($row['name'] && strlen($row['name']))
                 {
@@ -187,9 +195,10 @@ if (!class_exists('\CAT\Registry', false))
         {
             if(!is_array($key))
             {
+                $key = strtoupper($key);
                 $key = array($key => $value);
             }
-            foreach ( $key as $name => $value )
+            foreach($key as $name => $value)
             {
                 Registry::$REGISTRY[$name] = $value;
                 if($as_const && ! defined($name)) define($name,$value);

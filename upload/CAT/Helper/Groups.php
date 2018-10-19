@@ -38,10 +38,10 @@ if (!class_exists('\CAT\Helper\Groups'))
          **/
         public static function addGroup($name,$description)
         {
-            if(!self::user()->is_authenticated() || self::user()->hasPerm('groups_add'))
+            if(!self::user()->is_authenticated() || !self::user()->hasPerm('groups_add'))
                 return false;
             $sth = self::db()->query(
-                  'INSERT INTO `:prefix:rbac_groups` ( `title`, `description` ) '
+                  'INSERT INTO `:prefix:rbac_groups` ( `group_title`, `group_description` ) '
                 . 'VALUES ( :name, :desc )',
                 array('name'=>$name,'desc'=>$description)
             );
@@ -60,7 +60,7 @@ if (!class_exists('\CAT\Helper\Groups'))
             foreach($groups as $group)
             {
                 if(is_numeric($item)  && $group['group_id'] == $item) return true;
-                if(!is_numeric($item) && strcasecmp($group['title'],$item)) return true;
+                if(!is_numeric($item) && !strcasecmp($group['group_title'],$item)) return true;
             }
             return false;
         }   // end function exists()
@@ -90,12 +90,15 @@ if (!class_exists('\CAT\Helper\Groups'))
             $params = array();
             $qb     = self::db()->qb();
 
-            $qb->select('`t3`.*')
-               ->from(self::db()->prefix().'rbac_usergroups','t2')
-               ->join('t2',self::db()->prefix().'rbac_groups','t3','`t2`.`group_id`=`t3`.`group_id`');
+            $qb->select('`t2`.*')
+               ->from(self::db()->prefix().'rbac_groups','t2')
+               ->leftJoin('t2',self::db()->prefix().'rbac_usergroups','t3','`t2`.`group_id`=`t3`.`group_id`');
 
             if($user_id)
             {
+echo "ACHTUNG ACHTUNG ACHTUNG! DAS SQL-STATEMENT STIMMT NOCH NICHT!<br />";
+echo "FILE [",__FILE__,"] FUNC [",__FUNCTION__,"] LINE [",__LINE__,"]<br />";
+exit;
                 $qb->join('t2',self::db()->prefix().'rbac_users','t1','`t1`.`user_id`=`t2`.`user_id`')
                    ->where('`t1`.`user_id`=?')
                    ->setParameter(0,$user_id);

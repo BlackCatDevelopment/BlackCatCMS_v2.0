@@ -59,17 +59,20 @@ if (!class_exists('\CAT\Helper\Template'))
          **/
         public static function getBlocks($template=null)
         {
-            if(!$template) $template = Registry::get('DEFAULT_TEMPLATE');
-            // include info.php for template info
-			$template_location = ( $template != '' ) ?
-				CAT_ENGINE_PATH.'/templates/'.$template.'/info.php' :
-				CAT_ENGINE_PATH.'/templates/'.Registry::get('DEFAULT_TEMPLATE').'/info.php';
-			if(file_exists($template_location))
-            {
-				require $template_location;
-                return ( isset($block) ? $block : array('Main') );
+            if(!$template) {
+                $template = Registry::get('DEFAULT_TEMPLATE');
             }
-            return array('Main');
+
+            $blocks    = array();
+            $classname = '\CAT\Addon\Template\\'.$template;
+            $filename  = \CAT\Helper\Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.$template.'/inc/class.'.$template.'.php');
+
+            if(file_exists($filename)) {
+                include_once $filename;
+                $blocks = $classname::getBlocks();
+            }
+
+            return $blocks;
         }   // end function getBlocks()
 
         /**

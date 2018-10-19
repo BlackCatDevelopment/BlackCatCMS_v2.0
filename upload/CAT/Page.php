@@ -155,10 +155,11 @@ if (!class_exists('\CAT\Page', false))
 
             $output = array();
 
-            foreach($sections as $block => $items)
+            #foreach($sections as $block => $items)
+            foreach($sections as $index => $section)
             {
-                foreach($items as $section)
-                {
+                #foreach($items as $section)
+                #{
                     if(!$section['active'] || $section['expired']) continue;
 
                     // spare some typing
@@ -199,7 +200,7 @@ if (!class_exists('\CAT\Page', false))
                             );
                         }
                     }
-                }
+                #}
             }
             echo implode("\n", $output);
         }   // end function getPageContent()
@@ -265,6 +266,8 @@ if (!class_exists('\CAT\Page', false))
 
             self::tpl()->setGlobals('page_id',$this->page_id);
 
+            self::track($this->page_id);
+
             // including the template; it may calls different functions
             // like page_content() etc.
             $this->log()->addDebug('including template');
@@ -276,6 +279,60 @@ if (!class_exists('\CAT\Page', false))
 
             echo $output;
         }   // end function show()
+
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function track($pageID)
+        {
+            // get the IP to create 'unique' identifier; it is not stored!
+            $ip = NULL;
+            if (isset($_SERVER['HTTP_CLIENT_IP']))
+                $ip = $_SERVER['HTTP_CLIENT_IP'];
+            elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            elseif (isset($_SERVER['REMOTE_ADDR']))
+                $ip = $_SERVER['REMOTE_ADDR'];
+
+            // remove outdated entries (1 Minute)
+            $ts = time() - 60; //(60*60);
+            self::db()->query(
+               'DELETE FROM `:prefix:mod_stats_reload` WHERE `page_id`=? && `timestamp`<?',
+                array($pageID, $ts)
+            );
+
+            // don't track localhost
+            #if($ip && !( $ip == '127.0.0.1' || substr($ip,0,2) == '0::' ) )
+            #{
+                // create identifier
+                $ident  = ( isset($_SERVER['HTTP_USER_AGENT']) )      ? $_SERVER['HTTP_USER_AGENT']      : 'xc';
+    			$ident .= ( isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : 'x9';
+    			$ident .= ( isset($_SERVER['HTTP_ACCEPT_CHARSET']) )  ? $_SERVER['HTTP_ACCEPT_CHARSET']  : 'xB';
+                $ident .= $ip;
+                $hash  = sha1($ident);
+
+                $stmt = self::db()->query(
+                    'SELECT `page_id` FROM `:prefix:mod_stats_reload` WHERE `page_ID`=? AND `hash`=?',
+                    array($pageID,$hash)
+                );
+                // do not count visits on the same page
+                if(!$stmt->rowCount()) {
+                    self::db()->query(
+                        'INSERT INTO `:prefix:mod_stats_reload` VALUES (?,?,?)',
+                        array($pageID,$hash,time())
+                    );
+                    self::db()->query(
+                          'INSERT INTO `:prefix:pages_visits` (`page_id`,`last`) '
+                        . 'VALUES(?,?) '
+                        . 'ON DUPLICATE KEY UPDATE `visits`=`visits`+1;',
+                        array($pageID,time())
+                    );
+                }
+            #}
+        }   // end function track()
+        
 
     } // end class \CAT\Page
 

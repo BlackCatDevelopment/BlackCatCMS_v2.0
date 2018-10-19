@@ -41,7 +41,7 @@
 
         {if user_has_perm('groups_add')}
         <h3>{translate('Create new group')}</h3>
-        <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/groups/create">
+        <form role="form" method="post" class="form-inline ajax" action="{$CAT_ADMIN_URL}/groups/add">
             <label class="sr-only" for="group_name">{translate('Name')}</label>
                 <input type="text" placeholder="{translate('Name')}" class="form-control mb-2 mr-sm-2 mb-sm-0" id="group_name" name="group_name" />
             <label class="sr-only" for="group_description">{translate('Description')}</label>

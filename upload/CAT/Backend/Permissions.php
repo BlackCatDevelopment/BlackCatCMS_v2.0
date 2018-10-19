@@ -66,10 +66,10 @@ if(!class_exists('\CAT\Backend\Permissions',false))
          **/
         protected static function getPermID()
         {
-            $permID  = \CAT\Helper\Validate::sanitizePost('perm_id','numeric',NULL);
+            $permID  = \CAT\Helper\Validate::sanitizePost('perm_id','numeric');
 
             if(!$permID)
-                $permID  = \CAT\Helper\Validate::sanitizeGet('perm_id','numeric',NULL);
+                $permID  = \CAT\Helper\Validate::sanitizeGet('perm_id','numeric');
 
             if(!$permID)
                 $permID = self::router()->getParam(-1);

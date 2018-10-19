@@ -18,12 +18,12 @@
             {foreach $roles role}
                 <tr>
                     <td>
-                        {if $role.builtin == 'Y'}<span class="fa fa-fw fa-anchor"></span>{/if}
-                        {if user_has_perm('roles_perms')}<a href="#" class="perms" data-toggle="tooltip" title="{translate('Manage role permissions')}" data-role-id="{$role.role_id}" data-role-name="{$role.title}"><span class="fa fa-fw fa-key"></span></a>{/if}
+                        <span class="fa fa-fw{if $role.builtin == 'Y'} fa-anchor{/if}"></span>
+                        {if user_has_perm('roles_perms')}<a href="#" class="perms" data-toggle="tooltip" title="{translate('Manage role permissions')}" data-role-id="{$role.role_id}" data-role-name="{$role.role_title}"><span class="fa fa-fw fa-key"></span></a>{/if}
                     </td>
                     <td>{$role.role_id}</td>
-                    <td><a href="#" class="editable" data-name="title" data-type="text" data-pk="{$role.role_id}" data-url="{$CAT_ADMIN_URL}/roles/edit" data-title="{translate('Title')}">{$role.title}</a></td>
-                    <td><a href="#" class="editable" data-name="description" data-type="text" data-pk="{$role.role_id}" data-url="{$CAT_ADMIN_URL}/roles/edit" data-title="{translate('Description')}">{translate($role.description)}</a></td>
+                    <td>{if $role.builtin != 'Y'}<a href="#" class="editable" data-name="title" data-type="text" data-pk="{$role.role_id}" data-url="{$CAT_ADMIN_URL}/roles/edit" data-title="{translate('Title')}">{/if}{$role.role_title}{if $role.builtin != 'Y'}</a>{/if}</td>
+                    <td><a href="#" class="editable" data-name="description" data-type="text" data-pk="{$role.role_id}" data-url="{$CAT_ADMIN_URL}/roles/edit" data-title="{translate('Description')}">{translate($role.role_description)}</a></td>
                     <td>0</td>
                     <td>{$role.user_count}</td>
                     <td>{$role.perm_count}</td>
@@ -33,7 +33,7 @@
         </table>
 
 {if user_has_perm('roles_add')}
-        <form role="form" method="post" class="form-inline" action="{$CAT_ADMIN_URL}/roles/create">
+        <form role="form" method="post" class="form-inline" action="{$CAT_ADMIN_URL}/roles/add">
             {translate('New role')}:&nbsp;
             <input type="text" placeholder="{translate('Title')}" class="form-control mb-2 mr-sm-2" name="role_name" id="role_name" />
             <input type="text" placeholder="{translate('Description')}" class="form-control mb-2 mr-sm-2" name="role_description" id="role_description" />

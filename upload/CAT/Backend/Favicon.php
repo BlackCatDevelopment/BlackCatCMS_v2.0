@@ -69,14 +69,14 @@ if(!class_exists('\CAT\Backend\Favicon'))
 
             if(!self::asJSON())
             {
-                \CAT\Backend::print_header();
+                \CAT\Backend::printHeader();
                 self::tpl()->output(
                     'backend_settings_favicons',
                     array(
                         'seen' => $seen
                     )
                 );
-                \CAT\Backend::print_footer();
+                \CAT\Backend::printFooter();
             }
         }   // end function index()
 

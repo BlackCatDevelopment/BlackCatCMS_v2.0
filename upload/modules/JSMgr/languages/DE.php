@@ -6,8 +6,8 @@ $LANG = array(
     'Upload/install'            => 'Hochladen/Installieren',
     'Upload'                    => 'Hochladen',
     'Upload ZIPs only'          => 'Nur ZIP-Dateien hochladen',
-    'Manage your installed JavaScripts and jQuery Plugins here'
-        => 'Ermöglicht die Verwaltung der installierten JavaScripts und jQuery Plugins',
+    'Manage your jQuery- and other JavaScript Plugins'
+        => 'Verwaltung der installierten JavaScripts und jQuery Plugins',
     'Of course, we cannot guarantee that plugins uploaded here will work at all.'
         => 'Natürlich gibt es keine Garantie, dass das hier hochgeladene Plugin überhaupt funktioniert.',
     'We will try to read the version information from the .js files, but there is no guarantee that this will work.'

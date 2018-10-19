@@ -43,10 +43,11 @@ $LANG = array(
     'Sorry, there was an error' => 'Entschuldigung, ein Fehler ist aufgetreten',
     'This action is not available' => 'Diese Aktion ist nicht verfügbar',
     'Two step authentication failed!' => 'Zwei-Faktor Authentifizierung fehlgeschlagen!',
-    'You are not allowed for the requested action' => 'Sie sind nicht berechtigt, die Aktion auszuführen',
+    'You are not allowed for the requested action!' => 'Zur Ausführung der gewünschten Aktion fehlen Berechtigungen!',
 
     // --------------- Globals ---------------
     'Active'          => 'Aktiv',
+    'Add'             => 'Hinzufügen',
     'after'           => 'hinter',
     'All'             => 'Alle',
     'before'          => 'vor',

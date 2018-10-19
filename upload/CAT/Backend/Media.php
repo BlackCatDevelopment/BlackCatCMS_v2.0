@@ -106,9 +106,9 @@ if (!class_exists('\CAT\Backend\Media'))
             {
                 \CAT\Helper\JSON::printData($details);
             } else {
-                #\CAT\Backend::print_header();
+                #\CAT\Backend::printHeader();
                 self::tpl()->output('backend_media_details', $details);
-                #\CAT\Backend::print_footer();
+                #\CAT\Backend::printFooter();
             }
         }   // end function details()
 
@@ -149,9 +149,9 @@ if (!class_exists('\CAT\Backend\Media'))
             }
             else
             {
-                \CAT\Backend::print_header();
+                \CAT\Backend::printHeader();
                 self::tpl()->output('backend_media_files', $tpl_data);
-                \CAT\Backend::print_footer();
+                \CAT\Backend::printFooter();
             }
         }   // end function files()
         
@@ -184,9 +184,9 @@ if (!class_exists('\CAT\Backend\Media'))
             }
             else
             {
-                \CAT\Backend::print_header();
+                \CAT\Backend::printHeader();
                 self::tpl()->output('backend_media_folders', $tpl_data);
-                \CAT\Backend::print_footer();
+                \CAT\Backend::printFooter();
             }
         }   // end function index()
 
@@ -320,9 +320,9 @@ echo "</textarea><br />";
             }
             else
             {
-                \CAT\Backend::print_header();
+                \CAT\Backend::printHeader();
                 self::tpl()->output('backend_media_upload', $tpl_data);
-                \CAT\Backend::print_footer();
+                \CAT\Backend::printFooter();
             }
         }   // end function upload()
 

@@ -107,7 +107,7 @@ if (!class_exists('Backend', false))
                         'name'        => $item,
                         'parent'      => $last,
                         'title'       => self::lang()->t(self::humanize($item)),
-                        'href'        => CAT_ADMIN_URL."/".implode("/", array_slice($parts,0,($i+1))),
+                        'href'        => CAT_ADMIN_URL."/".implode("/", array_slice($parts,0,($level+1))),
                         'level'       => ++$level,
                         'is_current' => true,
                     ));
@@ -130,7 +130,7 @@ if (!class_exists('Backend', false))
             if(!self::$menu)
             {
                 // get backend areas
-                $r = self::db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY  `level` ASC, `parent` ASC, `position` ASC');
+                $r = self::db()->query('SELECT * FROM `:prefix:backend_areas` ORDER BY `level` ASC, `parent` ASC, `position` ASC');
                 self::$menu = $r->fetchAll(\PDO::FETCH_ASSOC);
                 self::log()->addDebug('main menu items from DB: '.print_r(self::$menu,1));
 
@@ -208,6 +208,7 @@ if (!class_exists('Backend', false))
         {
             if(self::user()->is_authenticated())
             {
+                $username_fieldname = Validate::createFieldname('username_');
                 $add_form   = FormBuilder::generateForm('be_page_add');
                 $add_form->getElement('page_type')->setValue("page");
                 $add_form->getElement('default_radio')->setLabel('Insert');
@@ -215,6 +216,8 @@ if (!class_exists('Backend', false))
                 $add_form->getElement('page_before_after')->setLabel(' ');
                 self::tpl()->setGlobals(array(
                     'add_page_form'      => $add_form->render(true),
+                    'USERNAME_FIELDNAME'    => $username_fieldname,
+                    'PASSWORD_FIELDNAME'    => Validate::createFieldname('password_'),
                 ));
             }
         }   // end function initialize()
@@ -402,7 +405,7 @@ if (!class_exists('Backend', false))
          *  @access public
          *  @return void
          */
-        public static function print_header()
+        public static function printHeader()
         {
             $tpl_data = array();
             $menu     = self::getMainMenu();
@@ -443,14 +446,14 @@ if (!class_exists('Backend', false))
             // reset listbuilder
             $lb->set('id','page_id');
             $lb->set('title','menu_title');
-        }   // end function print_header()
+        }   // end function printHeader()
 
         /**
         * Print the admin footer
         *
         * @access public
         **/
-        public static function print_footer()
+        public static function printFooter()
         {
             $data = array();
             self::initPaths();
@@ -501,7 +504,7 @@ if (!class_exists('Backend', false))
                 while (ob_get_level() > 0)
                     ob_end_flush();
 
-        }   // end function print_footer()
+        }   // end function printFooter()
 
         /**
          * check if TFA is enabled for current user

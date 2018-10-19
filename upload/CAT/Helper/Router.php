@@ -102,7 +102,7 @@ if(!class_exists('Router',false))
             $this->controller = "\\CAT\\".($this->backend ? 'Backend' : 'Frontend'); // \CAT\Backend || \CAT\Frontend
             $this->function   = ( (is_array($this->parts) && count($this->parts)>0 ) ? $this->parts[0] : 'index' );
 
-            // load template language files
+            // ----- load template language files ------------------------------
             if(self::isBackend()) {
                 Backend::initialize();
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_THEME').'/languages');
@@ -113,7 +113,6 @@ if(!class_exists('Router',false))
                 self::addLangFile($lang_path);
             }
 
-#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
             self::log()->addDebug(sprintf(
                 'controller [%s] function [%s]',
                 $this->controller,
@@ -428,8 +427,9 @@ if(!class_exists('Router',false))
             }
 
             // remove params
-            if(stripos($route,'?'))
+            if(stripos($route,'?')) {
                 list($route,$ignore) = explode('?',$route,2);
+            }
 
             // remove site subfolder
             $route = preg_replace('~^\/'.self::site()['site_folder'].'\/?~i','',$route);

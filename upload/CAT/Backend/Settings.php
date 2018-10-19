@@ -131,14 +131,14 @@ if (!class_exists('\CAT\Backend\Settings'))
 
             if(!self::asJSON())
             {
-                Backend::print_header();
+                Backend::printHeader();
                 self::tpl()->output(
                     'backend_settings',
                     array(
                         'form'   => $form->render(true),
                     )
                 );
-                Backend::print_footer();
+                Backend::printFooter();
             }
         }   // end function index()
 

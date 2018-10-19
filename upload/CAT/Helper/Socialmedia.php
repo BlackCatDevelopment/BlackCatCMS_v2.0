@@ -54,9 +54,10 @@ if(!class_exists('\CAT\Helper\Socialmedia'))
                 $data = self::db()->query(
                       'SELECT `t1`.`name`, ifnull(`t2`.`'.$what.'_url`,`t1`.`'.$what.'_url`) as `url` '
                     . 'FROM `:prefix:socialmedia` as `t1` '
-                    . 'LEFT JOIN `:prefix:socialmedia_global` as `t2` '
-                    . 'on `t1`.`id`=`t2`.`id` '
+                    . 'LEFT JOIN `:prefix:socialmedia_site` as `t2` '
+                    . 'ON `t1`.`id`=`t2`.`id` '
                     . 'WHERE (`t2`.`'.$what.'_disabled` IS NULL OR `t2`.`'.$what.'_disabled` != "Y" ) '
+                    . 'AND `t1`.`'.$what.'_url` IS NOT NULL '
                     . 'ORDER BY `name`'
                 );
                 if($data)
@@ -95,7 +96,8 @@ if(!class_exists('\CAT\Helper\Socialmedia'))
                           ->leftJoin(
                                 't1',self::db()->prefix().'socialmedia_site',
                                 't2','`t1`.`id`=`t2`.`id`'
-                            );
+                            )
+                          ->orderBy('name');
                 } else {
                     $query->select('`t1`.*');
                 }

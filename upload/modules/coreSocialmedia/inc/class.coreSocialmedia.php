@@ -25,11 +25,11 @@ if(!class_exists('\CAT\Addon\coreSocialmedia',false))
     {
         protected static $type        = 'tool';
         protected static $directory   = 'coreSocialmedia';
-        protected static $name        = 'Socialmedia';
+        protected static $name        = 'Socialmedia Link Manager';
         protected static $version     = '0.1';
         protected static $description = "Manage your Social Media Services here";
-        protected static $author      = "BlackCat Development";
-        protected static $guid        = "";
+        protected static $author      = "Black Cat Development";
+        protected static $guid        = "d3079e37-179a-4e79-ae69-3c454adc3594";
         protected static $license     = "GNU General Public License";
 
         /**

@@ -19,6 +19,7 @@ namespace CAT\Backend;
 
 use \CAT\Base as Base;
 use \CAT\Backend as Backend;
+use \CAT\Helper\Json as Json;
 use \CAT\Helper\Addons as Addons;
 use \CAT\Helper\Directory as Directory;
 use \CAT\Helper\Validate as Validate;
@@ -53,9 +54,9 @@ if (!class_exists('Backend\Admintools'))
         public static function index()
         {
             $d = self::list();
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_dashboard',array('id'=>0,'dashboard'=>$d));
-            Backend::print_footer();
+            Backend::printFooter();
 
         }   // end function index()
 
@@ -68,7 +69,7 @@ if (!class_exists('Backend\Admintools'))
         public static function list($as_array=false)
         {
             if(!self::user()->hasPerm('tools_list'))
-                Json::printError('You are not allowed for the requested action!');
+                self::printError('You are not allowed for the requested action!');
 
             $d = \CAT\Helper\Dashboard::getDashboardConfig('backend/admintools');
             // no configuration yet
@@ -190,9 +191,9 @@ if (!class_exists('Backend\Admintools'))
                 exit;
             }
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_admintool', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function tool()
         
         /**

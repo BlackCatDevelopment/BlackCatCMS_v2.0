@@ -19,4 +19,12 @@
         </a>
     </li>
     {/if}
+    {if user_has_perm('addons_create')}
+    <li class="nav-item">
+        <a class="nav-link{if $current=="create"} active{/if}" href="{$CAT_ADMIN_URL}/addons/create">
+          <span class="fa fa-fw fa-plus-square"></span>
+          {translate('Create new')}
+        </a>
+    </li>
+    {/if}
 </ul>

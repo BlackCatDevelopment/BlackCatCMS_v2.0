@@ -138,7 +138,7 @@ if (!class_exists('FormBuilder'))
                 array($name)
             );
             $fields = $stmt->fetchAll();
-            if(!$fields) return false;
+            if(!$fields) return new \wblib\wbForms\Form();
             return self::generate($name,$fields,$data);
         }   // end function generateForm()
     } // class FormBuilder

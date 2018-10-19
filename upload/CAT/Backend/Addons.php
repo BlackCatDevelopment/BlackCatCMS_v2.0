@@ -22,6 +22,7 @@ use \CAT\Backend as Backend;
 use \CAT\Helper\Addons as HAddons;
 use \CAT\Helper\DateTime as DateTime;
 use \CAT\Helper\Directory as Directory;
+use \CAT\Helper\FormBuilder as FormBuilder;
 use \CAT\Helper\GitHub as GitHub;
 use \CAT\Helper\Json as Json;
 use \CAT\Helper\Validate as Validate;
@@ -31,6 +32,9 @@ if (!class_exists('\CAT\Backend\Addons'))
     class Addons extends Base
     {
         protected static $instance = NULL;
+        protected static $known_types = array(
+            'Page','Language','Library','Template','Tool','WYSIWYG'
+        );
 
         /**
          *
@@ -71,9 +75,9 @@ if (!class_exists('\CAT\Backend\Addons'))
                 'notinstalled_json' => json_encode($ftp, JSON_NUMERIC_CHECK),
                 'current'      => 'installed',
             );
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_addons', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function index()
 
         /**
@@ -128,7 +132,12 @@ if (!class_exists('\CAT\Backend\Addons'))
                 }
                 // check requirements
                 if(isset($m['require']['core']['release'])) {
+                    // CMS version too low
                     if(HAddons::versionCompare(CAT_VERSION,$m['require']['core']['release'],'<')) {
+                        $catalog['modules'][$i]['warn'] = self::lang()->t('This module requires BlackCat CMS v').$m['require']['core']['release'];
+                    }
+                    // old module (CMS version too high)
+                    if(HAddons::versionCompare(CAT_VERSION,$m['require']['core']['release'],'>')) {
                         $catalog['modules'][$i]['warn'] = self::lang()->t('This module requires BlackCat CMS v').$m['require']['core']['release'];
                     }
                 }
@@ -145,10 +154,61 @@ if (!class_exists('\CAT\Backend\Addons'))
                 'current'      => 'catalog',
             );
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_addons', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function catalog()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function create()
+        {
+            if(!self::user()->hasPerm('addons_create'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            $form = FormBuilder::generateForm('be_addon_create');
+            $form->setAttribute('action',CAT_ADMIN_URL.'/addons/create');
+            $form->getElement('addon_type')->setData(self::$known_types);
+
+            // form already sent?
+            if($form->isSent())
+            {
+                // check data
+                if($form->isValid())
+                {
+                    // save data
+                    $data = $form->getData();
+                    // create database entry
+                    self::db()->query(
+                          'INSERT INTO `:prefix:addons` '
+                        . '(`type`,`directory`,`name`,`installed`,`upgraded`,`removable`,`bundled`) '
+                        . 'VALUES (?,?,?,?,?,"Y","N")',
+                        array(
+                            strtolower(self::$known_types[$data['addon_type']]),
+                            $data['addon_directory'],
+                            $data['addon_name'],
+                            time(),
+                            time(),
+                        )
+                    );
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Create folder and default files
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    self::router()->reroute(CAT_BACKEND_PATH.'/addons');
+                }
+            }
+
+            Backend::printHeader();
+                self::tpl()->output('backend_addons_create', array(
+                    'form'    => $form->render(true),
+                    'current' => 'create',
+                ));
+                Backend::printFooter();
+        }   // end function create()
+        
 
         /**
          *
@@ -196,9 +256,9 @@ if (!class_exists('\CAT\Backend\Addons'))
                             'errors'       => $errors,
                         );
 
-                        Backend::print_header();
+                        Backend::printHeader();
                         self::tpl()->output('backend_addons', $tpl_data);
-                        Backend::print_footer();
+                        Backend::printFooter();
                     }
                 }
             }
@@ -227,9 +287,9 @@ if (!class_exists('\CAT\Backend\Addons'))
                 'current'      => 'notinstalled',
             );
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_addons', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function notinstalled()
 
         /**
@@ -237,10 +297,10 @@ if (!class_exists('\CAT\Backend\Addons'))
          **/
         public static function getAddonName() : string
         {
-            $name  = Validate::sanitizePost('addon','string',NULL);
+            $name  = Validate::sanitizePost('addon','string');
 
             if(!$name)
-                $name  = Validate::sanitizeGet('addon','string',NULL);
+                $name  = Validate::sanitizeGet('addon','string');
 
             if(!$name)
                 $name = self::router()->getParam(-1);
