@@ -4,14 +4,9 @@ Repository for BC v2.0 (complete rewrite of BlackCat CMS)
 
 # Important note!
 
-This project is work in progress, which means you can *not* download and install it yet, and there will be *no* release before 2019. If you are looking for a stable release of BlackCat CMS, please visit
+This repository has been split up into several repositories containing the engine (CMS core), templates, and modules. All repositories that are related to the BC2 development have a BC2_ prefix in their names.
 
-https://github.com/BlackCatDevelopment/BlackCatCMS
+The most important are:
 
-For more information about BlackCat CMS v2.0, there is a homepage (sorry, German language only):
-
-https://bc2.blackcat-cms.org
-
-If you have any questions about the development, you're welcome to visit our forum. (English language welcome, while "default" is German.)
-
-https://forum.blackcat-cms.org/viewforum.php?f=31
+* [Engine](https://github.com/BlackCatDevelopment/BC2_Engine)
+* [Backstrap Backend Theme](https://github.com/BlackCatDevelopment/BC2_BackstrapTheme)
