@@ -10,7 +10,7 @@ div.treecontainer ul#space0.list-group.space.first-space li.route div.card{min-w
 table.datatable.compact.dataTable tbody span{display:inline-block;width:16%;}
 table.datatable.compact.dataTable tbody span:first-of-type{width:auto;}
 table.datatable.compact.dataTable tbody span.dtlabel{text-align:right;}
-div#list img.thumb{width:80px;padding:5px;}
+img.thumb{width:80px;padding:5px;}
 
 /* grid view */
 div#grid li.gridder-expander{display:inline-block;border:1px solid gray;border-radius:5px;width:200px;height:150px;line-height:150px;margin:5px;vertical-align:middle;text-align:center;}

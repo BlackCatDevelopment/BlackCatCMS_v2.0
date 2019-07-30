@@ -23,8 +23,3 @@ $template_description		= 'BackStrap - Bootstrap based backend theme';
 $template_engine			= 'dwoo';
 $template_guid				= '';
 
-// get variants
-$dirs = \CAT\Helper\CDirectory::getDirectories(CAT_PATH.'/modules/lib_bootstrap/vendor/css');
-echo "<textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
-print_r( $dirs );
-echo "</textarea>";

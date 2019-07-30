@@ -1,5 +1,5 @@
 <?php
-
+/*
 \wblib\wbFormsJQuery::set('load_ui_theme',false);
 \wblib\wbForms::set('add_breaks',false);
 \wblib\wbForms::set('add_buttons',false);
@@ -48,3 +48,4 @@
     </div>'
 );
 \wblib\wbForms::set('required_span','<i class="fa fa-fw fa-asterisk text-danger"></i>');
+*/

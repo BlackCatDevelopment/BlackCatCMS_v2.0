@@ -17,48 +17,49 @@
 
 namespace CAT\Addon;
 
-use \CAT\Helper\Directory As Directory;
+use \CAT\Helper\Directory as Directory;
 
 class Page extends Module implements IAddon, IPage
 {
-	/**
-	 * @var void
-	 */
-	protected static $type     = 'page';
-	protected static $addonID  = 0;
+    /**
+     * @var void
+     */
+    protected static $type     = 'page';
+    protected static $addonID  = 0;
     protected static $template = '';
 
-	public function __construct()
-	{
-		parent::__construct();
-	}
-	public function __destruct()
-	{
-		parent::__destruct();
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
+    public function __destruct()
+    {
+        parent::__destruct();
+    }
 
     /**
      * default add function; override to add your own actions
      **/
-	public static function add() : integer
-	{
-		self::setIDs();
-		// Add a new section
-		if(self::db()->query(
-				'INSERT INTO `:prefix:mod_' . static::$directory . '`
+    public static function add() : integer
+    {
+        self::setIDs();
+        // Add a new section
+        if (self::db()->query(
+                'INSERT INTO `:prefix:mod_' . static::$directory . '`
 					( `page_id`, `section_id` ) VALUES
 					( :page_id, :section_id )',
-				array(
-					'page_id'		=> self::$page_id,
-					'section_id'	=> self::$section_id
-				)
-			)
-		) {
-			self::$addonID = (int)self::db()->lastInsertId();
-			return self::$addonID;
-		}
-		else return 0;
-	}
+                array(
+                    'page_id'		=> self::$page_id,
+                    'section_id'	=> self::$section_id
+                )
+            )
+        ) {
+            self::$addonID = (int)self::db()->lastInsertId();
+            return self::$addonID;
+        } else {
+            return 0;
+        }
+    }
 
     /**
      * default view function
@@ -67,26 +68,29 @@ class Page extends Module implements IAddon, IPage
      * @param  array  $section - section settings
      * @return string
      **/
-	public static function view(array $section)
-	{
-		self::$template	= 'view';
+    public static function view(array $section)
+    {
+        self::$template	= 'view';
     }
 
     /**
      * default remove function
      **/
-	public static function remove()
-	{
-		// Remove from database 
-		if( self::db()->query(
-			'DELETE FROM `:prefix:mod_' . static::$directory . '` ' .
-				'WHERE `page_id` =:page_id ' .
-				'AND `section_id` =:section_id',
-			array(
-				'page_id'		=> self::$page_id,
-				'section_id'	=> self::$section_id
-			)
-		) ) return true;
-		else return false;
-	}
+    public static function remove()
+    {
+        // Remove from database
+        if (self::db()->query(
+            'DELETE FROM `:prefix:mod_' . static::$directory . '` ' .
+                'WHERE `page_id` =:page_id ' .
+                'AND `section_id` =:section_id',
+            array(
+                'page_id'		=> self::$page_id,
+                'section_id'	=> self::$section_id
+            )
+        )) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

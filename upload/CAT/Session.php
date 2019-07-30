@@ -21,8 +21,8 @@ if(!class_exists('\CAT\Session',false))
 {
     class Session extends Base implements \SessionHandlerInterface
     {
-        protected static $loglevel = \Monolog\Logger::EMERGENCY;
-        #protected static $loglevel = \Monolog\Logger::DEBUG;
+        #protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        protected static $loglevel = \Monolog\Logger::DEBUG;
 
         private        $domain;
         private        $path     = '/';
@@ -64,6 +64,8 @@ if(!class_exists('\CAT\Session',false))
          **/
         public function start_session()
         {
+            self::log()->addDebug('start_session()');
+
             // Hash algorithm to use for the session.
             // (use hash_algos() to get a list of available hashes.)
             $session_hash = null;
@@ -106,14 +108,16 @@ if(!class_exists('\CAT\Session',false))
             // Change the session name
             session_name($name);
 
-            // Now we cat start the session
+            // Start the session
             if (session_status() !== PHP_SESSION_ACTIVE) {
                 session_start();
             }
 
             // Make sure the session hasn't expired, and destroy it if it has
-        	if(!self::validateSession())
+        	if(!self::validateSession(session_id()))
         	{
+self::log()->addDebug(sprintf('destroying invalid session %s',session_id()));
+                #self::stop_session();
         		$_SESSION = array();
         		session_destroy();
         		session_start();
@@ -128,6 +132,7 @@ if(!class_exists('\CAT\Session',false))
          **/
         public static function stop_session()
         {
+            self::log()->addDebug('stop_session()');
             // invalidate cookie
             $params = session_get_cookie_params();
             setcookie(session_name(), '', 0, $params['path'], $params['domain'], $params['secure'], isset($params['httponly']));
@@ -143,6 +148,7 @@ if(!class_exists('\CAT\Session',false))
          **/
         public function close()
         {
+            self::log()->addDebug('close()');
             if ($this->gcCalled)
             {
                 $this->gcCalled = false;
@@ -164,7 +170,7 @@ if(!class_exists('\CAT\Session',false))
         public function read($sessionId)
         {
             self::log()->addDebug(sprintf(
-                'reading data from session [%s]',$sessionId
+                'read() - reading data from session [%s]',$sessionId
             ));
             $sql = self::getStatement('read');
             if(false!==$sql)
@@ -177,8 +183,9 @@ if(!class_exists('\CAT\Session',false))
                     if(is_array($session) && count($session)>0)
                     {
                         if($session['sess_obsolete'] == 'Y') {
+                            self::log()->addDebug('session is marked as obsolete, deleted it');
                             destroy($sessionId);
-                            return false;
+                            return '';
                         }
                         return empty($session['sess_data'])
                              ? ''
@@ -187,6 +194,9 @@ if(!class_exists('\CAT\Session',false))
                 } catch ( \Exception $e ) {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO
+                    self::log()->addDebug(sprintf(
+                        'catched exception [%s]', $e->getMessage()
+                    ));
                     return false;
                 }
             }
@@ -199,7 +209,7 @@ if(!class_exists('\CAT\Session',false))
         public function write($sessionId,$data)
         {
             self::log()->addDebug(sprintf(
-                'writing data to session [%s]',$sessionId
+                'write() - writing data to session [%s]',$sessionId
             ));
             self::log()->addDebug(print_r($data,1));
 
@@ -227,7 +237,13 @@ if(!class_exists('\CAT\Session',false))
             return false;
         }   // end function write()
 
+        /**
+         * @inheritdoc
+         **/
         public function destroy($sessionId) {
+            self::log()->addDebug(sprintf(
+                'destroy() - destroying session %s',$sessionId
+            ));
             $sql = self::getStatement('delete');
             if(false!==$sql)
             {
@@ -236,6 +252,7 @@ if(!class_exists('\CAT\Session',false))
                 $stmt->bindValue(':time', time()    , \PDO::PARAM_STR);
                 $stmt->execute();
             }
+            return true;
         }
 
         /**
@@ -246,6 +263,9 @@ if(!class_exists('\CAT\Session',false))
          **/
         public function gc($maxlifetime)
         {
+            self::log()->addDebug(sprintf(
+                'gc(%s)',$maxlifetime
+            ));
             $this->gcCalled = true;
             return true;
         }   // end function gc()
@@ -435,18 +455,38 @@ if(!class_exists('\CAT\Session',false))
             );
         }
 
-        private static function validateSession()
+        private static function validateSession($sessionId)
         {
-
-        	if(isset($_SESSION['OBSOLETE']) && !isset($_SESSION['EXPIRES']))
+            self::log()->addDebug(sprintf(
+                'validateSession(%s)',$sessionId
+            ));
+            // cleanup expired sessions
+            $sql = self::getStatement('delete');
+            if(false!==$sql)
             {
-        		return false;
+                self::log()->addDebug('cleanup sessions');
+                $stmt = \CAT\Base::db()->prepare($sql);
+                $stmt->bindValue(':id'  , 'ignore', \PDO::PARAM_STR);
+                $stmt->bindValue(':time', time()  , \PDO::PARAM_STR);
+                $stmt->execute();
             }
-        	if(isset($_SESSION['EXPIRES']) && $_SESSION['EXPIRES'] < time())
+            // if the session was killed, there will be no key
+            $sql = self::getStatement('getkey');
+            $key = null;
+            if(false!==$sql)
             {
-        		return false;
+                self::log()->addDebug(sprintf(
+                    'SQL: %s', $sql
+                ));
+                $stmt = \CAT\Base::db()->prepare($sql);
+                $stmt->bindValue(':id', $sessionId, \PDO::PARAM_STR);
+                $stmt->execute();
+                $data = $stmt->fetch();
+                $key  = $data['sess_key'];
+                self::log()->addDebug(sprintf('KEY [%s]',$key));
+                return !empty($key);
             }
-        	return true;
+            return false;
         }
     }
 }

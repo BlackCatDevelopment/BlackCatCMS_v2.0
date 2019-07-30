@@ -367,7 +367,15 @@ if ( ! class_exists( 'Sections', false ) ) {
             {
                 if(isset($ref[$page_id]))
                 {
-                    return $ref[$page_id];
+                    if($block_id) {
+                        return (
+                              isset($ref[$page_id][$block_id])
+                            ? $ref[$page_id][$block_id]
+                            : null
+                        );
+                    } else {
+                        return $ref[$page_id];
+                    }
                 }
                 else
                 {

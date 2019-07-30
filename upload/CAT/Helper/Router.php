@@ -102,8 +102,9 @@ if(!class_exists('Router',false))
             $this->controller = "\\CAT\\".($this->backend ? 'Backend' : 'Frontend'); // \CAT\Backend || \CAT\Frontend
             $this->function   = ( (is_array($this->parts) && count($this->parts)>0 ) ? $this->parts[0] : 'index' );
 
-            // load template language files
+            // ----- load template language files ------------------------------
             if(self::isBackend()) {
+                Backend::initialize();
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_THEME').'/languages');
             } else {
                 $lang_path = Directory::sanitizePath(CAT_ENGINE_PATH.'/templates/'.\CAT\Registry::get('DEFAULT_TEMPLATE').'/languages');
@@ -112,7 +113,6 @@ if(!class_exists('Router',false))
                 self::addLangFile($lang_path);
             }
 
-#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
             self::log()->addDebug(sprintf(
                 'controller [%s] function [%s]',
                 $this->controller,
@@ -141,7 +141,7 @@ if(!class_exists('Router',false))
                 return;
             }
 
-#echo "is callable [", is_callable(array($this->controller,$this->function)), "]<br />";
+#echo "is callable controller[", $this->controller, "] function [", $this->function,"] result [", is_callable(array($this->controller,$this->function)), "]<br />";
             // ----- internal handler? ex \CAT\Backend::index() ----------------
             if(!is_callable(array($this->controller,$this->function)))
             {
@@ -163,7 +163,7 @@ if(!class_exists('Router',false))
             self::log()->addDebug(sprintf(
                 'handler [%s]', $handler
             ));
-#echo sprintf("controller [%s] func [%s]<br />", $this->controller, $this->function);
+#echo sprintf("is_callable controller [%s] func [%s]<br />", $this->controller, $this->function);
             if(is_callable(array($this->controller,$this->function)))
             {
                 self::log()->addDebug('is_callable() succeeded');
@@ -184,7 +184,7 @@ if(!class_exists('Router',false))
                         'protected route [%s], forwarding to login page',
                         $this->route
                     ));
-                    $this->reroute('/backend/login');
+                    $this->reroute(CAT_BACKEND_PATH.'/login');
                 } else {
                     // forward to route handler
                     self::log()->addDebug('forwarding request to route handler');
@@ -327,6 +327,17 @@ if(!class_exists('Router',false))
         }   // end function getParams()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public function getParts() : array
+        {
+            if($this->parts) return $this->parts;
+            return array();
+        }   // end function getParts()
+
+        /**
          * accessor to private route (example: 'backend/dashboard')
          *
          * @access public
@@ -416,8 +427,9 @@ if(!class_exists('Router',false))
             }
 
             // remove params
-            if(stripos($route,'?'))
+            if(stripos($route,'?')) {
                 list($route,$ignore) = explode('?',$route,2);
+            }
 
             // remove site subfolder
             $route = preg_replace('~^\/'.self::site()['site_folder'].'\/?~i','',$route);

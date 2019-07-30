@@ -625,24 +625,37 @@ console.log(data);
             data.contents.push({attribute:opt,column:col,content:content});
             $(this).removeClass("haschanged");
         });
-        $.ajax({
-            type    : 'POST',
-            url     : CAT_ADMIN_URL + '/section/save/' + section_id,
-            data    : data,
-            dataType: 'json',
-            success : function(data, status) {
-                BCGrowl($.cattranslate(data.message),data.success);
-                if(data.success) {
-                    $(card).parent().find('.bsChangedFlag').removeClass("fa-exclamation-triangle").removeClass("text-warning");
-                    if(!$("[contenteditable].haschanged").length) {
-                        $('span#bsGlobalChangeIndicator').removeClass("fa-exclamation-triangle").removeClass("text-warning");
-                    }
-                } else {
-                    $(card).parent().find('.bsChangedFlag').removeClass("text-warning").addClass("text-danger");
-                }
-            }
+
+        // default WYSIWYG section
+        $(card).find('textarea.wysiwyg').each(function() {
+            var instance = $(this).attr('name');
+            data.contents.push({content:CKEDITOR.instances[instance].getData()});
         });
 
+        if(data.contents.length==0) {
+            BCGrowl($.cattranslate("No data to send"));
+        } else {
+
+console.log(data);
+
+            $.ajax({
+                type    : 'POST',
+                url     : CAT_ADMIN_URL + '/section/save/' + section_id,
+                data    : data,
+                dataType: 'json',
+                success : function(data, status) {
+                    BCGrowl($.cattranslate(data.message),data.success);
+                    if(data.success) {
+                        $(card).parent().find('.bsChangedFlag').removeClass("fa-exclamation-triangle").removeClass("text-warning");
+                        if(!$("[contenteditable].haschanged").length) {
+                            $('span#bsGlobalChangeIndicator').removeClass("fa-exclamation-triangle").removeClass("text-warning");
+                        }
+                    } else {
+                        $(card).parent().find('.bsChangedFlag').removeClass("text-warning").addClass("text-danger");
+                    }
+                }
+            });
+        }
     });
 
     // allows to click on the select inside the dropdown without closing it
@@ -657,20 +670,19 @@ console.log(data);
         $('#tplcss').modal('show');
     });
 
-$("[contenteditable]").each(function () {
-  var target = this;
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.attributeName === "class" && $(mutation.target).prop(mutation.attributeName).indexOf("haschanged")>0) {
-            var attributeValue = $(mutation.target).prop(mutation.attributeName);
-            console.log("Class attribute changed to:", attributeValue);
-            $(mutation.target).parentsUntil('li.card').parent().find('.bsChangedFlag').addClass("fa-exclamation-triangle text-warning");
-            $('span#bsGlobalChangeIndicator').addClass("fa-exclamation-triangle text-warning");
-        }
+    $("[contenteditable]").each(function () {
+        var target = this;
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === "class" && $(mutation.target).prop(mutation.attributeName).indexOf("haschanged")>0) {
+                    var attributeValue = $(mutation.target).prop(mutation.attributeName);
+                    //console.log("Class attribute changed to:", attributeValue);
+                    $(mutation.target).parentsUntil('li.card').parent().find('.bsChangedFlag').addClass("fa-exclamation-triangle text-warning");
+                    $('span#bsGlobalChangeIndicator').addClass("fa-exclamation-triangle text-warning");
+                }
+            });
+        });
+        observer.observe(target, {attributes: true});
     });
-  });
-
-  observer.observe(target, {attributes: true});
-});
 
 })(jQuery);

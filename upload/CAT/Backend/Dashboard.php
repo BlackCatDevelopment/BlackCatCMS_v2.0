@@ -88,10 +88,10 @@ if(!class_exists('\CAT\Backend\Dashboard'))
          **/
         public static function getDashID()
         {
-            $dashID  = Validate::sanitizePost('dash_id','numeric',NULL);
+            $dashID  = Validate::sanitizePost('dash_id','numeric');
 
             if(!$dashID)
-                $dashID  = Validate::sanitizeGet('dash_id','numeric',NULL);
+                $dashID  = Validate::sanitizeGet('dash_id','numeric');
 
             if(!$dashID)
                 $dashID = self::router()->getParam(-1);
@@ -144,19 +144,18 @@ if(!class_exists('\CAT\Backend\Dashboard'))
             $query   = self::router()->getQuery();
             if($query)
             {
-                parse_str($query,$query_data);
                 // widget id?
-                if(isset($query_data['widget']))
+                if(isset($query['widget']))
                 {
                     // check if widget exists
-                    if(Widget::exists($query_data['widget']))
+                    if(Widget::exists($query['widget']))
                     {
                         // check if widget is visible on current dashboard
-                        if(Widget::isOnDashboard($query_data['widget'],$dash))
+                        if(Widget::isOnDashboard($query['widget'],$dash))
                         {
                             // forward
-                            $widget = Widget::getWidget($query_data['widget']);
-                            Widget::handleCall($widget,$query_data);
+                            $widget = Widget::getWidget($query['widget']);
+                            Widget::handleCall($widget,$query);
                         }
                     }
                 }
@@ -181,9 +180,9 @@ Array
                 'MAIN_MENU' => Backend::getMainMenu(),
             );
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_dashboard', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function index()
         
         /**

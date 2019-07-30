@@ -105,7 +105,7 @@ if(!class_exists('\CAT\Helper\HArray'))
             $result = array();
             foreach($array as $i => $item)
             {
-                if(is_array($item[$key]))
+                if(isset($item[$key]) && is_array($item[$key]))
                     $result[] = self::extract($item[$key],$key);
                 if(array_key_exists($key,$item))
                     if($index_by && array_key_exists($index_by,$item))

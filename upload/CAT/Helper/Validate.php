@@ -26,6 +26,7 @@ if (!class_exists('Validate'))
     {
         private   static $instance = NULL;
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
+        #protected static $loglevel = \Monolog\Logger::DEBUG;
 
         /**
          * get an instance of the validator class
@@ -67,20 +68,34 @@ if (!class_exists('Validate'))
         }   // end function check()
 
         /**
+         * deletes all form data
+         *
+         * @access public
+         * @return
+         **/
+        public static function cleanup()
+        {
+            $_GET = array();
+            $_POST = array();
+            $_REQUEST = array();
+        }   // end function cleanup()
+
+        /**
          * global method to get data from globals
          *
          * @access public
-         * @param  string  $global  - name of the superglobal
          * @param  string  $key     - name of the key/var to get
          * @param  string  $require - value type (scalar, numeric, array)
          * @param  boolean $escape  - wether to use add_slashes(), default false
          * @return mixed
          **/
-        public static function get($global, $key, $require=NULL, $escape=false )
+        public static function get(string $key, string $require=NULL, bool $escape=false, string $global=null )
         {
-            $self = self::getInstance();
-            $self->log()->addDebug(sprintf(
-                'Get key [%s] from global var [%s]',$key,$global
+            if(is_null($global)) {
+                $global = '_REQUEST';
+            }
+            self::log()->addDebug(sprintf(
+                'Get key [%s] from global var [_REQUEST]',$key
             ));
 
             $glob = array();
@@ -88,18 +103,18 @@ if (!class_exists('Validate'))
             {
                 $glob =& $GLOBALS[$global];
             }
-            $value = isset($glob[$key]) ? $glob[$key] : NULL;
+            $value = isset($glob[$key]) ? $glob[$key] : '';
             if ( $value && $require )
             {
-                $self->log()->addDebug(sprintf('validate as [%s]',$require));
+                self::log()->addDebug(sprintf('validate as [%s]',$require));
                 $value = self::check($value,$require);
             }
             if ( $value && $escape )
             {
-                $self->log()->addDebug('add slashes');
+                self::log()->addDebug('add slashes');
                 $value = self::add_slashes($value);
             }
-            $self->log()->addDebug('returning value [{value}]',array('value'=>$value));
+            self::log()->addDebug('returning value [{value}]',array('value'=>$value));
             return $value;
         }   // end function get()
 
@@ -146,6 +161,10 @@ if (!class_exists('Validate'))
                 $prefix .= '_';
             $salt      = strtolower(md5(uniqid(rand(),true)));
             $offset    = ( $offset === NULL ) ? rand(1,12) : $offset;
+            self::log()->addDebug(sprintf(
+                'createFieldname prefix [%s] offset [%s] length [%s] salt [%s]',
+                $prefix, $offset, $length, $salt
+            ));
             $fieldname = $prefix.substr($salt,$offset,$length);
             return $fieldname;
         }   // end function createFieldname()
@@ -224,6 +243,16 @@ if (!class_exists('Validate'))
         }   // end function getURI()
 
         /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function isSet($field)
+        {
+            return isset($_REQUEST[$field]);
+        }   // end function isSet()
+        
+        /**
          * Get POST data
          *
          * TODO: add sanitize/validate
@@ -234,12 +263,12 @@ if (!class_exists('Validate'))
          * @param  boolean $escape  - use add_slashes(); default: false
          * @return mixed
          **/
-        public static function sanitizePost( $field, $require=NULL, $escape = false )
+        public static function sanitizePost(string $field,string $require=NULL,bool $escape=false )
         {
             self::log()->addDebug(sprintf(
                 'get field [%s] from $_POST, require type [%s], escape [%s]',$field,$require,$escape
             ));
-            return self::get('_POST',$field,$require,$escape);
+            return self::get($field,$require,$escape);
         }   // end function sanitizePost()
 
         /**
@@ -252,20 +281,20 @@ if (!class_exists('Validate'))
          * @param  string  $require - value type (scalar, numeric, array)
          * @return mixed
          **/
-        public static function sanitizeGet($field,$require=NULL,$escape=false)
+        public static function sanitizeGet(string $field,string $require=NULL,bool $escape=false)
         {
             self::log()->addDebug(sprintf(
                 'get field [%s] from $_GET, require type [%s], escape [%s]',$field,$require,$escape
             ));
-            return self::get('_GET',$field,$require,$escape);
+            return self::get($field,$require,$escape,'_GET');
         }   // end function sanitizeGet()
 
         /**
          * convenience function to meet the names of the other ones
          **/
-        public static function sanitizeSession($field,$require=NULL,$escape=false)
+        public static function sanitizeSession(string $field,string $require=NULL,bool $escape=false) : string
         {
-            return self::get('_SESSION',$field,$require,$escape);
+            return self::get($field,$require,$escape,'_SESSION');
         }   // end function sanitizeSession()
 
         /**
@@ -276,9 +305,9 @@ if (!class_exists('Validate'))
          * @param  string  $require - value type (scalar, numeric, array)
          * @return mixed
          **/
-        public static function fromSession($field,$require=NULL,$escape=false)
+        public static function fromSession(string $field,string $require=NULL,bool $escape=false) : string
         {
-            return self::get('_SESSION',$field,$require,$escape);
+            return self::get($field,$require,$escape,'_SESSION');
         }   // end function fromSession()
 
         /**
@@ -289,9 +318,9 @@ if (!class_exists('Validate'))
          * @param  string  $require - value type (scalar, numeric, array)
          * @return mixed
          **/
-        public static function sanitizeServer($field,$require=NULL,$escape=false)
+        public static function sanitizeServer(string $field,string $require=NULL,bool $escape=false) : string
         {
-            return self::get('_SERVER',$field,$require,$escape);
+            return self::get($field,$require,$escape,'_SERVER');
         }   // end function sanitizeServer()
 
         /**

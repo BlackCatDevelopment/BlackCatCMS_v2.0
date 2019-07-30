@@ -32,9 +32,8 @@ if (!class_exists('FormBuilder'))
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $forms    = array();
 
-        public static function generate($name,$items,$formdata=array(),$legend_key='fieldset')
+        public static function generate(string $name,$items,array $formdata=array(),string $legend_key='fieldset',bool $skip_filehandler=false) : \wblib\wbForms\Form
         {
-
             \wblib\wbForms\Base::$lang_path = CAT_ENGINE_PATH.'/CAT/Backend/languages';
             $form = new Form($name);
 
@@ -82,15 +81,23 @@ if (!class_exists('FormBuilder'))
                         }
                     }
 
-
                     // add values from fieldhandler
                     if(strlen($item['fieldhandler'])) {
-                        $params = ( substr_count($item['params'], ',') ? explode(', ',$item['params']) : array($item['params']) );
-                        $data = call_user_func_array($item['fieldhandler'], $params);
-                        if($data) {
-                            $e->setData($data);
+                        if($item['fieldtype'] != 'button') {
+                            $params = ( substr_count($item['params'], ',') ? explode(', ',$item['params']) : array($item['params']) );
+                            $data = call_user_func_array($item['fieldhandler'], $params);
+                            if($data) {
+                                $e->setData($data);
+                            }
+                        } else {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// TODO: Inline JavaScript vermeiden; man koennte z.B. alle onclicks sammeln
+// und an den Asset Manager als Scriptblock uebergeben
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            $e->setAttribute('onclick','window.location.href=\''.CAT_SITE_URL.$item['route'].'\';');
                         }
                     }
+
 
                     if(isset($formdata[$item['name']])) {
                         $e->setValue($formdata[$item['name']]);
@@ -100,10 +107,10 @@ if (!class_exists('FormBuilder'))
                 }
 
                 // buttons
-                $form->addElement(new \wblib\wbForms\Element\Button(
+                $form->addElement(new \wblib\wbForms\Element\Submit(
                     self::lang()->translate('Save')
                 ));
-                $form->addElement(new \wblib\wbForms\Element\Button(
+                $form->addElement(new \wblib\wbForms\Element\Submit(
                     self::lang()->translate('Cancel')
                 ));
             }
@@ -118,29 +125,21 @@ if (!class_exists('FormBuilder'))
          **/
         public static function generateForm($name,$data=array())
         {
-            //if(!in_array($name,self::$forms))
-            //{
-                // get form from DB
-                $stmt = self::db()->query(
-                    'SELECT `t1`.`action`, `t2`.*, '
-                    . '     `t3`.`name`, `t3`.`mapto`, `t3`.label, `t3`.`helptext`, `t3`.`pattern`, '
-                    . '     `t4`.`fieldtype` '
-                    . 'FROM `:prefix:forms` as `t1` '
-                    . 'JOIN `:prefix:forms_has_fields` AS `t2` ON `t1`.`form_id`=`t2`.`form_id` '
-                    . 'JOIN `:prefix:forms_fielddefinitions` AS `t3` ON `t2`.`field_id`=`t3`.`field_id` '
-                    . 'JOIN `:prefix:forms_fieldtypes` AS `t4` ON `t2`.type_id=`t4`.`type_id` '
-                    . 'WHERE `t1`.`form_name`=? ORDER BY `fieldset`, `t2`.`position` ',
-                    array($name)
-                );
-                $fields = $stmt->fetchAll();
-                if(!$fields) return false;
-                //self::$forms[$name] = self::generate($name,$fields,$data);
-                return self::generate($name,$fields,$data);
-            //}
-            //else
-            //{
-            //    return self::$forms[$name];
-            //}
+            // get form from DB
+            $stmt = self::db()->query(
+                'SELECT `t1`.`action`, `t2`.*, '
+                . '     `t3`.`name`, `t3`.`mapto`, `t3`.label, `t3`.`helptext`, `t3`.`pattern`, '
+                . '     `t4`.`fieldtype` '
+                . 'FROM `:prefix:forms` as `t1` '
+                . 'JOIN `:prefix:forms_has_fields` AS `t2` ON `t1`.`form_id`=`t2`.`form_id` '
+                . 'JOIN `:prefix:forms_fielddefinitions` AS `t3` ON `t2`.`field_id`=`t3`.`field_id` '
+                . 'JOIN `:prefix:forms_fieldtypes` AS `t4` ON `t2`.type_id=`t4`.`type_id` '
+                . 'WHERE `t1`.`form_name`=? ORDER BY `fieldset`, `t2`.`position` ',
+                array($name)
+            );
+            $fields = $stmt->fetchAll();
+            if(!$fields) return new \wblib\wbForms\Form();
+            return self::generate($name,$fields,$data);
         }   // end function generateForm()
     } // class FormBuilder
 } // if class_exists()

@@ -1,16 +1,27 @@
 <div id="bclogs">
     {if $logs}
-    <table>
-    {foreach $logs item}
-    <tr style="border-bottom:1px solid #ccc">
-        <td><a style="margin-right:20px" class="bcshowlog" href="#" data-file="{$item.file}">{$item.file}</a></td>
-        <td style="font-size:x-small">{$item.size}</td>
-        <td style="white-space:nowrap">
-            <a href="#" class="fa fa-fw fa-download" data-file="{$item.file}"></a>
-            {if $item.removable === true}<a href="#" class="fa fa-fw fa-trash" data-file="{$item.file}"></a>{/if}
-        </td>
-    </tr>
-    {/foreach}
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>{translate('File')}</th>
+                <th>{translate('Size')}</th>
+                <th>{translate('Last modified')}</th>
+                <th>{translate('Actions')}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {foreach $logs item}
+            <tr style="border-bottom:1px solid #ccc">
+                <td><a style="margin-right:20px" class="bcshowlog" href="#" data-file="{$item.file}">{$item.file}</a></td>
+                <td style="white-space:nowrap">{$item.size}</td>
+                <td style="white-space:nowrap">{$item.date}</td>
+                <td style="white-space:nowrap">
+                    <a href="#" class="fa fa-fw fa-download" data-file="{$item.file}"></a>
+                    {if $item.removable === true}<a href="#" class="fa fa-fw fa-trash" data-file="{$item.file}"></a>{/if}
+                </td>
+            </tr>
+            {/foreach}
+        </tbody>
     </table>
     {/if}
     <div id="bclogdialog" title="{translate('Log')}:" style="display:none;font-size:.8em;"></div>

@@ -17,6 +17,7 @@
 
 namespace CAT\Backend;
 use \CAT\Base as Base;
+use \CAT\Helper\Validate as Validate;
 
 if (!class_exists('\CAT\Backend\Roles'))
 {
@@ -37,6 +38,31 @@ if (!class_exists('\CAT\Backend\Roles'))
                 self::$instance = new self();
             return self::$instance;
         }   // end function getInstance()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function add()
+        {
+            // check permissions
+            if(!self::user()->hasPerm('roles_add'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            $name  = Validate::sanitizePost('role_name');
+            $desc  = Validate::sanitizePost('role_description');
+
+            $sth = self::db()->query(
+                  'INSERT INTO `:prefix:rbac_roles` ( `role_title`, `role_description` ) '
+                . 'VALUES ( :name, :desc )',
+                array('name'=>$name,'desc'=>$desc)
+            );
+
+            if(!self::db()->isError()) return true;
+            else                       return false;
+
+        }   // end function add()
 
         /**
          *
@@ -74,9 +100,9 @@ if (!class_exists('\CAT\Backend\Roles'))
                 'perms' => $list,
             );
 
-            \CAT\Backend::print_header();
+            \CAT\Backend::printHeader();
             self::tpl()->output('backend_roles', $tpl_data);
-            \CAT\Backend::print_footer();
+            \CAT\Backend::printFooter();
         }   // end function index()
 
         /**
@@ -133,10 +159,10 @@ if (!class_exists('\CAT\Backend\Roles'))
          **/
         protected static function getRoleID()
         {
-            $roleID  = \CAT\Helper\Validate::sanitizePost('role_id','numeric',NULL);
+            $roleID  = \CAT\Helper\Validate::sanitizePost('role_id','numeric');
 
             if(!$roleID)
-                $roleID  = \CAT\Helper\Validate::sanitizeGet('role_id','numeric',NULL);
+                $roleID  = \CAT\Helper\Validate::sanitizeGet('role_id','numeric');
 
             if(!$roleID)
                 $roleID = self::router()->getParam(-1);

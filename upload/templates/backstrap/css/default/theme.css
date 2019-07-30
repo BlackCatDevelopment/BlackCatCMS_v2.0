@@ -1,4 +1,5 @@
 html,body{height:100%;min-height:100%;}
+main{overflow:hidden;margin-bottom:50px}
 
 /* top menu */
 .navbar-brand{font-size:1.2em;}
@@ -13,11 +14,6 @@ html body div.container-fluid.h-100{margin-top:56px}
 /* dark backdrop for session timed out modal */
 .modal-backdrop.show{opacity:.7 !important;background-color:#00;}
 
-/* detached buttons */
-ol.breadcrumb{padding-left:18.5rem;}
-
-*[aria-hidden=true]{display:none;}
-
 /* breadcrumb */
 ul.breadcrumb{list-style:none;display:block;border-radius:0;margin:auto -15px 15px -15px;}
 ul.breadcrumb li{display:inline-block;}
@@ -27,8 +23,6 @@ ul.breadcrumb li:nth-child(even) a:before{border-color:#2980b9;border-left-color
 ul.breadcrumb li:nth-child(even) a:after{border-left-color:#2980b9;}
 ul.breadcrumb li:first-child a{padding-left:15px;-moz-border-radius:4px 0 0 4px;-webkit-border-radius:4px;border-radius:4px 0 0 4px;}
 ul.breadcrumb li:first-child a:before{border:none;}
-ul.breadcrumb li:last-child a{padding-right:15px;-moz-border-radius:0 4px 4px 0;-webkit-border-radius:0;border-radius:0 4px 4px 0;}
-ul.breadcrumb li:last-child a:after{border:none;}
 ul.breadcrumb li a:before, ul.breadcrumb li a:after{content:"";position:absolute;top:0;border:0 solid #3498db;border-width:20px 10px;width:0;height:0;}
 ul.breadcrumb li a:before{left:-20px;border-left-color:transparent;}
 ul.breadcrumb li a:after{left:100%;border-color:transparent;border-left-color:#3498db;}
@@ -38,9 +32,13 @@ ul.breadcrumb li a:hover:after{border-left-color:#1abc9c;}
 ul.breadcrumb li a:active{background-color:#16a085;}
 ul.breadcrumb li a:active:before{border-color:#16a085;border-left-color:transparent;}
 ul.breadcrumb li a:active:after{border-left-color:#16a085;}
+ul.breadcrumb > button{margin-right:5px}
 
 /* margin for tablist */
 ul[role="tablist"]{margin-bottom:15px;}
+
+/* fix small bottom border on active tab */
+.nav-tabs .nav-item{margin-bottom:-2px}
 
 /* form buttons */
 .buttonline{border-top:1px solid #ccc;padding:5px;background-color:#f5f5f5;}
@@ -57,7 +55,7 @@ div.form-group.form-row div.form-check.form-check-inline.enum:not(:last-child){b
 
 /* top nav */
 #navbarMainContent{color:rgba(255,255,255,.75)}
-#navbarMainContent li a.nav-link{display:inline}
+#navbarMainContent li a.nav-link{display:inline-block}
 #navbarMainContent li a.nav-link.dropdown-item{color:#000}
 #navbarMainContent li a.nav-link.dropdown-item.active{color:#000;background-color:#fff}
 #navbarMainContent li a.nav-link::before{font-family:"FontAwesome";padding-right:3px}
@@ -91,7 +89,7 @@ div.form-group.form-row div.form-check.form-check-inline.enum:not(:last-child){b
 .fa-theme:before{content:"\f26c"}
 .fa-tool:before{content:"\f0ad"}
 .fa-users:before{content:"\f183";}
-.fa-wysiwyg:before{content:"\f2c3"}
+.fa-WYSIWYG:before{content:"\f2c3"}
 
 /* fix for Boostrap v4: Multilevel Sub Menu for top navbar */
 .dropdown-submenu{position:relative;}
@@ -120,12 +118,22 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
     font-weight: 700;
 }
 
+/* dashboard */
+.column-count-1{column-count:1;}
+.column-count-2{column-count:2;}
+.column-count-3{column-count:3;}
+.column-count-4{column-count:4;}
+
 .mt50{margin-top:50px !important;}
 
 
 .main .page-header {
   margin-top: 0;
 }
+
+/* labels inside table cols (backend_settings_socialmedia.tpl) */
+table tbody tr td{white-space:nowrap;}
+table tbody tr td .label{display:inline-block;width:10em;font-weight:500}
 
 
 
@@ -136,6 +144,7 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
   margin-right: 0;
   cursor: pointer;
 }
+.custom-control{display:inline-block}
   .custom-checkbox .custom-control-indicator {
     content: "";
     display: inline-block;
@@ -167,6 +176,7 @@ span.fancytree-active span.fancytree-title, span.fancytree-selected span.fancytr
     }
   .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator {
     background-image: none;
+    background-color: rgb(0,153,0);
     box-shadow: none !important;
   }
     .custom-checkbox .custom-control-input:checked ~ .custom-control-indicator:after {

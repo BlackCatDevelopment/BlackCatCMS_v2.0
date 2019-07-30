@@ -18,6 +18,7 @@
 namespace CAT\Helper;
 use \CAT\Base as Base;
 use \CAT\Registry as Registry;
+use \CAT\Helper\Directory as Directory;
 
 if (!class_exists('\CAT\Helper\Media'))
 {
@@ -86,7 +87,7 @@ if (!class_exists('\CAT\Helper\Media'))
                 {
                     $attr[$item['attribute']] = $item['value'];
                 }
-                $attr['hfilesize'] = \CAT\Helper\Directory::humanize($attr['filesize']);
+                $attr['hfilesize'] = Directory::humanize($attr['filesize']);
                 $attr['filename']  = $data[0]['filename'];
                 $attr['is_image']  = (substr($attr['mime_type'],0,6) == 'image/')
                                    ? true
@@ -95,6 +96,20 @@ if (!class_exists('\CAT\Helper\Media'))
             }
             return $attr;
         }   // end function getAttributes()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getDirname(string $dir)
+        {
+            return str_ireplace(
+                self::user()->getHomeFolder().'/',
+                '',
+                $dir
+            );
+        }   // end function getDirname()
 
         /**
          *
@@ -114,13 +129,32 @@ if (!class_exists('\CAT\Helper\Media'))
                 );
                 $files = $sth->fetchAll();
                 foreach($files as $i => $f) {
-                    $files[$i] = array_merge($files[$i],self::getAttributes($f['media_id']));
-                    $files[$i]['filename'] = \CAT\Helper\Directory::getName($f['filename']);
+                    $attr      = self::getAttributes($f['media_id']);
+                    $files[$i] = array_merge($files[$i],$attr);
+                    $files[$i]['filename'] = Directory::getName($f['filename']);
+                    $files[$i]['isImage']  = substr_count($attr['mime_type'],'image/');
                 }
                 return $files;
             }
             return false;
         }   // end function getFiles()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function getFolderByID(int $id) : string
+        {
+            $sth  = self::db()->query(
+                  'SELECT `path` FROM `:prefix:media_dirs` AS `t1` '
+                . 'WHERE `dir_id`=? AND `site_id`=?',
+                array($id,CAT_SITE_ID)
+            );
+            $data = $sth->fetch();
+            if(is_array($data) && isset($data['path'])) return $data['path'];
+            return '';
+        }   // end function getFolderByID()
 
         /**
          *
@@ -174,6 +208,30 @@ if (!class_exists('\CAT\Helper\Media'))
          * @access public
          * @return
          **/
+        public static function removeFolder(int $id, string $dir) : bool
+        {
+            $fulldir = CAT_PATH.'/'.Registry::get('media_directory').'/'.$dir;
+            // the folder may no longer exists, just the entry in the db
+            if(is_dir($fulldir)) {
+// !!!!! TODO: Derzeit wird das Ergebnis der Loeschen-Operation ignoriert !!!!!!
+                $result = Directory::removeDirectory($fulldir);
+            } else {
+                $result = true;
+            }
+            if($id && $result) {
+                $sth = self::db()->query(
+                    'DELETE FROM `:prefix:media_dirs` WHERE `dir_id`=?',
+                    array($id)
+                );
+            }
+            return self::db()->isError() ? false : true;
+        }   // end function removeFolder()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
         public static function updateFiles($dir,$filter=NULL,$recurse=false)
         {
             // first, make sure the directory exists, and is already present in
@@ -197,7 +255,7 @@ if (!class_exists('\CAT\Helper\Media'))
                 if(!count($suffixes))
                     return false;
             }
-            $files = \CAT\Helper\Directory::findFiles(
+            $files = Directory::findFiles(
                 $dir,array('extension'=>$suffixes,'recurse'=>$recurse)
             );
 
@@ -222,7 +280,7 @@ if (!class_exists('\CAT\Helper\Media'))
             {
                 foreach($files as $file)
                 {
-                    $decoded_filename = \CAT\Helper\Directory::getName(pathinfo($file,PATHINFO_BASENAME));
+                    $decoded_filename = Directory::getName(pathinfo($file,PATHINFO_BASENAME));
                     if(!array_key_exists($decoded_filename,$dbfiles))
                     {
                         self::db()->query(
@@ -262,10 +320,21 @@ if (!class_exists('\CAT\Helper\Media'))
          **/
         public static function updateFolderData($dir)
         {
-            $subfolders = \CAT\Helper\Directory::findDirectories(
-                $dir, array('recurse'=>true,'remove_prefix'=>CAT_PATH.'/'.Registry::get('media_directory'))
+            // under some circumstances, the 'media' folder is added twice
+            $dir = str_ireplace(
+                \CAT\Registry::get('media_directory').'/'.\CAT\Registry::get('media_directory'),
+                \CAT\Registry::get('media_directory'),
+                $dir
             );
+            // get subfolders
+            $subfolders = Directory::findDirectories(
+                $dir, array('recurse'=>true,'remove_prefix'=>CAT_PATH.'/'.Registry::get('media_directory').'/')
+            );
+            // add the dir itself to the folders to check
+            array_unshift($subfolders,self::getDirname($dir));
+            // get folders already in DB
             $dbfolders = self::getFolders();
+            // check real folders against DB
             if(is_array($subfolders) && count($subfolders)>0)
             {
                 $lookup1 = array_flip($subfolders);
@@ -278,7 +347,7 @@ if (!class_exists('\CAT\Helper\Media'))
                 // add folders to db
                 foreach($subfolders as $folder)
                 {
-                    if(!array_key_exists(\CAT\Helper\Directory::getName(ltrim($folder,'/')),$lookup2))
+                    if(!array_key_exists(Directory::getName(ltrim($folder,'/')),$lookup2))
                     {
                         self::db()->query(
                             'INSERT INTO `:prefix:media_dirs` (`site_id`,`path`) VALUES (?,?)',
@@ -297,7 +366,6 @@ if (!class_exists('\CAT\Helper\Media'))
                         }
                     }
                 }
-
             }
         }   // end function updateFolderData()
         
@@ -341,7 +409,7 @@ if (!class_exists('\CAT\Helper\Media'))
             // file size
             if(isset($data['filesize']) && $data['filesize'] != 'n/a')
             {
-                $data['hfilesize'] = \CAT\Helper\Directory::humanize($data['filesize']);
+                $data['hfilesize'] = Directory::humanize($data['filesize']);
                 self::db()->query(
                       'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
                     . 'VALUES(?, ?, ?)',
@@ -350,7 +418,7 @@ if (!class_exists('\CAT\Helper\Media'))
             }
 
             // modification time
-            $data['moddate'] = \CAT\Helper\DateTime::getDateTime(\CAT\Helper\Directory::getModdate($filename));
+            $data['moddate'] = \CAT\Helper\DateTime::getDateTime(Directory::getModdate($filename));
             self::db()->query(
                   'INSERT INTO `:prefix:media_data` ( `media_id`, `attribute`, `value` ) '
                 . 'VALUES(?, ?, ?)',

@@ -135,12 +135,17 @@ if ( !class_exists( 'Addons' ) )
                         } else {
                             $q->andWhere('type = '.$q->createNamedParameter($type));
                         }
+                    } else {
+                        $q->andWhere('type != "core"');
                     }
 
                     // always order by type
                     $q->orderBy('type', 'ASC'); // default order
-                    if($order && $order != 'name')
+                    if($order) {
                         $q->addOrderBy($order, 'ASC');
+                    } else {
+                        $q->addOrderBy('name','ASC');
+                    }
 
                     // get the data
                     $data = $q->execute()->fetchAll();
@@ -152,31 +157,36 @@ if ( !class_exists( 'Addons' ) )
                         {
                             unset($data[$i]); // not allowed
                         }
-                        if(!$names_only && $find_icon)
+                        if(!$names_only)
                         {
-                            $icon = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
-                            $data[$i]['icon'] = '';
-                            if(file_exists($icon)){
-                                list($width, $height, $type_of, $attr) = getimagesize($icon);
-                                // Check whether file is 32*32 pixel and is an PNG-Image
-                                $data[$i]['icon']
-                                    = ($width == 32 && $height == 32 && $type_of == 3)
-                                    ? CAT_URL.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png'
-                                    : false
-                                    ;
+                            if($find_icon) {
+                                $icon = Directory::sanitizePath(CAT_ENGINE_PATH.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png');
+                                $data[$i]['icon'] = '';
+                                if(file_exists($icon)){
+                                    list($width, $height, $type_of, $attr) = getimagesize($icon);
+                                    // Check whether file is 32*32 pixel and is an PNG-Image
+                                    $data[$i]['icon']
+                                        = ($width == 32 && $height == 32 && $type_of == 3)
+                                        ? CAT_URL.'/'.$addon['type'].'s/'.$addon['directory'].'/icon.png'
+                                        : false
+                                        ;
+                                }
+                            }
+                            if($addon['type']!='language') {
+                                $info = self::getInfo($addon['directory']);
+                                $data[$i] = array_merge($data[$i],$info);
                             }
                         }
                     }
 
                     if($not_installed)
                     {
-                        $seen   = HArray::extract($data,'directory');
+                        $seen   = HArray::extractList($data,'directory');
                         $result = array();
                         // scan modules path for modules not seen yet
                         foreach(array('modules','templates') as $t)
                         {
                             $subdirs = Directory::findDirectories(CAT_ENGINE_PATH.'/'.$t);
-
                             if(count($subdirs))
                             {
                                 foreach($subdirs as $dir)
@@ -184,8 +194,10 @@ if ( !class_exists( 'Addons' ) )
                                     // skip paths starting with __ (sometimes used for deactivating addons)
                                     if(substr($dir,0,2) == '__') continue;
                                     $info = self::getInfo($dir);
-                                    if(is_array($info) && count($info))
+
+                                    if(is_array($info) && count($info) && !in_array($dir,$seen)) {
                                         $result[] = $info;
+                                    }
                                 }
                             }
                         }
@@ -194,8 +206,16 @@ if ( !class_exists( 'Addons' ) )
                     break;
             } // end switch()
 
-            if($names_only)
+            if($names_only) {
                 $data = HArray::extractList($data,'name','directory');
+            } else {
+                for($i=0;$i<count($data);$i++) {
+                    $info = self::getInfo($data[$i]['directory']);
+                    if(is_array($info) && !empty($info)) {
+                        $data[$i] = array_merge($data[$i],$info);
+                    }
+                }
+            }
 
             return $data;
         } // end function getAddons()
@@ -210,7 +230,7 @@ if ( !class_exists( 'Addons' ) )
         public static function getDetails($addon,$field='*')
         {
             // sanitize column name
-            if(!in_array($field,array('*','addon_id','type','directory','name','description','function','version','guid','platform','author','license','installed','upgraded','removable','bundled')))
+            if(!in_array($field,array('*','addon_id','type','directory','name','installed','upgraded','removable','bundled')))
                 return NULL; // silently fail
             $q = 'SELECT %s FROM `:prefix:addons` WHERE ';
             if(is_numeric($addon)) $q .= '`addon_id`=:val';
@@ -293,14 +313,14 @@ if ( !class_exists( 'Addons' ) )
         public static function getVersion($version)
         {
             $version = strtolower($version);
-
             // additional version string, f.e. "beta", to "weight"
-            foreach(self::$states as $value => $keys)
+            foreach(self::$states as $value => $keys) {
                 $version = str_replace($keys, $value, $version);
-            // remove blanks, replace comma
+            }
+            // remove blanks, comma, 'x'
             $version = str_replace(
-                array(" ",','),
-                array("",''),
+                array(" ",',','.x'),
+                array("",'',''),
                 $version
             );
             /**

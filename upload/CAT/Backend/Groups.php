@@ -48,16 +48,27 @@ if (!class_exists('\CAT\Backend\Groups'))
 print_r($_REQUEST);
         }   // end function addmember()
 
-        public static function create()
+        public static function add()
         {
             if(!Base::user()->hasPerm('groups_add'))
-                Json::printError('You are not allowed for the requested action!');
+                self::printError('You are not allowed for the requested action!');
+
             $val   = \CAT\Helper\Validate::getInstance();
             $name  = $val->sanitizePost('group_name');
             $desc  = $val->sanitizePost('group_description');
-            if(\CAT\Groups::exists($name))
+            if(\CAT\Helper\Groups::exists($name))
                 Json::printError('A group with the same name already exists!');
-            \CAT\Groups::addGroup($name,$desc);
+
+            $result = \CAT\Helper\Groups::addGroup($name,$desc);
+
+            if(self::asJSON())
+            {
+                echo header('Content-Type: application/json');
+                echo Json::printSuccess('Success');
+                return;
+            }
+
+            self::router()->reroute(CAT_BACKEND_PATH.'/groups');
         }
 
         /**
@@ -74,12 +85,12 @@ print_r($_REQUEST);
                 Json::printError('You are not allowed for the requested action!');
             $val   = \CAT\Helper\Validate::getInstance();
             $id    = $val->sanitizePost('id');
-            if(!\CAT\Groups::exists($id))
+            if(!\CAT\Helper\Groups::exists($id))
                 Json::printError('No such group!');
             $group = \CAT\Groups::getInstance()->getGroup($id);
             if($group['builtin']=='Y')
                 Json::printError('Built-in elements cannot be removed!');
-            $res   = \CAT\Groups::removeGroup($id);
+            $res   = \CAT\Helper\Groups::removeGroup($id);
             Base::json_result($res,($res?'':'Failed!'),($res?true:false));
         }   // end function delete()
 
@@ -158,9 +169,9 @@ print_r($_REQUEST);
                 $tpl_data['groups'][$i]['member_count'] = count($members);
                 $tpl_data['groups'][$i]['role_count']   = count($roles);
             }
-            \CAT\Backend::print_header();
+            \CAT\Backend::printHeader();
             self::tpl()->output('backend_groups', $tpl_data);
-            \CAT\Backend::print_footer();
+            \CAT\Backend::printFooter();
         }   // end function index()
 
         /**
@@ -184,9 +195,9 @@ print_r($_REQUEST);
             $tpl_data = array(
                 'members' => $users
             );
-            \CAT\Backend::print_header();
+            \CAT\Backend::printHeader();
             self::tpl()->output('backend_groups_members', $tpl_data);
-            \CAT\Backend::print_footer();
+            \CAT\Backend::printFooter();
         }   // end function users()
 
     } // class \CAT\Helper\Groups

@@ -1,0 +1,1 @@
+https://github.com/Talv/x-editable/tree/develop/dist/bootstrap4-editable

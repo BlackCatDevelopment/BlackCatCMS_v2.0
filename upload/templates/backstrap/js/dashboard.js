@@ -2,11 +2,6 @@ $(function() {
     var dashboard_id = $('div.dashboard').data('id'),
         columns      = $('div.dashboard').data('columns');
 
-    // dashboard lanes
-    $('ul.columnize').columnize(columns,{
-        ul_classes:'bs_sortable'
-    });
-
     // addable widgets
     $.ajax({
         type    : 'POST',
@@ -71,38 +66,6 @@ $(function() {
             e.preventDefault();
         });
     });
-
-    // drag & drop
-    $(".bs_sortable").sortable({
-        connectWith: ".bs_sortable",
-        placeholder: "bs_placeholder",
-        forcePlaceholderSize: true,
-        forceHelperSize: true,
-        over:function(event,ui){
-            $('.bs_placeholder').parent().addClass('bs_highlight');
-        },
-        out:function(event,ui){
-            $('.bs_placeholder').parent().removeClass('bs_highlight');
-        },
-        update:function(event,ui){
-            // make sure this only fires once
-            if (this === ui.item.parent()[0]) {
-                $(this).removeClass('bs_highlight');
-                $(this).find('.card').effect("highlight","slow");
-                $.ajax({
-                    type    : 'POST',
-                    url     : CAT_ADMIN_URL + '/dashboard/order',
-                    data    : {
-                        col      : $(this).data('col'),
-                        row      : ui.item.index()+1,
-                        id       : ui.item.find('.card').data('id'),
-                        dashboard: dashboard_id
-                    },
-                    dataType: 'json'
-                });
-            }
-        }
-    }).disableSelection();
 
     // toggle panel
     $(document).on('click', '.card-header span.toggle', function(e){

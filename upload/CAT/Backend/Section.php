@@ -24,7 +24,7 @@ if (!class_exists('\CAT\Backend\Section'))
     {
         protected static $loglevel = \Monolog\Logger::EMERGENCY;
         protected static $instance = NULL;
-        protected static $debug    = false;
+        protected static $debug    = true;
 
         /**
          * create an instance (singleton)
@@ -54,7 +54,7 @@ if (!class_exists('\CAT\Backend\Section'))
                 . (self::$debug ? '(CAT_Backend_Section::add())' : '');
             else
                 $module = \CAT\Helper\Addons::getDetails($addon,'addon_id');
-            $blockID = \CAT\Helper\Validate::sanitizePost('block','numeric',1);
+            $blockID = \CAT\Helper\Validate::sanitizePost('block','numeric');
             $result  = \CAT\Sections::addSection($pageID,$module,$blockID);
             if(self::asJSON())
             {
@@ -84,6 +84,59 @@ if (!class_exists('\CAT\Backend\Section'))
                 return;
             }
         }   // end function delete()
+
+        /**
+         *
+         * @access public
+         * @return
+         **/
+        public static function edit()
+        {
+            $sectionID = self::getSectionID();
+
+            // check permissions
+            if(!self::user()->hasPerm('section_edit'))
+                self::printFatalError('You are not allowed for the requested action!');
+
+            // option name
+            $opt     = \CAT\Helper\Validate::get('name','string');
+            // new value
+            $value   = \CAT\Helper\Validate::get('value','string');
+            // id
+            $pageID  = \CAT\Helper\Validate::get('pk');
+            // default block number
+            $blockNr = 1;
+
+            if(substr_count($pageID,'#')) {
+                list($pageID,$blockNr) = explode('#',$pageID,2);
+            }
+
+            if($sectionID && $opt && $value && $pageID)
+            {
+                self::db()->query(
+                      'UPDATE `:prefix:pages_sections` '
+                    . 'SET `:field:`=:value '
+                    . 'WHERE `page_id`=:page AND `section_id`=:section AND `block`=:block',
+                    array(
+                        'page'    => $pageID,
+                        'section' => $sectionID,
+                        'field'   => $opt,
+                        'value'   => $value,
+                        'block'   => $blockNr,
+                    )
+                );
+echo "FILE [",__FILE__,"] FUNC [",__FUNCTION__,"] LINE [",__LINE__,"]<br /><textarea style=\"width:100%;height:200px;color:#000;background-color:#fff;\">";
+print_r(self::db()->getLastStatement(array(
+                        'page'    => $pageID,
+                        'section' => $sectionID,
+                        'field'   => $opt,
+                        'value'   => $value,
+                        'block'   => $blockNr,
+                    )));
+echo "</textarea><br />";
+            }
+
+        }   // end function edit()
 
         /**
          *
@@ -273,7 +326,7 @@ if (!class_exists('\CAT\Backend\Section'))
             // special case
             if($section['module']=='wysiwyg')
             {
-                \CAT\Addon\WYSIWYG::initialize();
+                \CAT\Addon\WYSIWYG::initialize($section);
                 $result = \CAT\Addon\WYSIWYG::save($sectionID);
             }
             else
@@ -334,13 +387,16 @@ if (!class_exists('\CAT\Backend\Section'))
         protected static function getPageID()
         {
             $self    = self::getInstance();
-            $pageID  = \CAT\Helper\Validate::sanitizePost('page_id','numeric',NULL);
+            $pageID  = \CAT\Helper\Validate::sanitizePost('page_id','numeric');
 
             if(!$pageID)
-                $pageID  = \CAT\Helper\Validate::sanitizeGet('page_id','numeric',NULL);
+                $pageID  = \CAT\Helper\Validate::sanitizeGet('page_id','numeric');
 
             if(!$pageID)
                 $pageID = $self->router()->getParam(-1);
+
+            if(!$pageID)
+                $pageID = $self->router()->getRoutePart(-1);
 
             if(!$pageID)
                 $pageID = \CAT\Sections::getPageForSection(self::getSectionID());
@@ -359,10 +415,10 @@ if (!class_exists('\CAT\Backend\Section'))
          **/
         protected static function getSectionID()
         {
-            $sectID  = \CAT\Helper\Validate::sanitizePost('section_id','numeric',NULL);
+            $sectID  = \CAT\Helper\Validate::sanitizePost('section_id','numeric');
 
             if(!$sectID)
-                $sectID  = \CAT\Helper\Validate::sanitizeGet('section_id','numeric',NULL);
+                $sectID  = \CAT\Helper\Validate::sanitizeGet('section_id','numeric');
 
             if(!$sectID)
                 $sectID = self::router()->getParam(-1);

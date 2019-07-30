@@ -4,8 +4,28 @@
                 <table style="width:100%;">
                   <tr>
                     <td><span class="fa fa-fw fa-arrows"></span></td>
-                    <td><strong>{translate('Block')}:</strong> {$block.name} ({translate('Block number')}: {$block.block})</td>
-                    <td><strong>{translate('Name')}:</strong> <span class="editable" data-name="name" data-type="text" data-pk="{$block.section_id}" data-url="{$CAT_ADMIN_URL}/sections/edit">{if !$block.name}<i>{translate('no name')}</i>{else}{$block.name}{/if}</span></td>
+                    <td>
+                        {if $avail_blocks}
+                        <button class="btn dropdown-toggle" type="button" id="bsBlockDropdown{$block.section_id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <span class="font-weight-bold">{translate('Block')}:</span> {$block.block}
+                        </button>
+                        <div class="dropdown-menu keep-open">
+                          <div class="form-row">
+                            <div class="col">
+                              <select name="blocknr" class="form-control form-control-sm">
+                              {foreach $avail_blocks number name}<option value="{$number}"{if $number == $block.block} selected="selected"{/if}>{$name}</option>{/foreach}
+                              </select>
+                            </div>
+                            <div class="col">
+                              <input type="submit" data-id="{$block.section_id}" class="form-control form-control-sm bsVariantSave" value="{translate('Save')}" />
+                            </div>
+                          </div>
+                        </div>
+                        {else}
+                        <strong>{translate('Block')}:</strong> {$block.block}
+                        {/if}
+                    </td>
+                    <td><strong>{translate('Name')}:</strong> <span class="editable" data-name="name" data-type="text" data-pk="{$block.page_id}#{$block.block}" data-url="{$CAT_ADMIN_URL}/section/edit/{$block.section_id}">{if !$block.name}<i>{translate('no name')}</i>{else}{$block.name}{/if}</span></td>
                     <td><strong>{translate('Module')}:</strong> {$block.module}</td>
                     <td><strong>{translate('Section ID')}:</strong> {$block.section_id}</td>
                     <td>

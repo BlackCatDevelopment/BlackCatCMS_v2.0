@@ -25,9 +25,9 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
     {
         protected static $type        = 'tool';
         protected static $directory   = 'JSMgr';
-        protected static $name        = 'JSMgr';
+        protected static $name        = 'JavaScript Plugin Manager';
         protected static $version     = '1.0';
-        protected static $description = "JSMgr";
+        protected static $description = "Manage your jQuery- and other JavaScript Plugins";
         protected static $author      = "BlackCat Development";
         protected static $guid        = "cae3b023-13a4-4a9d-8634-115cf4ee9bc2";
         protected static $license     = "GNU General Public License";
@@ -38,7 +38,7 @@ if(!class_exists('\CAT\Addon\JSMgr',false))
          * @access public
          * @return
          **/
-        public static function initialize()
+        public static function initialize(array $section)
         {
             self::$basepath = \CAT\Helper\Directory::sanitizePath(
                 CAT_ENGINE_PATH.'/modules/lib_javascript/plugins/'

@@ -2,7 +2,29 @@
         </div>
         <footer class="navbar fixed-bottom navbar-expand navbar-dark bg-dark">
             <div class="text-muted">{$WEBSITE_TITLE}</div>
-            <div id="sessiontimer" class="navbar-nav flex-row ml-md-auto d-none d-md-flex text-muted">{translate('Remaining session time')}: <span id="sesstime">{$SESSION_TIME}</span></div>
+            <div id="sessiontimer" class="navbar-nav flex-row ml-md-auto d-none d-md-flex text-muted">
+                <div class="nav-item dropup">
+                    <a class="dropdown-toggle mr-5 text-muted" href="#" id="bsInfo" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="10,20">
+                        <i class="fa fa-info-circle"></i>
+                    </a>
+                    <div class="dropdown-menu p-2" style="width:300px;font-size:.8em">
+                        <div class="row">
+                            <div class="col">{translate('About')}</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="row">
+                            <div class="col">{translate('BlackCat Version')}:</div><div class="col">{$CAT_VERSION}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{translate('PHP Version')}:</div><div class="col"><?php echo PHP_VERSION ?></div>
+                        </div>
+                        <div class="row">
+                            <div class="col">{translate('Backend Theme')}:</div><div class="col">{$THEME_INFO.name} v{$THEME_INFO.version}</div>
+                        </div>
+                    </div>
+                </div>
+                {translate('Remaining session time')}: <span id="sesstime">{$SESSION_TIME}</span>
+            </div>
         </footer>
         {include(file='backend_modal.tpl' modal_id='bsDialog' modal_title='', modal_text='', modal_savebtn='1')}
         {include(file='backend_modal.tpl' modal_id='add_page_modal' modal_title='', modal_text='$add_page_form', modal_savebtn='1')}

@@ -63,8 +63,9 @@ if (!class_exists('Page'))
             $pageID   = NULL;
 
             $add_form = FormBuilder::generateForm('be_page_add');
+            $add_form->setAttribute('action',CAT_ADMIN_URL.'/page/add');
 
-            if($add_form->isValid())
+            if($add_form->isSent() && $add_form->isValid())
             {
                 $data   = $add_form->getData();
                 $errors = array();
@@ -96,26 +97,16 @@ if (!class_exists('Page'))
                     // get details for parent page
                     $parent_page = HPage::properties($parent);
 
-                    // set root parent
-                    $query->setValue('root_parent',$query->createNamedParameter($parent_page['page_id']));
-
                     // set level
                     $query->setValue('level',$query->createNamedParameter($parent_page['level']+1));
 
-                    // set trail
-                    $trail = (substr_count($parent_page['page_trail'],',')>0 ? explode(',',$parent_page['page_trail']) : array());
-                    array_push($trail,$parent_page['page_id']);
-                    $query->setValue('page_trail',$query->createNamedParameter(implode(',',$trail)));
-
                     // set link
-                    $query->setValue('link',$query->createNamedParameter($parent_page['link'].'/'.$title));
+                    $query->setValue('route',$query->createNamedParameter($parent_page['link'].'/'.$title));
                 }
                 else
                 {
-                    // set root parent
-                    $query->setValue('root_parent',$query->createNamedParameter(0));
                     // set link
-                    $query->setValue('link',$query->createNamedParameter('/'.$title));
+                    $query->setValue('route',$query->createNamedParameter('/'.$title));
                 }
 
                 // save page
@@ -140,24 +131,21 @@ if (!class_exists('Page'))
                     'message' => self::lang()->t('The page was created successfully')
                 );
             }
-            else
-            {
-                $tpl_data['form'] = $add_form->render(true);
-            }
+
+            $tpl_data['form'] = $add_form->render(true);
 
             if(self::asJSON())
             {
                 echo Json::printData($tpl_data);
                 exit;
             }
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            Backend::print_header();
-echo "HIER SOLLTE ICH NICHT SEIN!<br />";
-exit;
+            Backend::printHeader();
             self::tpl()->output('backend_page_add', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function add()
 
         /**
@@ -193,15 +181,19 @@ exit;
             // sections
             $sections = array();
 
-            //
+            // blocks (one block may contain several sections)
             $blocks   = array();
 
-            // template data
+            // available template blocks
+            $tpl_blocks = Template::getBlocks();
+
+            // default template data
             $tpl_data = array(
                 'blocks'  => NULL,
                 'addable' => $addable,
                 'langs'   => self::getLanguages(1), // available languages
                 'pages'   => HPage::getPages(1),
+                'avail_blocks' => Template::getBlocks(),
             );
 
             // catch errors on wrong pageID
@@ -358,9 +350,9 @@ exit;
                 self::lang()->translate('Edit')
             ));
 
-            Backend::print_header();
+            Backend::printHeader();
             self::tpl()->output('backend_page_modify', $tpl_data);
-            Backend::print_footer();
+            Backend::printFooter();
         }   // end function edit()
 
         /**
@@ -379,10 +371,10 @@ exit;
          **/
         public static function getPageID()
         {
-            $pageID  = Validate::sanitizePost('page_id','numeric',NULL);
+            $pageID  = Validate::sanitizePost('page_id','numeric');
 
             if(!$pageID)
-                $pageID  = Validate::sanitizeGet('page_id','numeric',NULL);
+                $pageID  = Validate::sanitizeGet('page_id','numeric');
 
             if(!$pageID)
                 $pageID = self::router()->getParam(-1);
@@ -506,12 +498,12 @@ Array
                     ))
                 ));
             } else {
-                Backend::print_header();
+                Backend::printHeader();
                 self::tpl()->output('backend_page_headerfiles', array(
                     'files'  => $files,
                     'tplcss' => $tplcss,
                 ));
-                Backend::print_footer();
+                Backend::printFooter();
             }
 
         }   // end function headerfiles()
@@ -825,12 +817,12 @@ echo "</textarea>";
             {
                 Json::printSuccess($form->render(true));
             } else {
-                Backend::print_header();
+                Backend::printHeader();
                 self::tpl()->output('backend_page_settings', array(
                     'form' => $form->render(true),
                     'page' => HPage::properties($pageID),
                 ));
-                Backend::print_footer();
+                Backend::printFooter();
             }
         }   // end function settings()
 
@@ -846,14 +838,14 @@ echo "</textarea>";
             {
                 Json::printSuccess($form->getForm());
             } else {
-                Backend::print_header();
+                Backend::printHeader();
                 self::tpl()->output('backend_page_sections', array(
                     'page'     => HPage::properties($pageID),
                     'sections' => \CAT\Sections::getSections($pageID,NULL,false),
                     'blocks'   => Template::getBlocks(),
                     'addable'  => Addons::getAddons('page','name',false),
                 ));
-                Backend::print_footer();
+                Backend::printFooter();
             }
         }   // end function sections()
 

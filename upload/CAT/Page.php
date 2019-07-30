@@ -18,6 +18,7 @@
 namespace CAT;
 
 use \CAT\Base as Base;
+use \CAT\Helper\Page as HPage;
 
 if (!class_exists('\CAT\Page', false))
 {
@@ -149,15 +150,16 @@ if (!class_exists('\CAT\Page', false))
             $sections = \CAT\Sections::getSections($page_id,$block,true);
 
             // in fact, this should never happen, als isActive() does the same
-            if(!count($sections)) // no content for this block
+            if(!is_array($sections) || !count($sections)) // no content for this block
                 return false;
 
             $output = array();
 
-            foreach($sections as $block => $items)
+            #foreach($sections as $block => $items)
+            foreach($sections as $index => $section)
             {
-                foreach($items as $section)
-                {
+                #foreach($items as $section)
+                #{
                     if(!$section['active'] || $section['expired']) continue;
 
                     // spare some typing
@@ -198,7 +200,7 @@ if (!class_exists('\CAT\Page', false))
                             );
                         }
                     }
-                }
+                #}
             }
             echo implode("\n", $output);
         }   // end function getPageContent()
@@ -210,9 +212,9 @@ if (!class_exists('\CAT\Page', false))
          **/
         public static function print404()
         {
-            if(\CAT\Registry::exists('ERR_PAGE_404'))
+            if(\CAT\Registry::get('err_page_404')!==0)
             {
-                $err_page_id = \CAT\Registry::get('ERR_PAGE_404');
+                $err_page_id = \CAT\Registry::get('err_page_404');
                 header($_SERVER['SERVER_PROTOCOL'].' 404 Not found');
                 header('Location: '.\CAT\Helper\Page::getLink($err_page_id));
             }
@@ -231,29 +233,15 @@ if (!class_exists('\CAT\Page', false))
          **/
         public function setTemplate()
         {
-/*
             if(!defined('TEMPLATE'))
             {
-                $prop = $this->getProperties();
-                // page has it's own template
-                if(isset($prop['template']) && $prop['template'] != '') {
-                    if(file_exists(\CAT\PATH.'/templates/'.$prop['template'].'/index.php')) {
-                        \CAT\Registry::register('TEMPLATE', $prop['template'], true);
-                    } else {
-                        \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
-                    }
-                // use global default
-                } else {
-                    \CAT\Registry::register('TEMPLATE', \CAT\Registry::get('DEFAULT_TEMPLATE'), true);
-                }
+                define('TEMPLATE',HPage::getPageTemplate($this->page_id));
             }
             $dir = '/templates/'.TEMPLATE;
-            // Set the template dir (which is, in fact, the URL, but for backward
-            // compatibility, we have to keep this irritating name)
-            \CAT\Registry::register('TEMPLATE_DIR', CAT_URL.$dir, true);
+            // Set the template url
+            \CAT\Registry::register('CAT_TEMPLATE_URL', CAT_URL.$dir);
             // This is the REAL dir
-            \CAT\Registry::register('CAT_TEMPLATE_DIR', CAT_PATH.$dir, true);
-*/
+            \CAT\Registry::register('CAT_TEMPLATE_DIR', CAT_ENGINE_PATH.$dir);
         }   // end function setTemplate()
 
         /**
@@ -278,17 +266,73 @@ if (!class_exists('\CAT\Page', false))
 
             self::tpl()->setGlobals('page_id',$this->page_id);
 
+            self::track($this->page_id);
+
             // including the template; it may calls different functions
             // like page_content() etc.
             $this->log()->addDebug('including template');
 
             ob_start();
-                require CAT_TEMPLATE_DIR.'/index.php';
+                require \CAT\Registry::get('CAT_TEMPLATE_DIR').'/index.php';
                 $output = ob_get_contents();
             ob_clean();
 
             echo $output;
         }   // end function show()
+
+        /**
+         *
+         * @access protected
+         * @return
+         **/
+        protected static function track($pageID)
+        {
+            // get the IP to create 'unique' identifier; it is not stored!
+            $ip = NULL;
+            if (isset($_SERVER['HTTP_CLIENT_IP']))
+                $ip = $_SERVER['HTTP_CLIENT_IP'];
+            elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            elseif (isset($_SERVER['REMOTE_ADDR']))
+                $ip = $_SERVER['REMOTE_ADDR'];
+
+            // remove outdated entries (1 Minute)
+            $ts = time() - 60; //(60*60);
+            self::db()->query(
+               'DELETE FROM `:prefix:mod_stats_reload` WHERE `page_id`=? && `timestamp`<?',
+                array($pageID, $ts)
+            );
+
+            // don't track localhost
+            #if($ip && !( $ip == '127.0.0.1' || substr($ip,0,2) == '0::' ) )
+            #{
+                // create identifier
+                $ident  = ( isset($_SERVER['HTTP_USER_AGENT']) )      ? $_SERVER['HTTP_USER_AGENT']      : 'xc';
+    			$ident .= ( isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : 'x9';
+    			$ident .= ( isset($_SERVER['HTTP_ACCEPT_CHARSET']) )  ? $_SERVER['HTTP_ACCEPT_CHARSET']  : 'xB';
+                $ident .= $ip;
+                $hash  = sha1($ident);
+
+                $stmt = self::db()->query(
+                    'SELECT `page_id` FROM `:prefix:mod_stats_reload` WHERE `page_ID`=? AND `hash`=?',
+                    array($pageID,$hash)
+                );
+                // do not count visits on the same page
+                if(!$stmt->rowCount()) {
+                    self::db()->query(
+                        'INSERT INTO `:prefix:mod_stats_reload` VALUES (?,?,?)',
+                        array($pageID,$hash,time())
+                    );
+                    self::db()->query(
+                          'INSERT INTO `:prefix:pages_visits` (`page_id`,`last`) '
+                        . 'VALUES(?,?) '
+                        . 'ON DUPLICATE KEY UPDATE `visits`=`visits`+1;',
+                        array($pageID,time())
+                    );
+                }
+            #}
+        }   // end function track()
+        
 
     } // end class \CAT\Page
 

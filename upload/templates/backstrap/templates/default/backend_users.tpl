@@ -14,15 +14,19 @@
     {foreach $users user}
         <tr>
             <td>
-                <span class="fa fa-fw{if $user.protected == 'Y'} fa-anchor{/if}"></span>
+                <span class="fa fa-fw{if $user.protected == 'Y'} fa-anchor" title="{translate('This is a built-in-user, so you cannot change it')}{/if}"></span>
                 {if user_has_perm('users_edit')}
-                    <a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}dis{else}en{/if}abled"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>
-                    <a href="#" class="bsedit" data-url="{$CAT_ADMIN_URL}/users/edit" data-id="{$user.user_id}"><span class="fa fa-fw fa-pencil"></span></a>
+                    <a href="#" class="tfa" data-url="{$CAT_ADMIN_URL}/users/tfa" data-id="{$user.user_id}" title="{translate('Two factor authentication is')}: {if $user.tfa_enabled == 'N'}{translate('disabled')}{else}{translate('enabled')}{/if}"><span class="text-success fa fa-fw fa-{if $user.tfa_enabled == 'N'}un{/if}lock {if $user.tfa_enabled == 'N'}yellow{/if}"></span></a>
+                    {if $user.protected != 'Y'}
+                    <a href="#" class="bsedit" data-url="{$CAT_ADMIN_URL}/users/edit" data-id="{$user.user_id}" title="{translate('Edit')}"><span class="fa fa-fw fa-pencil"></span></a>
+                    {else}
+                    <span class="fa fa-fw"></span>
+                    {/if}
                 {else}
                     <span class="fa fa-fw"></span><span class="fa fa-fw"></span>
                 {/if}
                 {if $user.protected != 'Y'}
-                {if user_has_perm('users_delete')}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>{/if}
+                {if user_has_perm('users_delete')}<a href="#" class="delete" data-url="{$CAT_ADMIN_URL}/users/delete" data-id="{$user.user_id}" data-name="{$user.username}" title="{translate('Delete')}"><span class="fa fa-fw fa-trash text-danger"></span></a>{else}<span class="fa fa-fw"></span>{/if}
                 {/if}
             </td>
             <td>{$user.user_id}</td>
@@ -51,13 +55,16 @@
     </tbody>
 </table>
 
-<span class="text-success fa fa-fw fa-lock"></span> = {translate('Two-Step Authentication enabled')}
-<span class="text-success fa fa-fw fa-unlock"></span> = {translate('Two-Step Authentication disabled')}
-<span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}
-<span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}<br /><br />
+<small>
+<span class="fa fa-fw fa-anchor"></span> = {translate('Built in')}<br />
+<span class="fa fa-fw fa-pencil"></span> = {translate('Edit')}<br />
+<span class="text-success fa fa-fw fa-lock"></span> = {translate('Two-Step Authentication enabled')}<br />
+<span class="text-success fa fa-fw fa-unlock"></span> = {translate('Two-Step Authentication disabled')}<br />
+<span class="fa fa-fw fa-trash text-danger"></span> = {translate('Delete')}
+</small><br /><br />
 
 {* hidden user form *}
-<div hidden>
+<div style="display:none">
     {$userform}
 </div>
 

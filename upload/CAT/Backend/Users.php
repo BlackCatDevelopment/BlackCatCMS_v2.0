@@ -136,9 +136,9 @@ if (!class_exists('\CAT\Backend\Users'))
                 'users' => $data,
                 'userform' => self::renderForm($data),
             );
-            \CAT\Backend::print_header();
+            \CAT\Backend::printHeader();
             self::tpl()->output('backend_users', $tpl_data);
-            \CAT\Backend::print_footer();
+            \CAT\Backend::printFooter();
         }   // end function index()
 
         /**
@@ -224,10 +224,10 @@ if (!class_exists('\CAT\Backend\Users'))
          **/
         protected static function getUserID()
         {
-            $userID  = \CAT\Helper\Validate::sanitizePost('user_id','numeric',NULL);
+            $userID  = \CAT\Helper\Validate::sanitizePost('user_id','numeric');
 
             if(!$userID)
-                $userID  = \CAT\Helper\Validate::sanitizeGet('user_id','numeric',NULL);
+                $userID  = \CAT\Helper\Validate::sanitizeGet('user_id','numeric');
 
             if(!$userID)
                 $userID = self::router()->getParam(-1);
